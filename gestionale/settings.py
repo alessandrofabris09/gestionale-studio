@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 import os
 import dj_database_url
 """
@@ -136,12 +138,6 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-DEFAULT_FROM_EMAIL = 'gestionale@studio.local'
-
-ALERT_EMAIL = 'tua_email@gmail.com'
-
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = [
@@ -166,4 +162,36 @@ if DATABASE_URL:
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+INSTALLED_APPS += [
+    'cloudinary',
+    'cloudinary_storage',
+]
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('dzkfffn5o'),
+    'API_KEY': os.environ.get('938227332888318'),
+    'API_SECRET': os.environ.get('kje53vO5ISbcTSylHPYF5h58BU0'),
+}
+
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+INSTALLED_APPS += [
+    'anymail',
+]
+
+EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+
+ANYMAIL = {
+    'RESEND_API_KEY': os.environ.get('re_74i7zDcn_4W8as7LW85s3R7N4iUAiGznV'),
+}
+
+DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'
+
+ALERT_EMAIL = 'alessandro.fabris09@gmail.com'
