@@ -1,0 +1,57 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Backup completato
+{% endblock %}
+
+{% block page_title %}
+Backup completato
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .card{
+        background:white;
+        padding:30px;
+        border-radius:14px;
+        box-shadow:0 2px 10px rgba(0,0,0,0.08);
+        max-width:800px;
+    }
+
+    .btn{
+        display:inline-block;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:8px;
+        text-decoration:none;
+        margin-top:20px;
+    }
+</style>
+
+<div class="card">
+
+    <h2>Backup creato correttamente</h2>
+
+    <br>
+
+    <p>
+        Il backup è stato salvato nella cartella:
+    </p>
+
+    <br>
+
+    <strong>
+        {{ backup_folder }}
+    </strong>
+
+    <br>
+
+    <a class="btn" href="/">
+        Torna alla dashboard
+    </a>
+
+</div>
+
+{% endblock %}

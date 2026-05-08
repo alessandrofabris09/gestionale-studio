@@ -1,0 +1,161 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Ricerca globale
+{% endblock %}
+
+{% block page_title %}
+Ricerca globale
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .search-box{
+        background:white;
+        padding:25px;
+        border-radius:12px;
+        box-shadow:0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom:25px;
+    }
+
+    .search-box form{
+        display:flex;
+        gap:10px;
+    }
+
+    .search-box input{
+        flex:1;
+        padding:13px;
+        border:1px solid #d1d5db;
+        border-radius:8px;
+    }
+
+    .search-box button{
+        background:#111827;
+        color:white;
+        border:0;
+        padding:13px 20px;
+        border-radius:8px;
+        cursor:pointer;
+    }
+
+    .section{
+        background:white;
+        padding:25px;
+        border-radius:12px;
+        box-shadow:0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom:25px;
+    }
+
+    .section h2{
+        margin-bottom:15px;
+    }
+
+    .item{
+        padding:12px 0;
+        border-bottom:1px solid #eee;
+    }
+
+    .item:last-child{
+        border-bottom:none;
+    }
+
+    a{
+        color:#111827;
+        font-weight:bold;
+    }
+</style>
+
+<div class="search-box">
+    <form method="get">
+        <input type="text" name="q" value="{{ query }}" placeholder="Cerca cliente, pratica, comune, protocollo, documento...">
+        <button type="submit">Cerca</button>
+    </form>
+</div>
+
+{% if query %}
+
+<div class="section">
+    <h2>Pratiche</h2>
+
+    {% for pratica in pratiche %}
+        <div class="item">
+            <a href="/pratiche/{{ pratica.id }}/">
+                {{ pratica.oggetto }}
+            </a>
+            <br>
+            {{ pratica.cliente }} - {{ pratica.comune }} - {{ pratica.stato }}
+        </div>
+    {% empty %}
+        <p>Nessuna pratica trovata.</p>
+    {% endfor %}
+</div>
+
+<div class="section">
+    <h2>Clienti</h2>
+
+    {% for cliente in clienti %}
+        <div class="item">
+            <strong>{{ cliente.nome }}</strong>
+            <br>
+            {{ cliente.telefono }} - {{ cliente.email }}
+        </div>
+    {% empty %}
+        <p>Nessun cliente trovato.</p>
+    {% endfor %}
+</div>
+
+<div class="section">
+    <h2>Immobili</h2>
+
+    {% for immobile in immobili %}
+        <div class="item">
+            <strong>{{ immobile.comune }} - {{ immobile.indirizzo }}</strong>
+            <br>
+            Fg. {{ immobile.foglio }} - Mapp. {{ immobile.mappale }} - Sub. {{ immobile.subalterno }}
+        </div>
+    {% empty %}
+        <p>Nessun immobile trovato.</p>
+    {% endfor %}
+</div>
+
+<div class="section">
+    <h2>Scadenze</h2>
+
+    {% for scadenza in scadenze %}
+        <div class="item">
+            <a href="/pratiche/{{ scadenza.pratica.id }}/">
+                {{ scadenza.titolo }}
+            </a>
+            <br>
+            {{ scadenza.data_scadenza }} - {{ scadenza.priorita }}
+        </div>
+    {% empty %}
+        <p>Nessuna scadenza trovata.</p>
+    {% endfor %}
+</div>
+
+<div class="section">
+    <h2>Documenti</h2>
+
+    {% for documento in documenti %}
+        <div class="item">
+            <a href="{{ documento.file.url }}" target="_blank">
+                {{ documento.titolo }}
+            </a>
+            <br>
+            Pratica: {{ documento.pratica }}
+        </div>
+    {% empty %}
+        <p>Nessun documento trovato.</p>
+    {% endfor %}
+</div>
+
+{% else %}
+
+<p>Inserisci una parola nella barra di ricerca.</p>
+
+{% endif %}
+
+{% endblock %}

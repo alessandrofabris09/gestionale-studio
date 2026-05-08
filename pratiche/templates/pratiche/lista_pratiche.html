@@ -1,0 +1,170 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Pratiche
+{% endblock %}
+
+{% block page_title %}
+Elenco Pratiche
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .btn{
+        display:inline-block;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:8px;
+        text-decoration:none;
+        margin-bottom:20px;
+    }
+
+    .filters{
+        background:white;
+        padding:20px;
+        border-radius:12px;
+        box-shadow:0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom:20px;
+        display:grid;
+        grid-template-columns:2fr 1fr 1fr auto;
+        gap:15px;
+        align-items:end;
+    }
+
+    input, select{
+        width:100%;
+        padding:11px;
+        border:1px solid #d1d5db;
+        border-radius:8px;
+    }
+
+    label{
+        font-weight:bold;
+        display:block;
+        margin-bottom:6px;
+    }
+
+    button{
+        background:#111827;
+        color:white;
+        border:0;
+        padding:12px 18px;
+        border-radius:8px;
+        cursor:pointer;
+    }
+
+    table{
+        width:100%;
+        border-collapse:collapse;
+        background:white;
+        border-radius:12px;
+        overflow:hidden;
+        box-shadow:0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    th{
+        background:#111827;
+        color:white;
+        padding:15px;
+        text-align:left;
+    }
+
+    td{
+        padding:15px;
+        border-bottom:1px solid #eee;
+    }
+
+    tr:hover{
+        background:#f9fafb;
+    }
+
+    .reset{
+        color:#111827;
+        text-decoration:none;
+        margin-left:10px;
+    }
+</style>
+
+<a class="btn" href="/pratiche/nuova/">+ Nuova pratica</a>
+
+<form method="get" class="filters">
+
+    <div>
+        <label>Ricerca</label>
+        <input type="text" name="ricerca" value="{{ ricerca|default:'' }}" placeholder="Cliente, oggetto, comune, protocollo">
+    </div>
+
+    <div>
+        <label>Stato</label>
+        <select name="stato">
+            <option value="">Tutti</option>
+            <option value="PREVENTIVO" {% if stato == 'PREVENTIVO' %}selected{% endif %}>Preventivo</option>
+            <option value="IN_CORSO" {% if stato == 'IN_CORSO' %}selected{% endif %}>In corso</option>
+            <option value="DEPOSITATA" {% if stato == 'DEPOSITATA' %}selected{% endif %}>Depositata</option>
+            <option value="INTEGRAZIONE" {% if stato == 'INTEGRAZIONE' %}selected{% endif %}>Integrazione</option>
+            <option value="APPROVATA" {% if stato == 'APPROVATA' %}selected{% endif %}>Approvata</option>
+            <option value="CONCLUSA" {% if stato == 'CONCLUSA' %}selected{% endif %}>Conclusa</option>
+        </select>
+    </div>
+
+    <div>
+        <label>Tipo</label>
+        <select name="tipo">
+            <option value="">Tutte</option>
+            <option value="CILA" {% if tipo == 'CILA' %}selected{% endif %}>CILA</option>
+            <option value="SCIA" {% if tipo == 'SCIA' %}selected{% endif %}>SCIA</option>
+            <option value="PDC" {% if tipo == 'PDC' %}selected{% endif %}>Permesso di Costruire</option>
+            <option value="SANATORIA" {% if tipo == 'SANATORIA' %}selected{% endif %}>Sanatoria</option>
+            <option value="PAESAGGISTICA" {% if tipo == 'PAESAGGISTICA' %}selected{% endif %}>Paesaggistica</option>
+            <option value="CATASTO" {% if tipo == 'CATASTO' %}selected{% endif %}>Catasto</option>
+            <option value="FRAZIONAMENTO" {% if tipo == 'FRAZIONAMENTO' %}selected{% endif %}>Frazionamento</option>
+            <option value="SUCCESSIONE" {% if tipo == 'SUCCESSIONE' %}selected{% endif %}>Successione</option>
+            <option value="APE" {% if tipo == 'APE' %}selected{% endif %}>APE</option>
+            <option value="PERIZIA" {% if tipo == 'PERIZIA' %}selected{% endif %}>Perizia</option>
+        </select>
+    </div>
+
+    <div>
+        <button type="submit">Filtra</button>
+        <a class="reset" href="/pratiche/">Reset</a>
+    </div>
+
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Tipo</th>
+            <th>Oggetto</th>
+            <th>Cliente</th>
+            <th>Comune</th>
+            <th>Stato</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for pratica in pratiche %}
+        <tr>
+            <td>{{ pratica.id }}</td>
+            <td>{{ pratica.tipo_pratica }}</td>
+            <td>
+                <a href="/pratiche/{{ pratica.id }}/">
+                    {{ pratica.oggetto }}
+                </a>
+            </td>
+            <td>{{ pratica.cliente }}</td>
+            <td>{{ pratica.comune }}</td>
+            <td>{{ pratica.stato }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">Nessuna pratica trovata</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

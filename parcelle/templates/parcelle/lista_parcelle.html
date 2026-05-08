@@ -1,0 +1,138 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Parcelle{% endblock %}
+{% block page_title %}Parcelle e pagamenti{% endblock %}
+
+{% block content %}
+
+<style>
+    .top-actions{
+        display:flex;
+        justify-content:space-between;
+        margin-bottom:25px;
+        gap:20px;
+    }
+
+    .btn{
+        display:inline-block;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:8px;
+        text-decoration:none;
+        margin-right:8px;
+    }
+
+    .btn-delete{
+        background:#991b1b;
+    }
+
+    .search{
+        flex:1;
+    }
+
+    .search input{
+        width:100%;
+        padding:12px;
+        border:1px solid #d1d5db;
+        border-radius:8px;
+    }
+
+    table{
+        width:100%;
+        border-collapse:collapse;
+        background:white;
+        border-radius:12px;
+        overflow:hidden;
+        box-shadow:0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    th{
+        background:#111827;
+        color:white;
+        padding:15px;
+        text-align:left;
+    }
+
+    td{
+        padding:15px;
+        border-bottom:1px solid #eee;
+    }
+
+    .pagato{
+        color:#166534;
+        font-weight:bold;
+    }
+
+    .parziale{
+        color:#92400e;
+        font-weight:bold;
+    }
+
+    .da-pagare{
+        color:#991b1b;
+        font-weight:bold;
+    }
+</style>
+
+<div class="top-actions">
+    <a class="btn" href="/parcelle/nuova/">+ Nuova parcella</a>
+
+    <form class="search" method="get">
+        <input
+            type="text"
+            name="ricerca"
+            value="{{ ricerca|default:'' }}"
+            placeholder="Cerca parcella, pratica o cliente..."
+        >
+    </form>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Descrizione</th>
+            <th>Pratica</th>
+            <th>Importo</th>
+            <th>Pagato</th>
+            <th>Residuo</th>
+            <th>Stato</th>
+            <th>Azioni</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for parcella in parcelle %}
+        <tr>
+            <td>{{ parcella.descrizione }}</td>
+            <td>
+                <a href="/pratiche/{{ parcella.pratica.id }}/">
+                    {{ parcella.pratica }}
+                </a>
+            </td>
+            <td>€ {{ parcella.importo }}</td>
+            <td>€ {{ parcella.importo_pagato }}</td>
+            <td>€ {{ parcella.saldo_residuo }}</td>
+            <td>
+                {% if parcella.stato == 'PAGATO' %}
+                    <span class="pagato">Pagato</span>
+                {% elif parcella.stato == 'PARZIALE' %}
+                    <span class="parziale">Parziale</span>
+                {% else %}
+                    <span class="da-pagare">Da pagare</span>
+                {% endif %}
+            </td>
+            <td>
+                <a class="btn" href="/parcelle/{{ parcella.id }}/modifica/">Modifica</a>
+                <a class="btn btn-delete" href="/parcelle/{{ parcella.id }}/elimina/">Elimina</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">Nessuna parcella presente</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

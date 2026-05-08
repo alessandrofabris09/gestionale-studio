@@ -1,0 +1,50 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Immobile{% endblock %}
+{% block page_title %}Scheda immobile{% endblock %}
+
+{% block content %}
+
+<style>
+    .card{background:white;padding:30px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.08);margin-bottom:30px;}
+    .row{margin-bottom:20px;}
+    .label{font-weight:bold;color:#6b7280;margin-bottom:5px;}
+    .value{font-size:18px;}
+    .btn{display:inline-block;background:#111827;color:white;padding:12px 18px;border-radius:8px;text-decoration:none;margin-right:10px;margin-bottom:20px;}
+    .btn-delete{background:#991b1b;}
+    .pratica{padding:15px;border-bottom:1px solid #eee;}
+    .pratica a{color:#111827;font-weight:bold;text-decoration:none;}
+</style>
+
+<a class="btn" href="/immobili/{{ immobile.id }}/modifica/">Modifica immobile</a>
+<a class="btn btn-delete" href="/immobili/{{ immobile.id }}/elimina/">Elimina immobile</a>
+
+<div class="card">
+    <div class="row"><div class="label">Cliente</div><div class="value">{{ immobile.cliente }}</div></div>
+    <div class="row"><div class="label">Comune</div><div class="value">{{ immobile.comune }}</div></div>
+    <div class="row"><div class="label">Indirizzo</div><div class="value">{{ immobile.indirizzo }}</div></div>
+    <div class="row"><div class="label">Foglio</div><div class="value">{{ immobile.foglio }}</div></div>
+    <div class="row"><div class="label">Mappale</div><div class="value">{{ immobile.mappale }}</div></div>
+    <div class="row"><div class="label">Subalterno</div><div class="value">{{ immobile.subalterno }}</div></div>
+    <div class="row"><div class="label">Categoria catastale</div><div class="value">{{ immobile.categoria_catastale }}</div></div>
+    <div class="row"><div class="label">Zona urbanistica</div><div class="value">{{ immobile.zona_urbanistica }}</div></div>
+    <div class="row"><div class="label">Vincoli</div><div class="value">{{ immobile.vincoli }}</div></div>
+    <div class="row"><div class="label">Note</div><div class="value">{{ immobile.note }}</div></div>
+</div>
+
+<div class="card">
+    <h2>Pratiche collegate</h2>
+    <br>
+
+    {% for pratica in pratiche %}
+        <div class="pratica">
+            <a href="/pratiche/{{ pratica.id }}/">{{ pratica.oggetto }}</a>
+            <br>
+            {{ pratica.comune }} - {{ pratica.stato }}
+        </div>
+    {% empty %}
+        <p>Nessuna pratica collegata.</p>
+    {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,257 @@
+{% load role_tags %}
+
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>
+        {% block title %}
+        Gestionale Studio Tecnico
+        {% endblock %}
+    </title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            font-family:Arial, sans-serif;
+            background:#f3f4f6;
+            display:flex;
+            min-height:100vh;
+        }
+
+        .sidebar{
+            width:260px;
+            background:#111827;
+            color:white;
+            padding:25px 20px;
+        }
+
+        .sidebar h2{
+            margin-bottom:10px;
+            font-size:24px;
+        }
+
+        .user-info{
+            font-size:13px;
+            color:#d1d5db;
+            margin-bottom:30px;
+        }
+
+        .menu a{
+            display:block;
+            color:white;
+            text-decoration:none;
+            padding:14px 16px;
+            border-radius:8px;
+            margin-bottom:8px;
+            background:#1f2937;
+            transition:0.2s;
+        }
+
+        .menu a:hover{
+            background:#374151;
+        }
+
+        .main{
+            flex:1;
+            padding:35px;
+        }
+
+        .topbar{
+            background:white;
+            padding:20px 25px;
+            border-radius:12px;
+            margin-bottom:30px;
+            box-shadow:0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .content{
+            background:transparent;
+        }
+
+        .cards{
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            gap:20px;
+        }
+
+        .card{
+            background:white;
+            padding:28px;
+            border-radius:14px;
+            box-shadow:0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .card-title{
+            color:#6b7280;
+            font-size:15px;
+        }
+
+        .number{
+            font-size:40px;
+            font-weight:bold;
+            margin-top:10px;
+            color:#111827;
+        }
+
+        @media(max-width:1100px){
+
+            .cards{
+                grid-template-columns:repeat(2,1fr);
+            }
+
+        }
+
+        @media(max-width:700px){
+
+            body{
+                flex-direction:column;
+            }
+
+            .sidebar{
+                width:100%;
+            }
+
+            .cards{
+                grid-template-columns:1fr;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <aside class="sidebar">
+
+        <h2>Studio Tecnico</h2>
+
+        <div class="user-info">
+            Utente: {{ request.user.username }}
+        </div>
+
+        <nav class="menu">
+
+            <a href="/">
+                Dashboard
+            </a>
+
+            <a href="/ricerca/">
+                Ricerca globale
+            </a>
+
+            {% if request.user|has_group:"Admin Studio" or request.user|has_group:"Tecnico" %}
+
+                <a href="/pratiche/">
+                    Pratiche
+                </a>
+
+                <a href="/immobili/">
+                    Immobili
+                </a>
+
+                <a href="/documenti/">
+                    Documenti
+                </a>
+
+            {% endif %}
+
+            {% if request.user|has_group:"Admin Studio" or request.user|has_group:"Segreteria" %}
+
+                <a href="/clienti/">
+                    Clienti
+                </a>
+
+                <a href="/parcelle/">
+                    Parcelle
+                </a>
+
+            {% endif %}
+
+            {% if request.user|has_group:"Admin Studio" or request.user|has_group:"Tecnico" or request.user|has_group:"Segreteria" %}
+
+                <a href="/scadenze/">
+                    Scadenze
+                </a>
+
+                <a href="/scadenze/alert/">
+                    Alert scadenze
+                </a>
+
+                <a href="/scadenze/calendario/">
+                    Calendario
+                </a>
+
+            {% endif %}
+
+            {% if request.user|has_group:"Admin Studio" %}
+
+                <a href="/admin/">
+                    Admin tecnico
+                </a>
+                
+                <a href="/backup/">
+                    Backup manuale
+                </a>
+
+            {% endif %}
+
+            <form method="post" action="/logout/" style="margin:0;">
+    {% csrf_token %}
+    <button type="submit" style="
+        width:100%;
+        display:block;
+        color:white;
+        text-align:left;
+        padding:14px 16px;
+        border-radius:8px;
+        margin-bottom:8px;
+        background:#991b1b;
+        border:0;
+        cursor:pointer;
+        font-size:16px;
+    ">
+        Logout
+    </button>
+</form>
+
+        </nav>
+
+    </aside>
+
+    <main class="main">
+
+        <div class="topbar">
+
+            <h1>
+
+                {% block page_title %}
+                Dashboard
+                {% endblock %}
+
+            </h1>
+
+        </div>
+
+        <div class="content">
+
+            {% block content %}
+            {% endblock %}
+
+        </div>
+
+    </main>
+
+</body>
+
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Gestionale Studio Tecnico</title>
+
+    <style>
+        body{
+            font-family:Arial, sans-serif;
+            background:#111827;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            min-height:100vh;
+        }
+
+        .login-box{
+            background:white;
+            padding:40px;
+            border-radius:14px;
+            width:380px;
+            box-shadow:0 10px 30px rgba(0,0,0,0.25);
+        }
+
+        h1{
+            margin-bottom:25px;
+            font-size:26px;
+            color:#111827;
+        }
+
+        p{
+            margin-bottom:18px;
+        }
+
+        label{
+            display:block;
+            font-weight:bold;
+            margin-bottom:6px;
+        }
+
+        input{
+            width:100%;
+            padding:12px;
+            border:1px solid #d1d5db;
+            border-radius:8px;
+        }
+
+        button{
+            width:100%;
+            background:#111827;
+            color:white;
+            border:0;
+            padding:13px;
+            border-radius:8px;
+            cursor:pointer;
+            font-size:16px;
+        }
+
+        .error{
+            background:#fee2e2;
+            color:#991b1b;
+            padding:12px;
+            border-radius:8px;
+            margin-bottom:18px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-box">
+
+        <h1>Gestionale Studio Tecnico</h1>
+
+        {% if form.errors %}
+            <div class="error">
+                Username o password non corretti.
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button type="submit">
+                Accedi
+            </button>
+        </form>
+
+    </div>
+
+</body>
+</html>

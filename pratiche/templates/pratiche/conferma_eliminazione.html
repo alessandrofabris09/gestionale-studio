@@ -1,0 +1,89 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Elimina pratica
+{% endblock %}
+
+{% block page_title %}
+Conferma eliminazione
+{% endblock %}
+
+{% block content %}
+
+<style>
+
+    .card{
+        background:white;
+        padding:30px;
+        border-radius:14px;
+        max-width:700px;
+        box-shadow:0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .btn{
+        display:inline-block;
+        padding:12px 18px;
+        border-radius:8px;
+        text-decoration:none;
+        border:none;
+        cursor:pointer;
+        font-size:15px;
+    }
+
+    .btn-danger{
+        background:#dc2626;
+        color:white;
+    }
+
+    .btn-secondary{
+        background:#e5e7eb;
+        color:#111827;
+    }
+
+</style>
+
+<div class="card">
+
+    <h2>
+        Eliminare la pratica?
+    </h2>
+
+    <br>
+
+    <p>
+        <strong>{{ pratica.oggetto }}</strong>
+    </p>
+
+    <p>
+        Cliente: {{ pratica.cliente }}
+    </p>
+
+    <p>
+        Comune: {{ pratica.comune }}
+    </p>
+
+    <br>
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        <button
+            type="submit"
+            class="btn btn-danger"
+        >
+            Elimina definitivamente
+        </button>
+
+        <a
+            href="{% url 'dettaglio_pratica' pratica.id %}"
+            class="btn btn-secondary"
+        >
+            Annulla
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

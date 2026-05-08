@@ -1,0 +1,218 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Dettaglio pratica
+{% endblock %}
+
+{% block page_title %}
+Scheda pratica
+{% endblock %}
+
+{% block content %}
+
+<style>
+
+    .card{
+        background:white;
+        padding:30px;
+        border-radius:12px;
+        box-shadow:0 2px 10px rgba(0,0,0,0.08);
+        max-width:1100px;
+        margin-bottom:30px;
+    }
+
+    .row{
+        margin-bottom:20px;
+    }
+
+    .label{
+        font-weight:bold;
+        color:#374151;
+        margin-bottom:5px;
+    }
+
+    .value{
+        font-size:18px;
+    }
+
+    .back{
+        display:inline-block;
+        margin-bottom:20px;
+        text-decoration:none;
+        color:#111827;
+    }
+
+    .btn{
+        display:inline-block;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:8px;
+        text-decoration:none;
+        margin-right:10px;
+        margin-bottom:20px;
+    }
+
+    .delete-link{
+        display:inline-block;
+        background:#991b1b;
+        color:white;
+        padding:12px 18px;
+        border-radius:8px;
+        text-decoration:none;
+        margin-bottom:20px;
+    }
+
+    .doc-delete{
+        color:#991b1b;
+        margin-left:10px;
+        text-decoration:none;
+        font-weight:bold;
+    }
+
+    .doc-delete:hover{
+        text-decoration:underline;
+    }
+
+</style>
+
+<a class="back" href="/pratiche/">
+    ← Torna alle pratiche
+</a>
+
+<br>
+
+<a class="btn" href="/pratiche/{{ pratica.id }}/modifica/">
+    Modifica pratica
+</a>
+
+<a class="btn" href="/pratiche/{{ pratica.id }}/pdf/">
+    Esporta PDF
+</a>
+
+<a class="delete-link" href="/pratiche/{{ pratica.id }}/elimina/">
+    Elimina pratica
+</a>
+
+<div class="card">
+
+    <div class="row">
+        <div class="label">Tipo pratica</div>
+        <div class="value">{{ pratica.tipo_pratica }}</div>
+    </div>
+
+    <div class="row">
+        <div class="label">Oggetto</div>
+        <div class="value">{{ pratica.oggetto }}</div>
+    </div>
+
+    <div class="row">
+        <div class="label">Cliente</div>
+        <div class="value">{{ pratica.cliente }}</div>
+    </div>
+
+    <div class="row">
+        <div class="label">Immobile</div>
+        <div class="value">{{ pratica.immobile }}</div>
+    </div>
+
+    <div class="row">
+        <div class="label">Comune</div>
+        <div class="value">{{ pratica.comune }}</div>
+    </div>
+
+    <div class="row">
+        <div class="label">Stato pratica</div>
+        <div class="value">{{ pratica.stato }}</div>
+    </div>
+
+    <div class="row">
+        <div class="label">Protocollo</div>
+        <div class="value">{{ pratica.protocollo }}</div>
+    </div>
+
+    <div class="row">
+        <div class="label">Data incarico</div>
+        <div class="value">{{ pratica.data_incarico }}</div>
+    </div>
+
+    <div class="row">
+        <div class="label">Data deposito</div>
+        <div class="value">{{ pratica.data_deposito }}</div>
+    </div>
+
+    <div class="row">
+        <div class="label">Scadenza</div>
+        <div class="value">{{ pratica.scadenza }}</div>
+    </div>
+
+    <div class="row">
+        <div class="label">Compenso</div>
+        <div class="value">{{ pratica.compenso }}</div>
+    </div>
+
+    <div class="row">
+        <div class="label">Note</div>
+        <div class="value">{{ pratica.note }}</div>
+    </div>
+
+</div>
+
+<div class="card">
+
+    <h2>Documenti</h2>
+
+    <br>
+
+    <a class="btn" href="/documenti/pratica/{{ pratica.id }}/carica/">
+        + Carica documento
+    </a>
+
+    <a class="btn" href="/documenti/pratica/{{ pratica.id }}/carica-multipli/">
+        + Carica multipli
+    </a>
+
+    <br><br>
+
+    {% if documenti %}
+
+        {% for documento in documenti %}
+
+            <div class="row">
+
+                <div class="label">
+                    {{ documento.titolo }}
+                </div>
+
+                <div class="value">
+
+                    {{ documento.tipo_documento }}
+
+                    -
+
+                    <a href="{{ documento.file.url }}" target="_blank">
+                        Apri file
+                    </a>
+
+                    <a
+                        class="doc-delete"
+                        href="/documenti/{{ documento.id }}/elimina/"
+                    >
+                        Elimina
+                    </a>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <p>Nessun documento caricato.</p>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Elimina immobile{% endblock %}
+{% block page_title %}Elimina immobile{% endblock %}
+
+{% block content %}
+
+<style>
+    .card{background:white;padding:30px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.08);max-width:700px;}
+    .btn-danger{background:#991b1b;color:white;border:0;padding:12px 18px;border-radius:8px;cursor:pointer;}
+</style>
+
+<div class="card">
+    <h2>Sei sicuro di voler eliminare questo immobile?</h2>
+
+    <br>
+
+    <h3>{{ immobile.comune }} - {{ immobile.indirizzo }}</h3>
+
+    <br>
+
+    <p>Attenzione: se ci sono pratiche collegate, verranno eliminate anche quelle.</p>
+
+    <br>
+
+    <form method="post">
+        {% csrf_token %}
+        <button class="btn-danger" type="submit">Elimina definitivamente</button>
+    </form>
+</div>
+
+{% endblock %}
