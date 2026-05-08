@@ -86,14 +86,9 @@ WSGI_APPLICATION = 'gestionale.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'gestionale_studio',
-        'USER': 'postgres',
-        'PASSWORD': 'admin123',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.parse(
+        'postgresql://gestionale_studio_user:9GbgrIPI1Fv4K1y5vwFexDlne0FjwNOT@dpg-d7uq9prbc2fs73evbmsg-a.frankfurt-postgres.render.com/gestionale_studio'
+    )
 }
 
 

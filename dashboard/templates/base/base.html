@@ -150,7 +150,7 @@
                 Ricerca globale
             </a>
 
-            {% if request.user|has_group:"Admin Studio" or request.user|has_group:"Tecnico" %}
+            {% if request.user.is_superuser or request.user|has_group:"Admin Studio" or request.user|has_group:"Tecnico" %}
 
                 <a href="/pratiche/">
                     Pratiche
@@ -166,7 +166,7 @@
 
             {% endif %}
 
-            {% if request.user|has_group:"Admin Studio" or request.user|has_group:"Segreteria" %}
+            {% if request.user.is_superuser or request.user|has_group:"Admin Studio" or request.user|has_group:"Segreteria" %}
 
                 <a href="/clienti/">
                     Clienti
@@ -178,8 +178,7 @@
 
             {% endif %}
 
-            {% if request.user|has_group:"Admin Studio" or request.user|has_group:"Tecnico" or request.user|has_group:"Segreteria" %}
-
+            {% if request.user.is_superuser or request.user|has_group:"Admin Studio" or request.user|has_group:"Tecnico" or request.user|has_group:"Segreteria" %}
                 <a href="/scadenze/">
                     Scadenze
                 </a>
@@ -194,7 +193,7 @@
 
             {% endif %}
 
-            {% if request.user|has_group:"Admin Studio" %}
+            {% if request.user.is_superuser or request.user|has_group:"Admin Studio" %}
 
                 <a href="/admin/">
                     Admin tecnico
