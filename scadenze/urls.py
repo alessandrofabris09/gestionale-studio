@@ -22,8 +22,7 @@ urlpatterns = [
     path('eventi/', eventi_calendario, name='eventi_calendario'),
     path('invia-alert-email/', invia_alert_email_manuale, name='invia_alert_email_manuale'),
     path(
-    'invia-alert-email-cron/ABCD1234/',
+    'invia-alert-email-cron/<str:codice>/',
     invia_alert_email_cron,
     name='invia_alert_email_cron'
 ),
-]
