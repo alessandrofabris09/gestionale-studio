@@ -1,3 +1,4 @@
+
 from django.db import models
 from pratiche.models import Pratica
 

@@ -215,4 +215,53 @@ Scheda pratica
 
 </div>
 
+<div class="card">
+
+    <h2>Parcelle</h2>
+
+    <br>
+
+    {% if parcelle %}
+
+        {% for parcella in parcelle %}
+
+            <div class="row">
+
+                <div class="label">
+                    {{ parcella.descrizione }}
+                </div>
+
+                <div class="value">
+
+                    Importo:
+                    € {{ parcella.importo }}
+
+                    -
+
+                    Stato:
+                    {{ parcella.get_stato_display }}
+
+                    -
+
+                    <a
+                        href="{% url 'pdf_parcella' parcella.id %}"
+                        target="_blank"
+                    >
+                        PDF parcella
+                    </a>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <p>Nessuna parcella collegata.</p>
+
+    {% endif %}
+
+</div>
+
 {% endblock %}

@@ -1,6 +1,12 @@
+from io import BytesIO
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
+from django.http import FileResponse
+
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
 
 from .models import Parcella
 from .forms import ParcellaForm
@@ -82,4 +88,136 @@ def elimina_parcella(request, parcella_id):
         request,
         'parcelle/elimina_parcella.html',
         {'parcella': parcella}
+    )
+
+
+@login_required
+def pdf_parcella(request, parcella_id):
+
+    parcella = get_object_or_404(
+        Parcella,
+        id=parcella_id
+    )
+
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+
+    width, height = A4
+    logo_path = "static/img/logo.png"
+
+    try:
+        p.drawImage(
+            logo_path,
+            50,
+            height - 85,
+            width=90,
+            height=45,
+            preserveAspectRatio=True,
+            mask='auto'
+        )
+    except Exception:
+        pass
+
+    p.setFont("Helvetica-Bold", 18)
+    p.drawString(160, height - 55, "Gestionale Studio Tecnico")
+
+    p.setFont("Helvetica", 10)
+    p.drawString(160, height - 73, "Scheda parcella / riepilogo compenso")
+
+    p.line(50, height - 105, width - 50, height - 105)
+
+    y = height - 145
+
+    p.setFont("Helvetica-Bold", 17)
+    p.drawString(50, y, "Riepilogo parcella")
+
+    y -= 35
+
+    def section_title(title, y_pos):
+        p.setFillColorRGB(0.07, 0.09, 0.15)
+        p.rect(50, y_pos - 6, width - 100, 24, fill=True, stroke=False)
+        p.setFillColorRGB(1, 1, 1)
+        p.setFont("Helvetica-Bold", 11)
+        p.drawString(60, y_pos, title)
+        p.setFillColorRGB(0, 0, 0)
+        return y_pos - 35
+
+    def row(label, value, y_pos):
+        p.setFont("Helvetica-Bold", 10)
+        p.drawString(60, y_pos, f"{label}:")
+        p.setFont("Helvetica", 10)
+        p.drawString(190, y_pos, str(value) if value else "-")
+        return y_pos - 22
+
+    y = section_title("DATI PARCELLA", y)
+
+    y = row("ID parcella", parcella.id, y)
+    y = row("Descrizione", parcella.descrizione, y)
+    y = row("Stato pagamento", parcella.get_stato_display(), y)
+    y = row("Data emissione", parcella.data_emissione, y)
+    y = row("Data pagamento", parcella.data_pagamento, y)
+
+    y -= 10
+    y = section_title("PRATICA COLLEGATA", y)
+
+    y = row("Pratica", parcella.pratica, y)
+
+    if hasattr(parcella.pratica, 'cliente'):
+        y = row("Cliente", parcella.pratica.cliente, y)
+
+    if hasattr(parcella.pratica, 'comune'):
+        y = row("Comune", parcella.pratica.comune, y)
+
+    y -= 10
+    y = section_title("IMPORTI", y)
+
+    y = row("Importo totale", f"Euro {parcella.importo}", y)
+    y = row("Importo pagato", f"Euro {parcella.importo_pagato}", y)
+    y = row("Saldo residuo", f"Euro {parcella.saldo_residuo()}", y)
+
+    y -= 10
+    y = section_title("NOTE", y)
+
+    note = parcella.note if parcella.note else "-"
+
+    p.setFont("Helvetica", 10)
+
+    max_chars = 90
+    note_lines = [
+        note[i:i + max_chars]
+        for i in range(0, len(note), max_chars)
+    ]
+
+    for line in note_lines:
+        if y < 80:
+            p.showPage()
+            y = height - 70
+
+        p.drawString(60, y, line)
+        y -= 18
+
+    p.line(50, 55, width - 50, 55)
+
+    p.setFont("Helvetica", 8)
+    p.drawString(
+        50,
+        40,
+        "Documento generato automaticamente dal Gestionale Studio Tecnico"
+    )
+
+    p.drawRightString(
+        width - 50,
+        40,
+        f"Parcella ID {parcella.id}"
+    )
+
+    p.showPage()
+    p.save()
+
+    buffer.seek(0)
+
+    return FileResponse(
+        buffer,
+        as_attachment=True,
+        filename=f"parcella_{parcella.id}.pdf"
     )

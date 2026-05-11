@@ -5,6 +5,7 @@ from .views import (
     nuova_parcella,
     modifica_parcella,
     elimina_parcella,
+    pdf_parcella,
 )
 
 urlpatterns = [
@@ -12,4 +13,5 @@ urlpatterns = [
     path('nuova/', nuova_parcella, name='nuova_parcella'),
     path('<int:parcella_id>/modifica/', modifica_parcella, name='modifica_parcella'),
     path('<int:parcella_id>/elimina/', elimina_parcella, name='elimina_parcella'),
+    path('<int:parcella_id>/pdf/', pdf_parcella, name='pdf_parcella'),
 ]
