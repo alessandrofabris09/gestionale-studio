@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 
+from attivita.models import Attivita
 from pratiche.models import Pratica
 from .models import Documento
 from .forms import DocumentoForm, DocumentoMultiploForm
@@ -55,6 +56,13 @@ def carica_documento(request, pratica_id):
             documento.pratica = pratica
             documento.save()
 
+            Attivita.objects.create(
+                pratica=pratica,
+                utente=request.user,
+                tipo='UPLOAD',
+                descrizione=f'Caricato documento: {documento.titolo}'
+            )
+
             return redirect(
                 'dettaglio_pratica',
                 pratica_id=pratica.id
@@ -96,21 +104,26 @@ def carica_documenti_multipli(request, pratica_id):
             files = request.FILES.getlist('files')
 
             titolo_base = form.cleaned_data.get('titolo_base')
-
             tipo_documento = form.cleaned_data.get('tipo_documento')
-
             note = form.cleaned_data.get('note')
 
             for file in files:
 
                 titolo = titolo_base if titolo_base else file.name
 
-                Documento.objects.create(
+                documento = Documento.objects.create(
                     pratica=pratica,
                     titolo=titolo,
                     tipo_documento=tipo_documento,
                     file=file,
                     note=note
+                )
+
+                Attivita.objects.create(
+                    pratica=pratica,
+                    utente=request.user,
+                    tipo='UPLOAD',
+                    descrizione=f'Caricato documento: {documento.titolo}'
                 )
 
             return redirect(
@@ -142,13 +155,21 @@ def elimina_documento(request, documento_id):
         id=documento_id
     )
 
-    pratica_id = documento.pratica.id
+    pratica = documento.pratica
+    pratica_id = pratica.id
+    titolo_documento = documento.titolo
 
     if request.method == 'POST':
 
         documento.file.delete(save=False)
-
         documento.delete()
+
+        Attivita.objects.create(
+            pratica=pratica,
+            utente=request.user,
+            tipo='ELIMINAZIONE',
+            descrizione=f'Eliminato documento: {titolo_documento}'
+        )
 
         return redirect(
             'dettaglio_pratica',

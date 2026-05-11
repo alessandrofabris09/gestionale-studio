@@ -43,6 +43,13 @@ def home(request):
 
     totale_da_incassare = totale_parcelle - totale_incassato
 
+    parcelle_scadute = Parcella.objects.filter(
+    stato='DA_PAGARE',
+    data_scadenza__lt=now().date()
+    ).count()
+
+    ultime_parcelle = Parcella.objects.all().order_by('-id')[:5]
+
     ultime_pratiche = Pratica.objects.all().order_by('-id')[:5]
 
     ultime_scadenze = Scadenza.objects.all().order_by(
@@ -90,6 +97,8 @@ def home(request):
         'totale_parcelle': totale_parcelle,
         'totale_incassato': totale_incassato,
         'totale_da_incassare': totale_da_incassare,
+        'parcelle_scadute': parcelle_scadute,
+        'ultime_parcelle': ultime_parcelle,
 
         'ultime_pratiche': ultime_pratiche,
         'ultime_scadenze': ultime_scadenze,

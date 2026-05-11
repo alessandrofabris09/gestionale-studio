@@ -42,10 +42,13 @@ def dettaglio_pratica(request, pratica_id):
 
     parcelle = pratica.parcelle.all()
 
+    attivita = pratica.attivita.all().order_by('-data')
+
     context = {
         'pratica': pratica,
         'documenti': documenti,
         'parcelle': parcelle,
+        'attivita': attivita,
     }
 
     return render(

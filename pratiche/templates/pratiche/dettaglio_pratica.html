@@ -53,6 +53,16 @@ Scheda pratica
         margin-bottom:20px;
     }
 
+    .btn-small{
+        display:inline-block;
+        background:#111827;
+        color:white;
+        padding:8px 12px;
+        border-radius:6px;
+        text-decoration:none;
+        margin-top:8px;
+    }
+
     .delete-link{
         display:inline-block;
         background:#991b1b;
@@ -72,6 +82,16 @@ Scheda pratica
 
     .doc-delete:hover{
         text-decoration:underline;
+    }
+
+    .badge{
+        display:inline-block;
+        background:#f3f4f6;
+        color:#111827;
+        padding:4px 8px;
+        border-radius:6px;
+        font-size:14px;
+        margin-right:8px;
     }
 
 </style>
@@ -217,7 +237,7 @@ Scheda pratica
 
 <div class="card">
 
-    <h2>Parcelle</h2>
+    <h2>Parcelle / Preventivi / Fatture</h2>
 
     <br>
 
@@ -228,26 +248,48 @@ Scheda pratica
             <div class="row">
 
                 <div class="label">
+                    {% if parcella.numero_documento %}
+                        {{ parcella.numero_documento }}
+                    {% else %}
+                        Documento non numerato
+                    {% endif %}
+                    -
                     {{ parcella.descrizione }}
                 </div>
 
                 <div class="value">
+
+                    <span class="badge">
+                        {{ parcella.get_tipo_documento_display }}
+                    </span>
+
+                    <span class="badge">
+                        {{ parcella.get_stato_display }}
+                    </span>
+
+                    <br><br>
 
                     Importo:
                     € {{ parcella.importo }}
 
                     -
 
-                    Stato:
-                    {{ parcella.get_stato_display }}
+                    Pagato:
+                    € {{ parcella.importo_pagato }}
 
                     -
 
+                    IVA:
+                    {{ parcella.iva }}%
+
+                    <br>
+
                     <a
+                        class="btn-small"
                         href="{% url 'pdf_parcella' parcella.id %}"
                         target="_blank"
                     >
-                        PDF parcella
+                        PDF documento
                     </a>
 
                 </div>
@@ -259,6 +301,60 @@ Scheda pratica
     {% else %}
 
         <p>Nessuna parcella collegata.</p>
+
+    {% endif %}
+
+</div>
+
+<div class="card">
+
+    <h2>Timeline attività</h2>
+
+    <br>
+
+    {% if attivita %}
+
+        {% for a in attivita %}
+
+            <div style="
+                border-left:4px solid #2563eb;
+                padding-left:15px;
+                margin-bottom:25px;
+            ">
+
+                <div style="
+                    font-weight:bold;
+                    font-size:18px;
+                    color:#111827;
+                ">
+                    {{ a.get_tipo_display }}
+                </div>
+
+                <div style="
+                    color:#374151;
+                    margin-top:6px;
+                ">
+                    {{ a.descrizione }}
+                </div>
+
+                <div style="
+                    margin-top:8px;
+                    font-size:14px;
+                    color:#6b7280;
+                ">
+                    {{ a.data }}
+                    {% if a.utente %}
+                        - {{ a.utente }}
+                    {% endif %}
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <p>Nessuna attività registrata.</p>
 
     {% endif %}
 

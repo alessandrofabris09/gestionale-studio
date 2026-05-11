@@ -1,3 +1,6 @@
+from django.core.management import call_command
+from django.http import JsonResponse
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 
@@ -72,60 +75,52 @@ def elimina_scadenza(request, scadenza_id):
     )
 
 
+    return render(request, 'scadenze/alert_scadenze.html', context)
+
 @login_required
-def calendario_scadenze(request):
-    oggi = date.today()
+def eventi_calendario(request):
 
-    anno = int(request.GET.get('anno', oggi.year))
-    mese = int(request.GET.get('mese', oggi.month))
+    scadenze = Scadenza.objects.all()
 
-    cal = calendar.Calendar(firstweekday=0)
-    giorni_mese = cal.monthdatescalendar(anno, mese)
-
-    scadenze = Scadenza.objects.filter(
-        data_scadenza__year=anno,
-        data_scadenza__month=mese
-    )
-
-    scadenze_per_giorno = {}
+    eventi = []
 
     for scadenza in scadenze:
-        giorno = scadenza.data_scadenza
 
-        if giorno not in scadenze_per_giorno:
-            scadenze_per_giorno[giorno] = []
+        colore = '#2563eb'
 
-        scadenze_per_giorno[giorno].append(scadenza)
+        if not scadenza.completata:
 
-    if mese == 1:
-        mese_precedente = 12
-        anno_precedente = anno - 1
-    else:
-        mese_precedente = mese - 1
-        anno_precedente = anno
+            if scadenza.data_scadenza < date.today():
+                colore = '#dc2626'
+            else:
+                colore = '#ca8a04'
 
-    if mese == 12:
-        mese_successivo = 1
-        anno_successivo = anno + 1
-    else:
-        mese_successivo = mese + 1
-        anno_successivo = anno
+        else:
+            colore = '#16a34a'
 
-    context = {
-        'anno': anno,
-        'mese': mese,
-        'nome_mese': calendar.month_name[mese],
-        'giorni_mese': giorni_mese,
-        'scadenze_per_giorno': scadenze_per_giorno,
-        'mese_precedente': mese_precedente,
-        'anno_precedente': anno_precedente,
-        'mese_successivo': mese_successivo,
-        'anno_successivo': anno_successivo,
-        'oggi': oggi,
-    }
+        url = ''
 
-    return render(request, 'scadenze/calendario_scadenze.html', context)
+        if scadenza.pratica:
+            url = reverse(
+                'dettaglio_pratica',
+                args=[scadenza.pratica.id]
+            )
 
+        eventi.append({
+            'title': scadenza.titolo,
+            'start': scadenza.data_scadenza.isoformat(),
+            'color': colore,
+            'url': url,
+        })
+
+    return JsonResponse(eventi, safe=False)
+    
+@login_required
+def calendario_scadenze(request):
+    return render(
+        request,
+        'scadenze/calendario.html'
+    )    
 
 @login_required
 def alert_scadenze(request):
@@ -149,4 +144,50 @@ def alert_scadenze(request):
         'imminenti': imminenti,
     }
 
-    return render(request, 'scadenze/alert_scadenze.html', context)
+    return render(
+        request,
+        'scadenze/alert_scadenze.html',
+        context
+    ) 
+
+@login_required
+def invia_alert_email_manuale(request):
+
+    if not request.user.is_superuser:
+        return redirect('/')
+
+    try:
+        call_command('invia_alert_scadenze')
+
+        messaggio = 'Email alert scadenze inviata correttamente.'
+
+    except Exception as e:
+
+        messaggio = f'Errore durante invio email: {e}'
+
+    return render(
+        request,
+        'scadenze/alert_email_inviato.html',
+        {
+            'messaggio': messaggio
+        }
+    )
+
+def invia_alert_email_cron(request, codice):
+
+    if codice != 'ABCD1234':
+        return redirect('/')
+
+    try:
+        call_command('invia_alert_scadenze')
+        messaggio = 'Alert email inviato correttamente.'
+    except Exception as e:
+        messaggio = f'Errore: {e}'
+
+    return render(
+        request,
+        'scadenze/alert_email_inviato.html',
+        {
+            'messaggio': messaggio
+        }
+    )    

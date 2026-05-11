@@ -120,18 +120,23 @@ Dashboard gestionale
     </div>
 
     <div class="card">
-        <div class="card-title">Totale parcelle</div>
+        <div class="card-title">Totale fatturato</div>
         <div class="number">€ {{ totale_parcelle }}</div>
     </div>
 
     <div class="card green">
-        <div class="card-title">Incassato</div>
+        <div class="card-title">Totale incassato</div>
         <div class="number">€ {{ totale_incassato }}</div>
     </div>
 
     <div class="card red">
         <div class="card-title">Da incassare</div>
         <div class="number">€ {{ totale_da_incassare }}</div>
+    </div>
+
+    <div class="card yellow">
+        <div class="card-title">Parcelle scadute</div>
+        <div class="number">{{ parcelle_scadute }}</div>
     </div>
 
 </div>
@@ -184,6 +189,58 @@ Dashboard gestionale
         {% empty %}
             <p>Nessuna scadenza presente.</p>
         {% endfor %}
+    </div>
+
+</div>
+
+<div class="grid-2">
+
+    <div class="section">
+        <h2>Ultime parcelle / fatture</h2>
+
+        {% for parcella in ultime_parcelle %}
+            <div class="item">
+                <strong>
+                    {% if parcella.numero_documento %}
+                        {{ parcella.numero_documento }}
+                    {% else %}
+                        Documento non numerato
+                    {% endif %}
+                </strong>
+                -
+                {{ parcella.descrizione }}
+                <br>
+                € {{ parcella.importo }}
+                -
+                {{ parcella.get_stato_display }}
+            </div>
+        {% empty %}
+            <p>Nessuna parcella presente.</p>
+        {% endfor %}
+    </div>
+
+    <div class="section">
+        <h2>Riepilogo economico</h2>
+
+        <div class="item">
+            <strong>Totale fatturato:</strong>
+            € {{ totale_parcelle }}
+        </div>
+
+        <div class="item">
+            <strong>Totale incassato:</strong>
+            € {{ totale_incassato }}
+        </div>
+
+        <div class="item">
+            <strong>Totale da incassare:</strong>
+            € {{ totale_da_incassare }}
+        </div>
+
+        <div class="item">
+            <strong>Parcelle scadute:</strong>
+            {{ parcelle_scadute }}
+        </div>
     </div>
 
 </div>

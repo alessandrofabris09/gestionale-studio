@@ -41,8 +41,31 @@ def nuova_parcella(request):
         form = ParcellaForm(request.POST)
 
         if form.is_valid():
-            form.save()
+
+            parcella = form.save(commit=False)
+
+            if not parcella.numero_documento:
+
+                anno = 2026
+
+                prefisso = 'PAR'
+
+                if parcella.tipo_documento == 'PREVENTIVO':
+                    prefisso = 'PRE'
+
+                elif parcella.tipo_documento == 'FATTURA':
+                    prefisso = 'FAT'
+
+                ultimo = Parcella.objects.filter(
+                    tipo_documento=parcella.tipo_documento
+                ).count() + 1
+
+                parcella.numero_documento = f'{prefisso}-{anno}-{ultimo}'
+
+            parcella.save()
+
             return redirect('lista_parcelle')
+
     else:
         form = ParcellaForm()
 
@@ -151,7 +174,10 @@ def pdf_parcella(request, parcella_id):
 
     y = section_title("DATI PARCELLA", y)
 
-    y = row("ID parcella", parcella.id, y)
+    y = row("Numero documento", parcella.numero_documento, y)
+    y = row("ID interno", parcella.id, y)
+    y = row("Numero documento", parcella.numero_documento, y)
+    y = row("Tipo documento", parcella.get_tipo_documento_display(), y)
     y = row("Descrizione", parcella.descrizione, y)
     y = row("Stato pagamento", parcella.get_stato_display(), y)
     y = row("Data emissione", parcella.data_emissione, y)
@@ -172,8 +198,12 @@ def pdf_parcella(request, parcella_id):
     y = section_title("IMPORTI", y)
 
     y = row("Importo totale", f"Euro {parcella.importo}", y)
+    y = row("IVA", f"{parcella.iva}%", y)
+    totale_con_iva = parcella.importo + (parcella.importo * parcella.iva / 100)
+    y = row("Totale con IVA", f"Euro {totale_con_iva}", y)
     y = row("Importo pagato", f"Euro {parcella.importo_pagato}", y)
-    y = row("Saldo residuo", f"Euro {parcella.saldo_residuo()}", y)
+    saldo_residuo = parcella.importo - parcella.importo_pagato
+    y = row("Saldo residuo", f"Euro {saldo_residuo}", y)
 
     y -= 10
     y = section_title("NOTE", y)

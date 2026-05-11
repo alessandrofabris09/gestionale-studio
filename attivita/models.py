@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from pratiche.models import Pratica
 
 
 TIPI_AZIONE = [
@@ -8,6 +9,8 @@ TIPI_AZIONE = [
     ('ELIMINAZIONE', 'Eliminazione'),
     ('UPLOAD', 'Upload documento'),
     ('PDF', 'Generazione PDF'),
+    ('SCADENZA', 'Scadenza'),
+    ('PARCELLA', 'Parcella'),
     ('ALTRO', 'Altro'),
 ]
 
@@ -18,6 +21,14 @@ class Attivita(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True
+    )
+
+    pratica = models.ForeignKey(
+        Pratica,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='attivita'
     )
 
     tipo = models.CharField(
