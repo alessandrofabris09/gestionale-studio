@@ -191,4 +191,4 @@ EMAIL_HOST_USER = 'alessandro.fabris09@gmail.com'
 EMAIL_HOST_PASSWORD = 'pcegpeapnnnritxw'
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-ALERT_EMAIL = 'alessandro.fabris09@gmail.com'
+ALERT_EMAIL = os.environ.get('ALERT_EMAIL')

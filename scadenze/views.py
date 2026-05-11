@@ -234,16 +234,18 @@ def invia_alert_email_cron(request, codice):
     if codice != 'ABCD1234':
         return redirect('/')
 
-    try:
-        messaggio = invia_email_scadenze_leggera()
+    if request.method in ['GET', 'HEAD']:
 
-    except Exception as e:
-        messaggio = f'Errore durante invio email: {e}'
+        try:
+            invia_email_scadenze_leggera()
+
+        except Exception as e:
+            print(f'Errore invio email cron: {e}')
 
     return render(
         request,
         'scadenze/alert_email_inviato.html',
         {
-            'messaggio': messaggio
+            'messaggio': 'Cron eseguito'
         }
     )
