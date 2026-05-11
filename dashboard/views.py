@@ -1,19 +1,12 @@
 import shutil
 
 from pathlib import Path
-
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.shortcuts import render
-from django.shortcuts import redirect
-from django.shortcuts import get_object_or_404
-
-from django.db.models import Q
-from django.db.models import Sum
-from django.db.models import Count
-
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q, Sum, Count
+from django.shortcuts import render, redirect
 from django.utils.timezone import now
 
 from clienti.models import Cliente
@@ -22,8 +15,6 @@ from pratiche.models import Pratica
 from scadenze.models import Scadenza
 from documenti.models import Documento
 from parcelle.models import Parcella
-
-from accounts.decorators import group_required
 
 
 @login_required
@@ -58,31 +49,33 @@ def home(request):
         'data_scadenza'
     )[:5]
 
-    pratiche_per_stato = Pratica.objects.values(
-        'stato'
-    ).annotate(
-        totale=Count('id')
-    ).order_by('stato')
+    pratiche_per_stato = list(
+        Pratica.objects.values('stato')
+        .annotate(totale=Count('id'))
+        .order_by('stato')
+    )
 
-    parcelle_per_stato = Parcella.objects.values(
-        'stato'
-    ).annotate(
-        totale=Count('id')
-    ).order_by('stato')
+    parcelle_per_stato = list(
+        Parcella.objects.values('stato')
+        .annotate(totale=Count('id'))
+        .order_by('stato')
+    )
 
-    max_pratiche_stato = 1
+    labels_pratiche = [
+        item['stato'] for item in pratiche_per_stato
+    ]
 
-    for item in pratiche_per_stato:
+    dati_pratiche = [
+        item['totale'] for item in pratiche_per_stato
+    ]
 
-        if item['totale'] > max_pratiche_stato:
-            max_pratiche_stato = item['totale']
+    labels_parcelle = [
+        item['stato'] for item in parcelle_per_stato
+    ]
 
-    max_parcelle_stato = 1
-
-    for item in parcelle_per_stato:
-
-        if item['totale'] > max_parcelle_stato:
-            max_parcelle_stato = item['totale']
+    dati_parcelle = [
+        item['totale'] for item in parcelle_per_stato
+    ]
 
     context = {
         'tot_clienti': Cliente.objects.count(),
@@ -101,11 +94,11 @@ def home(request):
         'ultime_pratiche': ultime_pratiche,
         'ultime_scadenze': ultime_scadenze,
 
-        'pratiche_per_stato': pratiche_per_stato,
-        'parcelle_per_stato': parcelle_per_stato,
+        'labels_pratiche': labels_pratiche,
+        'dati_pratiche': dati_pratiche,
 
-        'max_pratiche_stato': max_pratiche_stato,
-        'max_parcelle_stato': max_parcelle_stato,
+        'labels_parcelle': labels_parcelle,
+        'dati_parcelle': dati_parcelle,
     }
 
     return render(
@@ -193,7 +186,10 @@ def backup_manuale(request):
         '%Y-%m-%d_%H-%M-%S'
     )
 
-    backup_folder = backup_dir / f'backup_manuale_{timestamp}'
+    backup_folder = (
+        backup_dir /
+        f'backup_manuale_{timestamp}'
+    )
 
     backup_folder.mkdir(
         parents=True,
@@ -201,6 +197,7 @@ def backup_manuale(request):
     )
 
     if db_file.exists():
+
         shutil.copy2(
             db_file,
             backup_folder / 'db.sqlite3'

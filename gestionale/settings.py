@@ -1,5 +1,3 @@
-from dotenv import load_dotenv
-load_dotenv()
 import os
 import dj_database_url
 """
@@ -182,16 +180,14 @@ STORAGES = {
     },
 }
 
-INSTALLED_APPS += [
-    'anymail',
-]
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 465
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
 
-EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+EMAIL_HOST_USER = 'alessandro.fabris09@gmail.com'
+EMAIL_HOST_PASSWORD = 'pcegpeapnnnritxw'
 
-ANYMAIL = {
-    'RESEND_API_KEY': os.environ.get('re_74i7zDcn_4W8as7LW85s3R7N4iUAiGznV'),
-}
-
-DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'
-
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 ALERT_EMAIL = 'alessandro.fabris09@gmail.com'
