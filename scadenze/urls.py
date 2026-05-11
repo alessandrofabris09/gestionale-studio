@@ -26,3 +26,4 @@ urlpatterns = [
     invia_alert_email_cron,
     name='invia_alert_email_cron'
 ),
+]
