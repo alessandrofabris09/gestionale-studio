@@ -23,6 +23,8 @@ urlpatterns = [
 
     path('', include('accounts.urls')),
 
+    path('backups/', include('backups.urls')),
+
 ]
 
 if settings.DEBUG:

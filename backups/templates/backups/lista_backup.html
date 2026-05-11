@@ -1,0 +1,53 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Backup
+{% endblock %}
+
+{% block page_title %}
+Backup database
+{% endblock %}
+
+{% block content %}
+
+<div style="background:white; padding:30px; border-radius:18px; box-shadow:0 8px 22px rgba(0,0,0,0.08);">
+
+    <a href="{% url 'crea_backup' %}" style="display:inline-block; background:#111827; color:white; padding:12px 18px; border-radius:8px; text-decoration:none; margin-bottom:20px;">
+        Crea backup adesso
+    </a>
+
+    <table style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr>
+                <th style="padding:14px; border-bottom:1px solid #e5e7eb; text-align:left;">File backup</th>
+                <th style="padding:14px; border-bottom:1px solid #e5e7eb; text-align:left;">Dimensione KB</th>
+                <th style="padding:14px; border-bottom:1px solid #e5e7eb; text-align:left;">Data creazione</th>
+                <th style="padding:14px; border-bottom:1px solid #e5e7eb; text-align:left;">Download</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for backup in backups %}
+                <tr>
+                    <td style="padding:14px; border-bottom:1px solid #e5e7eb;">{{ backup.name }}</td>
+                    <td style="padding:14px; border-bottom:1px solid #e5e7eb;">{{ backup.size }}</td>
+                    <td style="padding:14px; border-bottom:1px solid #e5e7eb;">{{ backup.modified }}</td>
+                    <td style="padding:14px; border-bottom:1px solid #e5e7eb;">
+                        <a href="{% url 'scarica_backup' backup.name %}">
+                            Scarica
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" style="padding:14px;">
+                        Nessun backup presente.
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+
+{% endblock %}

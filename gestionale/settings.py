@@ -136,7 +136,7 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+DEBUG = True
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
@@ -163,6 +163,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 INSTALLED_APPS += [
     'cloudinary',
     'cloudinary_storage',
+    'backups',
 ]
 
 CLOUDINARY_STORAGE = {
