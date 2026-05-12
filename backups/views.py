@@ -1,9 +1,11 @@
+import os
+import resend
+
 from datetime import datetime, timedelta
 from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
 from django.core.management import call_command
 from django.http import FileResponse, Http404
 from django.shortcuts import render, redirect
@@ -55,13 +57,10 @@ def crea_backup(request):
     backup_dir.mkdir(exist_ok=True)
 
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-
     filename = f'backup_database_{timestamp}.json'
-
     filepath = backup_dir / filename
 
     with open(filepath, 'w', encoding='utf-8') as file:
-
         call_command(
             'dumpdata',
             exclude=[
@@ -96,19 +95,43 @@ def invia_email_backup(filename):
 
     try:
 
-        send_mail(
-            subject='Backup database completato',
-            message=(
-                f'Il backup del database è stato creato correttamente.\n\n'
-                f'File: {filename}'
-            ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[settings.ALERT_EMAIL],
-            fail_silently=True,
-        )
+        resend.api_key = os.environ.get('RESEND_API_KEY')
 
-    except Exception:
-        pass
+        if not resend.api_key:
+            print("ERRORE: RESEND_API_KEY non configurata")
+            return
+
+        messaggio_html = f"""
+        <div style="font-family:Arial, sans-serif; color:#111827;">
+            <h2>Backup database completato</h2>
+
+            <p>
+                Il backup del database del Gestionale Studio Tecnico
+                è stato creato correttamente.
+            </p>
+
+            <table style="border-collapse:collapse;margin-top:20px;">
+                <tr>
+                    <td style="padding:8px;font-weight:bold;">File backup</td>
+                    <td style="padding:8px;">{filename}</td>
+                </tr>
+            </table>
+
+            <p style="margin-top:25px;color:#6b7280;font-size:13px;">
+                Email generata automaticamente dal Gestionale Studio Tecnico.
+            </p>
+        </div>
+        """
+
+        resend.Emails.send({
+            "from": "Gestionale Studio <onboarding@resend.dev>",
+            "to": [settings.ALERT_EMAIL],
+            "subject": "Backup database completato",
+            "html": messaggio_html,
+        })
+
+    except Exception as e:
+        print(f"ERRORE INVIO EMAIL BACKUP: {e}")
 
 
 @login_required
@@ -118,7 +141,6 @@ def scarica_backup(request, filename):
         return redirect('/')
 
     backup_dir = Path(settings.BASE_DIR) / 'backups_files'
-
     filepath = backup_dir / filename
 
     if not filepath.exists():
