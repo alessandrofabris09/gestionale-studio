@@ -1,0 +1,56 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Elimina evento
+{% endblock %}
+
+{% block page_title %}
+Elimina evento agenda
+{% endblock %}
+
+{% block content %}
+
+<div style="
+    background:white;
+    padding:30px;
+    border-radius:18px;
+    box-shadow:0 8px 22px rgba(0,0,0,0.08);
+    max-width:700px;
+">
+
+    <h2>
+        Confermi l'eliminazione?
+    </h2>
+
+    <p>
+        Stai per eliminare l'evento:
+        <strong>{{ evento.titolo }}</strong>
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <button type="submit" style="
+            background:#991b1b;
+            color:white;
+            border:0;
+            padding:12px 18px;
+            border-radius:8px;
+            cursor:pointer;
+        ">
+            Elimina evento
+        </button>
+
+        <a href="/agenda/" style="
+            display:inline-block;
+            margin-left:10px;
+            color:#111827;
+            text-decoration:none;
+        ">
+            Annulla
+        </a>
+    </form>
+
+</div>
+
+{% endblock %}

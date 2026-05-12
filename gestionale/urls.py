@@ -25,6 +25,8 @@ urlpatterns = [
 
     path('backups/', include('backups.urls')),
 
+    path('agenda/', include('agenda.urls')),
+
 ]
 
 if settings.DEBUG:

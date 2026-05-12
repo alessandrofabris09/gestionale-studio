@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'parcelle',
     'accounts',
     'attivita',
+    'agenda',
 ]
 
 MIDDLEWARE = [

@@ -82,6 +82,16 @@ Dashboard gestionale
         height:320px;
     }
 
+    .btn{
+        display:inline-block;
+        background:#111827;
+        color:white;
+        padding:10px 14px;
+        border-radius:8px;
+        text-decoration:none;
+        margin-top:15px;
+    }
+
     @media(max-width:1200px){
         .cards{grid-template-columns:repeat(2,1fr);}
         .grid-2{grid-template-columns:1fr;}
@@ -109,14 +119,19 @@ Dashboard gestionale
         <div class="number">{{ pratiche_aperte }}</div>
     </div>
 
+    <div class="card purple">
+        <div class="card-title">Pratiche concluse</div>
+        <div class="number">{{ pratiche_chiuse }}</div>
+    </div>
+
     <div class="card red">
         <div class="card-title">Scadenze imminenti</div>
         <div class="number">{{ scadenze_imminenti }}</div>
     </div>
 
-    <div class="card purple">
-        <div class="card-title">Pratiche concluse</div>
-        <div class="number">{{ pratiche_chiuse }}</div>
+    <div class="card yellow">
+        <div class="card-title">Parcelle scadute</div>
+        <div class="number">{{ parcelle_scadute }}</div>
     </div>
 
     <div class="card">
@@ -134,27 +149,52 @@ Dashboard gestionale
         <div class="number">€ {{ totale_da_incassare }}</div>
     </div>
 
-    <div class="card yellow">
-        <div class="card-title">Parcelle scadute</div>
-        <div class="number">{{ parcelle_scadute }}</div>
-    </div>
-
 </div>
 
 <div class="grid-2">
 
     <div class="section">
-        <h2>Stato pratiche</h2>
-        <div class="chart-box">
-            <canvas id="graficoPratiche"></canvas>
-        </div>
+        <h2>Agenda di oggi</h2>
+
+        {% for evento in eventi_oggi %}
+            <div class="item">
+                <strong>
+                    {% if evento.ora_inizio %}
+                        {{ evento.ora_inizio }} -
+                    {% endif %}
+                    {{ evento.titolo }}
+                </strong>
+                <br>
+                {{ evento.get_tipo_display }}
+                -
+                Priorità {{ evento.get_priorita_display }}
+
+                {% if evento.cliente %}
+                    <br>
+                    {{ evento.cliente }}
+                {% endif %}
+            </div>
+        {% empty %}
+            <p>Nessun evento previsto per oggi.</p>
+        {% endfor %}
+
+        <a class="btn" href="/agenda/oggi/">
+            Apri agenda di oggi
+        </a>
     </div>
 
     <div class="section">
-        <h2>Stato parcelle</h2>
-        <div class="chart-box">
-            <canvas id="graficoParcelle"></canvas>
-        </div>
+        <h2>Prossime scadenze</h2>
+
+        {% for scadenza in ultime_scadenze %}
+            <div class="item">
+                <strong>{{ scadenza.titolo }}</strong>
+                <br>
+                {{ scadenza.data_scadenza }}
+            </div>
+        {% empty %}
+            <p>Nessuna scadenza presente.</p>
+        {% endfor %}
     </div>
 
 </div>
@@ -176,24 +216,6 @@ Dashboard gestionale
             <p>Nessuna pratica presente.</p>
         {% endfor %}
     </div>
-
-    <div class="section">
-        <h2>Prossime scadenze</h2>
-
-        {% for scadenza in ultime_scadenze %}
-            <div class="item">
-                <strong>{{ scadenza.titolo }}</strong>
-                <br>
-                {{ scadenza.data_scadenza }}
-            </div>
-        {% empty %}
-            <p>Nessuna scadenza presente.</p>
-        {% endfor %}
-    </div>
-
-</div>
-
-<div class="grid-2">
 
     <div class="section">
         <h2>Ultime parcelle / fatture</h2>
@@ -219,6 +241,10 @@ Dashboard gestionale
         {% endfor %}
     </div>
 
+</div>
+
+<div class="grid-2">
+
     <div class="section">
         <h2>Riepilogo economico</h2>
 
@@ -240,6 +266,48 @@ Dashboard gestionale
         <div class="item">
             <strong>Parcelle scadute:</strong>
             {{ parcelle_scadute }}
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Stato pratiche</h2>
+        <div class="chart-box">
+            <canvas id="graficoPratiche"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<div class="grid-2">
+
+    <div class="section">
+        <h2>Stato parcelle</h2>
+        <div class="chart-box">
+            <canvas id="graficoParcelle"></canvas>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Collegamenti rapidi</h2>
+
+        <div class="item">
+            <a href="/agenda/">Agenda operativa</a>
+        </div>
+
+        <div class="item">
+            <a href="/pratiche/">Pratiche</a>
+        </div>
+
+        <div class="item">
+            <a href="/scadenze/">Scadenze</a>
+        </div>
+
+        <div class="item">
+            <a href="/parcelle/">Parcelle / Fatture</a>
+        </div>
+
+        <div class="item">
+            <a href="/backups/">Backup database</a>
         </div>
     </div>
 

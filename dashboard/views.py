@@ -15,6 +15,7 @@ from pratiche.models import Pratica
 from scadenze.models import Scadenza
 from documenti.models import Documento
 from parcelle.models import Parcella
+from agenda.models import EventoAgenda
 
 
 @login_required
@@ -54,6 +55,12 @@ def home(request):
 
     ultime_scadenze = Scadenza.objects.all().order_by(
         'data_scadenza'
+    )[:5]
+
+    eventi_oggi = EventoAgenda.objects.filter(
+    data=now().date()
+    ).order_by(
+        'ora_inizio'
     )[:5]
 
     pratiche_per_stato = list(
@@ -108,6 +115,8 @@ def home(request):
 
         'labels_parcelle': labels_parcelle,
         'dati_parcelle': dati_parcelle,
+
+        'eventi_oggi': eventi_oggi,
     }
 
     return render(
