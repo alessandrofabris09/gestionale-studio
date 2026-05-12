@@ -269,8 +269,11 @@ def invia_agenda_email_cron(request, codice):
     )
 
 
-def calendario_ics(request):
+def calendario_ics(request, codice):
 
+    if codice != 'AGENDAICS1234':
+        return redirect('/')
+        
     calendario = Calendar()
 
     calendario.add('prodid', '-//Gestionale Studio Tecnico//Agenda Operativa//IT')

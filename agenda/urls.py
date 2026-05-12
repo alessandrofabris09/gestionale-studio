@@ -44,7 +44,7 @@ urlpatterns = [
     ),
 
     path(
-        'calendario.ics',
+        'calendario/<str:codice>/.ics',
         calendario_ics,
         name='calendario_ics'
     ),
