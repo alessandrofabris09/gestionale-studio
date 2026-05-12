@@ -5,6 +5,7 @@ from .views import (
     carica_documento,
     carica_documenti_multipli,
     elimina_documento,
+    verifica_documenti_cloud,
 )
 
 urlpatterns = [
@@ -31,6 +32,12 @@ urlpatterns = [
         '<int:documento_id>/elimina/',
         elimina_documento,
         name='elimina_documento'
+    ),
+
+    path(
+        'verifica-cloud/',
+        verifica_documenti_cloud,
+        name='verifica_documenti_cloud'
     ),
 
 ]

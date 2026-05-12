@@ -1,3 +1,5 @@
+import requests
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
@@ -180,4 +182,52 @@ def elimina_documento(request, documento_id):
         request,
         'documenti/elimina_documento.html',
         {'documento': documento}
+    )
+
+
+@login_required
+def verifica_documenti_cloud(request):
+
+    risultati = []
+
+    documenti = Documento.objects.all().order_by('id')
+
+    for documento in documenti:
+
+        stato = 'OK'
+        file_url = ''
+
+        try:
+
+            file_url = documento.file.url
+
+            response = requests.get(
+                file_url,
+                timeout=10,
+                stream=True
+            )
+
+            if response.status_code not in [200, 301, 302]:
+                stato = f'FILE NON RAGGIUNGIBILE ({response.status_code})'
+
+        except Exception:
+
+            stato = 'ERRORE FILE'
+
+        risultati.append({
+            'id': documento.id,
+            'titolo': documento.titolo,
+            'pratica': documento.pratica,
+            'url': file_url,
+            'stato': stato,
+        })
+
+    context = {
+        'risultati': risultati
+    }
+
+    return render(
+        request,
+        'documenti/verifica_cloud.html',
+        context
     )

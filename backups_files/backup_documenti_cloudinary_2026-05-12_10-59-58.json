@@ -1,0 +1,38 @@
+[
+    {
+        "id": 6,
+        "titolo": "asdfsaf",
+        "tipo_documento": "ALTRO",
+        "pratica": "CILA - Manutenzione straordinaria",
+        "file_name": "documenti_pratiche/scheda_pratica_2_KLlx77c.pdf",
+        "file_url": "https://res.cloudinary.com/dzkfffn5o/image/upload/v1/media/documenti_pratiche/scheda_pratica_2_KLlx77c.pdf",
+        "note": ""
+    },
+    {
+        "id": 11,
+        "titolo": "scheda_pratica_2.pdf",
+        "tipo_documento": "TAVOLA",
+        "pratica": "SCIA - manutenzione straordinaria",
+        "file_name": "media/documenti_pratiche/scheda_pratica_2_ouij2j",
+        "file_url": "https://res.cloudinary.com/dzkfffn5o/image/upload/v1/media/documenti_pratiche/scheda_pratica_2_ouij2j",
+        "note": ""
+    },
+    {
+        "id": 12,
+        "titolo": "Ricevuta del bonifico periodico_CAI_20260504095644.pdf",
+        "tipo_documento": "TAVOLA",
+        "pratica": "SCIA - manutenzione straordinaria",
+        "file_name": "media/documenti_pratiche/Ricevuta_del_bonifico_periodico_CAI_20260504095644_s7ajxv",
+        "file_url": "https://res.cloudinary.com/dzkfffn5o/image/upload/v1/media/documenti_pratiche/Ricevuta_del_bonifico_periodico_CAI_20260504095644_s7ajxv",
+        "note": ""
+    },
+    {
+        "id": 13,
+        "titolo": "Ricevuta",
+        "tipo_documento": "ALTRO",
+        "pratica": "SCIA - manutenzione straordinaria",
+        "file_name": "media/documenti_pratiche/parcella_3_1_huka6q",
+        "file_url": "https://res.cloudinary.com/dzkfffn5o/image/upload/v1/media/documenti_pratiche/parcella_3_1_huka6q",
+        "note": ""
+    }
+]

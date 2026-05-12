@@ -1,6 +1,7 @@
 import os
 import resend
 
+from documenti.models import Documento
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -21,10 +22,11 @@ def esegui_backup_database():
     backup_dir.mkdir(exist_ok=True)
 
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    filename = f'backup_database_{timestamp}.json'
-    filepath = backup_dir / filename
 
-    with open(filepath, 'w', encoding='utf-8') as file:
+    filename_db = f'backup_database_{timestamp}.json'
+    filepath_db = backup_dir / filename_db
+
+    with open(filepath_db, 'w', encoding='utf-8') as file:
         call_command(
             'dumpdata',
             exclude=[
@@ -34,11 +36,45 @@ def esegui_backup_database():
             stdout=file
         )
 
+    filename_documenti = f'backup_documenti_cloudinary_{timestamp}.json'
+    filepath_documenti = backup_dir / filename_documenti
+
+    documenti_backup = []
+
+    for documento in Documento.objects.all().order_by('id'):
+
+        try:
+            file_url = documento.file.url
+        except Exception:
+            file_url = ''
+
+        documenti_backup.append({
+            'id': documento.id,
+            'titolo': documento.titolo,
+            'tipo_documento': documento.tipo_documento,
+            'pratica': str(documento.pratica) if documento.pratica else '',
+            'file_name': documento.file.name if documento.file else '',
+            'file_url': file_url,
+            'note': documento.note,
+        })
+
+    import json
+
+    with open(filepath_documenti, 'w', encoding='utf-8') as file:
+        json.dump(
+            documenti_backup,
+            file,
+            ensure_ascii=False,
+            indent=4
+        )
+
     pulisci_backup_vecchi(backup_dir)
-    invia_email_backup(filename)
 
-    return filename
+    invia_email_backup(
+        f'{filename_db} + {filename_documenti}'
+    )
 
+    return filename_db
 
 @login_required
 def lista_backup(request):
