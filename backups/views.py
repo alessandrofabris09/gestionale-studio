@@ -12,6 +12,32 @@ from django.shortcuts import render, redirect
 
 
 MAX_BACKUP_DAYS = 30
+CODICE_CRON_BACKUP = 'ABCD1234'
+
+
+def esegui_backup_database():
+
+    backup_dir = Path(settings.BASE_DIR) / 'backups_files'
+    backup_dir.mkdir(exist_ok=True)
+
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    filename = f'backup_database_{timestamp}.json'
+    filepath = backup_dir / filename
+
+    with open(filepath, 'w', encoding='utf-8') as file:
+        call_command(
+            'dumpdata',
+            exclude=[
+                'auth.permission',
+                'contenttypes',
+            ],
+            stdout=file
+        )
+
+    pulisci_backup_vecchi(backup_dir)
+    invia_email_backup(filename)
+
+    return filename
 
 
 @login_required
@@ -53,26 +79,7 @@ def crea_backup(request):
     if not request.user.is_superuser:
         return redirect('/')
 
-    backup_dir = Path(settings.BASE_DIR) / 'backups_files'
-    backup_dir.mkdir(exist_ok=True)
-
-    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    filename = f'backup_database_{timestamp}.json'
-    filepath = backup_dir / filename
-
-    with open(filepath, 'w', encoding='utf-8') as file:
-        call_command(
-            'dumpdata',
-            exclude=[
-                'auth.permission',
-                'contenttypes',
-            ],
-            stdout=file
-        )
-
-    pulisci_backup_vecchi(backup_dir)
-
-    invia_email_backup(filename)
+    esegui_backup_database()
 
     return redirect('lista_backup')
 
@@ -94,7 +101,6 @@ def pulisci_backup_vecchi(backup_dir):
 def invia_email_backup(filename):
 
     try:
-
         resend.api_key = os.environ.get('RESEND_API_KEY')
 
         if not resend.api_key:
@@ -114,6 +120,10 @@ def invia_email_backup(filename):
                 <tr>
                     <td style="padding:8px;font-weight:bold;">File backup</td>
                     <td style="padding:8px;">{filename}</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px;font-weight:bold;">Data</td>
+                    <td style="padding:8px;">{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}</td>
                 </tr>
             </table>
 
@@ -150,4 +160,20 @@ def scarica_backup(request, filename):
         open(filepath, 'rb'),
         as_attachment=True,
         filename=filename
+    )
+
+
+def crea_backup_cron(request, codice):
+
+    if codice != CODICE_CRON_BACKUP:
+        return redirect('/')
+
+    filename = esegui_backup_database()
+
+    return render(
+        request,
+        'backups/backup_ok.html',
+        {
+            'backup_folder': filename
+        }
     )
