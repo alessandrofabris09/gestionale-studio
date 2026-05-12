@@ -8,7 +8,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.management import call_command
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import render, redirect
 
 
@@ -202,14 +202,25 @@ def scarica_backup(request, filename):
 def crea_backup_cron(request, codice):
 
     if codice != CODICE_CRON_BACKUP:
-        return redirect('/')
+        return HttpResponse(
+            'Codice non valido',
+            status=403,
+            content_type='text/plain'
+        )
 
-    filename = esegui_backup_database()
+    try:
+        filename = esegui_backup_database()
+        messaggio = f'Backup creato correttamente: {filename}'
 
-    return render(
-        request,
-        'backups/backup_ok.html',
-        {
-            'backup_folder': filename
-        }
+    except Exception as e:
+        messaggio = f'Errore backup: {e}'
+        return HttpResponse(
+            messaggio,
+            status=500,
+            content_type='text/plain'
+        )
+
+    return HttpResponse(
+        messaggio,
+        content_type='text/plain'
     )
