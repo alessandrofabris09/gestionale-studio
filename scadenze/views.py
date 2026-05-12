@@ -214,11 +214,10 @@ def invia_alert_email_manuale(request):
     if not request.user.is_superuser:
         return redirect('/')
 
-    try:
-        messaggio = invia_email_scadenze_leggera()
-
-    except Exception as e:
-        messaggio = f'Errore durante invio email: {e}'
+    messaggio = (
+        'Invio SMTP disattivato sul sito Render per evitare blocchi del server. '
+        'Usare il comando locale python manage.py invia_alert_scadenze oppure passare a Resend API.'
+    )
 
     return render(
         request,
@@ -227,7 +226,6 @@ def invia_alert_email_manuale(request):
             'messaggio': messaggio
         }
     )
-
 
 def invia_alert_email_cron(request, codice):
 
