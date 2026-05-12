@@ -13,19 +13,25 @@ Dashboard gestionale
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+    .dashboard-wrapper{
+        display:flex;
+        flex-direction:column;
+        gap:24px;
+    }
+
     .cards{
         display:grid;
-        grid-template-columns:repeat(4,1fr);
-        gap:20px;
-        margin-bottom:30px;
+        grid-template-columns:repeat(5,1fr);
+        gap:18px;
     }
 
     .card{
         background:white;
-        padding:25px;
+        padding:22px;
         border-radius:18px;
         box-shadow:0 8px 22px rgba(0,0,0,0.08);
         border-left:6px solid #2563eb;
+        min-height:95px;
     }
 
     .card.green{border-left-color:#16a34a;}
@@ -35,37 +41,47 @@ Dashboard gestionale
 
     .card-title{
         color:#6b7280;
-        font-size:14px;
+        font-size:15px;
+        font-weight:600;
         margin-bottom:10px;
     }
 
     .number{
-        font-size:32px;
-        font-weight:bold;
+        font-size:30px;
+        font-weight:800;
         color:#111827;
     }
 
     .grid-2{
         display:grid;
         grid-template-columns:1fr 1fr;
-        gap:25px;
-        margin-bottom:30px;
+        gap:24px;
+    }
+
+    .grid-main{
+        display:grid;
+        grid-template-columns:1.15fr .85fr;
+        gap:24px;
     }
 
     .section{
         background:white;
-        padding:30px;
+        padding:28px;
         border-radius:18px;
         box-shadow:0 8px 22px rgba(0,0,0,0.08);
     }
 
     .section h2{
-        margin-bottom:20px;
+        margin:0 0 18px 0;
+        font-size:22px;
+        color:#111827;
     }
 
     .item{
         padding:14px 0;
         border-bottom:1px solid #e5e7eb;
+        font-size:15px;
+        line-height:1.45;
     }
 
     .item:last-child{
@@ -75,240 +91,349 @@ Dashboard gestionale
     .item a{
         text-decoration:none;
         color:#111827;
-        font-weight:bold;
+        font-weight:700;
     }
 
-    .chart-box{
-        height:320px;
+    .muted{
+        color:#6b7280;
+        font-size:14px;
+    }
+
+    .badge{
+        display:inline-block;
+        padding:4px 9px;
+        border-radius:999px;
+        font-size:12px;
+        font-weight:700;
+        background:#eef2ff;
+        color:#3730a3;
+        margin-top:6px;
+    }
+
+    .badge-red{
+        background:#fee2e2;
+        color:#991b1b;
+    }
+
+    .badge-yellow{
+        background:#fef3c7;
+        color:#92400e;
+    }
+
+    .badge-green{
+        background:#dcfce7;
+        color:#166534;
     }
 
     .btn{
         display:inline-block;
         background:#111827;
         color:white;
-        padding:10px 14px;
-        border-radius:8px;
+        padding:11px 15px;
+        border-radius:9px;
         text-decoration:none;
-        margin-top:15px;
+        margin-top:18px;
+        font-weight:700;
+        font-size:14px;
     }
 
-    @media(max-width:1200px){
-        .cards{grid-template-columns:repeat(2,1fr);}
-        .grid-2{grid-template-columns:1fr;}
+    .quick-links{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:12px;
+    }
+
+    .quick-links a{
+        display:block;
+        background:#f3f4f6;
+        border-radius:12px;
+        padding:14px;
+        text-decoration:none;
+        color:#111827;
+        font-weight:700;
+        transition:.2s;
+    }
+
+    .quick-links a:hover{
+        background:#111827;
+        color:white;
+    }
+
+    .chart-box{
+        height:290px;
+    }
+
+    @media(max-width:1400px){
+        .cards{
+            grid-template-columns:repeat(3,1fr);
+        }
+    }
+
+    @media(max-width:1000px){
+        .cards{
+            grid-template-columns:repeat(2,1fr);
+        }
+
+        .grid-2,
+        .grid-main{
+            grid-template-columns:1fr;
+        }
     }
 
     @media(max-width:700px){
-        .cards{grid-template-columns:1fr;}
+        .cards{
+            grid-template-columns:1fr;
+        }
+
+        .quick-links{
+            grid-template-columns:1fr;
+        }
     }
 </style>
 
-<div class="cards">
+<div class="dashboard-wrapper">
 
-    <div class="card">
-        <div class="card-title">Clienti</div>
-        <div class="number">{{ tot_clienti }}</div>
+    <div class="cards">
+
+        <div class="card">
+            <div class="card-title">Clienti</div>
+            <div class="number">{{ tot_clienti }}</div>
+        </div>
+
+        <div class="card green">
+            <div class="card-title">Immobili</div>
+            <div class="number">{{ tot_immobili }}</div>
+        </div>
+
+        <div class="card yellow">
+            <div class="card-title">Pratiche aperte</div>
+            <div class="number">{{ pratiche_aperte }}</div>
+        </div>
+
+        <div class="card purple">
+            <div class="card-title">Pratiche concluse</div>
+            <div class="number">{{ pratiche_chiuse }}</div>
+        </div>
+
+        <div class="card red">
+            <div class="card-title">Scadenze imminenti</div>
+            <div class="number">{{ scadenze_imminenti }}</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Totale fatturato</div>
+            <div class="number">€ {{ totale_parcelle }}</div>
+        </div>
+
+        <div class="card green">
+            <div class="card-title">Totale incassato</div>
+            <div class="number">€ {{ totale_incassato }}</div>
+        </div>
+
+        <div class="card red">
+            <div class="card-title">Da incassare</div>
+            <div class="number">€ {{ totale_da_incassare }}</div>
+        </div>
+
+        <div class="card yellow">
+            <div class="card-title">Parcelle scadute</div>
+            <div class="number">{{ parcelle_scadute }}</div>
+        </div>
+
     </div>
 
-    <div class="card green">
-        <div class="card-title">Immobili</div>
-        <div class="number">{{ tot_immobili }}</div>
-    </div>
+    <div class="grid-main">
 
-    <div class="card yellow">
-        <div class="card-title">Pratiche aperte</div>
-        <div class="number">{{ pratiche_aperte }}</div>
-    </div>
+        <div class="section">
+            <h2>Agenda di oggi</h2>
 
-    <div class="card purple">
-        <div class="card-title">Pratiche concluse</div>
-        <div class="number">{{ pratiche_chiuse }}</div>
-    </div>
+            {% for evento in eventi_oggi %}
+                <div class="item">
+                    <strong>
+                        {% if evento.ora_inizio %}
+                            {{ evento.ora_inizio }} -
+                        {% endif %}
+                        {{ evento.titolo }}
+                    </strong>
 
-    <div class="card red">
-        <div class="card-title">Scadenze imminenti</div>
-        <div class="number">{{ scadenze_imminenti }}</div>
-    </div>
-
-    <div class="card yellow">
-        <div class="card-title">Parcelle scadute</div>
-        <div class="number">{{ parcelle_scadute }}</div>
-    </div>
-
-    <div class="card">
-        <div class="card-title">Totale fatturato</div>
-        <div class="number">€ {{ totale_parcelle }}</div>
-    </div>
-
-    <div class="card green">
-        <div class="card-title">Totale incassato</div>
-        <div class="number">€ {{ totale_incassato }}</div>
-    </div>
-
-    <div class="card red">
-        <div class="card-title">Da incassare</div>
-        <div class="number">€ {{ totale_da_incassare }}</div>
-    </div>
-
-</div>
-
-<div class="grid-2">
-
-    <div class="section">
-        <h2>Agenda di oggi</h2>
-
-        {% for evento in eventi_oggi %}
-            <div class="item">
-                <strong>
-                    {% if evento.ora_inizio %}
-                        {{ evento.ora_inizio }} -
-                    {% endif %}
-                    {{ evento.titolo }}
-                </strong>
-                <br>
-                {{ evento.get_tipo_display }}
-                -
-                Priorità {{ evento.get_priorita_display }}
-
-                {% if evento.cliente %}
                     <br>
-                    {{ evento.cliente }}
-                {% endif %}
-            </div>
-        {% empty %}
-            <p>Nessun evento previsto per oggi.</p>
-        {% endfor %}
 
-        <a class="btn" href="/agenda/oggi/">
-            Apri agenda di oggi
-        </a>
-    </div>
+                    <span class="muted">
+                        {{ evento.get_tipo_display }}
+                        -
+                        Priorità {{ evento.get_priorita_display }}
+                    </span>
 
-    <div class="section">
-        <h2>Prossime scadenze</h2>
-
-        {% for scadenza in ultime_scadenze %}
-            <div class="item">
-                <strong>{{ scadenza.titolo }}</strong>
-                <br>
-                {{ scadenza.data_scadenza }}
-            </div>
-        {% empty %}
-            <p>Nessuna scadenza presente.</p>
-        {% endfor %}
-    </div>
-
-</div>
-
-<div class="grid-2">
-
-    <div class="section">
-        <h2>Ultime pratiche</h2>
-
-        {% for pratica in ultime_pratiche %}
-            <div class="item">
-                <a href="/pratiche/{{ pratica.id }}/">
-                    {{ pratica.oggetto }}
-                </a>
-                <br>
-                {{ pratica.cliente }}
-            </div>
-        {% empty %}
-            <p>Nessuna pratica presente.</p>
-        {% endfor %}
-    </div>
-
-    <div class="section">
-        <h2>Ultime parcelle / fatture</h2>
-
-        {% for parcella in ultime_parcelle %}
-            <div class="item">
-                <strong>
-                    {% if parcella.numero_documento %}
-                        {{ parcella.numero_documento }}
-                    {% else %}
-                        Documento non numerato
+                    {% if evento.cliente %}
+                        <br>
+                        <span class="muted">
+                            Cliente: {{ evento.cliente }}
+                        </span>
                     {% endif %}
-                </strong>
-                -
-                {{ parcella.descrizione }}
-                <br>
-                € {{ parcella.importo }}
-                -
-                {{ parcella.get_stato_display }}
+
+                    {% if evento.pratica %}
+                        <br>
+                        <span class="muted">
+                            Pratica: {{ evento.pratica }}
+                        </span>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <p class="muted">
+                    Nessun evento previsto per oggi.
+                </p>
+            {% endfor %}
+
+            <a class="btn" href="/agenda/oggi/">
+                Apri agenda di oggi
+            </a>
+        </div>
+
+        <div class="section">
+            <h2>Prossime scadenze</h2>
+
+            {% for scadenza in ultime_scadenze %}
+                <div class="item">
+                    <strong>{{ scadenza.titolo }}</strong>
+                    <br>
+                    <span class="muted">
+                        {{ scadenza.data_scadenza }}
+                    </span>
+                </div>
+            {% empty %}
+                <p class="muted">
+                    Nessuna scadenza presente.
+                </p>
+            {% endfor %}
+
+            <a class="btn" href="/scadenze/">
+                Apri scadenze
+            </a>
+        </div>
+
+    </div>
+
+    <div class="grid-2">
+
+        <div class="section">
+            <h2>Ultime pratiche</h2>
+
+            {% for pratica in ultime_pratiche %}
+                <div class="item">
+                    <a href="/pratiche/{{ pratica.id }}/">
+                        {{ pratica.oggetto }}
+                    </a>
+                    <br>
+                    <span class="muted">
+                        {{ pratica.cliente }}
+                    </span>
+                </div>
+            {% empty %}
+                <p class="muted">
+                    Nessuna pratica presente.
+                </p>
+            {% endfor %}
+
+            <a class="btn" href="/pratiche/">
+                Apri pratiche
+            </a>
+        </div>
+
+        <div class="section">
+            <h2>Ultime parcelle / fatture</h2>
+
+            {% for parcella in ultime_parcelle %}
+                <div class="item">
+                    <strong>
+                        {% if parcella.numero_documento %}
+                            {{ parcella.numero_documento }}
+                        {% else %}
+                            Documento non numerato
+                        {% endif %}
+                    </strong>
+
+                    <br>
+
+                    <span class="muted">
+                        {{ parcella.descrizione }}
+                    </span>
+
+                    <br>
+
+                    € {{ parcella.importo }}
+                    -
+                    {{ parcella.get_stato_display }}
+                </div>
+            {% empty %}
+                <p class="muted">
+                    Nessuna parcella presente.
+                </p>
+            {% endfor %}
+
+            <a class="btn" href="/parcelle/">
+                Apri parcelle
+            </a>
+        </div>
+
+    </div>
+
+    <div class="grid-2">
+
+        <div class="section">
+            <h2>Riepilogo economico</h2>
+
+            <div class="item">
+                <strong>Totale fatturato:</strong>
+                € {{ totale_parcelle }}
             </div>
-        {% empty %}
-            <p>Nessuna parcella presente.</p>
-        {% endfor %}
+
+            <div class="item">
+                <strong>Totale incassato:</strong>
+                € {{ totale_incassato }}
+            </div>
+
+            <div class="item">
+                <strong>Totale da incassare:</strong>
+                € {{ totale_da_incassare }}
+            </div>
+
+            <div class="item">
+                <strong>Parcelle scadute:</strong>
+                {{ parcelle_scadute }}
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Collegamenti rapidi</h2>
+
+            <div class="quick-links">
+                <a href="/agenda/">Agenda operativa</a>
+                <a href="/pratiche/">Pratiche</a>
+                <a href="/scadenze/">Scadenze</a>
+                <a href="/parcelle/">Parcelle / Fatture</a>
+                <a href="/documenti/">Documenti</a>
+                <a href="/backups/">Backup database</a>
+            </div>
+        </div>
+
     </div>
 
-</div>
+    <div class="grid-2">
 
-<div class="grid-2">
-
-    <div class="section">
-        <h2>Riepilogo economico</h2>
-
-        <div class="item">
-            <strong>Totale fatturato:</strong>
-            € {{ totale_parcelle }}
+        <div class="section">
+            <h2>Stato pratiche</h2>
+            <div class="chart-box">
+                <canvas id="graficoPratiche"></canvas>
+            </div>
         </div>
 
-        <div class="item">
-            <strong>Totale incassato:</strong>
-            € {{ totale_incassato }}
+        <div class="section">
+            <h2>Stato parcelle</h2>
+            <div class="chart-box">
+                <canvas id="graficoParcelle"></canvas>
+            </div>
         </div>
 
-        <div class="item">
-            <strong>Totale da incassare:</strong>
-            € {{ totale_da_incassare }}
-        </div>
-
-        <div class="item">
-            <strong>Parcelle scadute:</strong>
-            {{ parcelle_scadute }}
-        </div>
-    </div>
-
-    <div class="section">
-        <h2>Stato pratiche</h2>
-        <div class="chart-box">
-            <canvas id="graficoPratiche"></canvas>
-        </div>
-    </div>
-
-</div>
-
-<div class="grid-2">
-
-    <div class="section">
-        <h2>Stato parcelle</h2>
-        <div class="chart-box">
-            <canvas id="graficoParcelle"></canvas>
-        </div>
-    </div>
-
-    <div class="section">
-        <h2>Collegamenti rapidi</h2>
-
-        <div class="item">
-            <a href="/agenda/">Agenda operativa</a>
-        </div>
-
-        <div class="item">
-            <a href="/pratiche/">Pratiche</a>
-        </div>
-
-        <div class="item">
-            <a href="/scadenze/">Scadenze</a>
-        </div>
-
-        <div class="item">
-            <a href="/parcelle/">Parcelle / Fatture</a>
-        </div>
-
-        <div class="item">
-            <a href="/backups/">Backup database</a>
-        </div>
     </div>
 
 </div>
