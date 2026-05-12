@@ -1,12 +1,12 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils.timezone import now
 
-import calendar
+import os
+import resend
 from datetime import date, timedelta
 
 from .models import Scadenza
@@ -180,32 +180,67 @@ def invia_email_scadenze_leggera():
     if not scadenze.exists():
         return 'Nessuna scadenza da notificare.'
 
-    righe = []
+    righe_html = []
 
     for scadenza in scadenze:
         pratica = scadenza.pratica if scadenza.pratica else '-'
 
-        righe.append(
-            f"- {scadenza.titolo}\n"
-            f"  Data: {scadenza.data_scadenza}\n"
-            f"  Pratica: {pratica}\n"
+        righe_html.append(
+            f"""
+            <tr>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
+                    {scadenza.titolo}
+                </td>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
+                    {scadenza.data_scadenza}
+                </td>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
+                    {pratica}
+                </td>
+            </tr>
+            """
         )
 
-    messaggio = (
-        "Alert scadenze gestionale studio tecnico\n\n"
-        "Scadenze da verificare entro i prossimi 7 giorni:\n\n"
-        + "\n".join(righe)
-    )
+    messaggio_html = f"""
+    <div style="font-family:Arial, sans-serif; color:#111827;">
+        <h2>Alert scadenze - Gestionale Studio Tecnico</h2>
 
-    send_mail(
-        'Alert scadenze - Gestionale Studio Tecnico',
-        messaggio,
-        settings.DEFAULT_FROM_EMAIL,
-        [settings.ALERT_EMAIL],
-        fail_silently=False,
-    )
+        <p>
+            Di seguito le scadenze da verificare entro i prossimi 7 giorni.
+        </p>
 
-    return 'Email alert scadenze inviata correttamente.'
+        <table style="border-collapse:collapse;width:100%;margin-top:20px;">
+            <thead>
+                <tr style="background:#111827;color:white;">
+                    <th style="padding:10px;text-align:left;">Scadenza</th>
+                    <th style="padding:10px;text-align:left;">Data</th>
+                    <th style="padding:10px;text-align:left;">Pratica</th>
+                </tr>
+            </thead>
+            <tbody>
+                {''.join(righe_html)}
+            </tbody>
+        </table>
+
+        <p style="margin-top:25px;color:#6b7280;font-size:13px;">
+            Email generata automaticamente dal Gestionale Studio Tecnico.
+        </p>
+    </div>
+    """
+
+    resend.api_key = os.environ.get('RESEND_API_KEY')
+
+    if not resend.api_key:
+        return 'Errore: RESEND_API_KEY non configurata.'
+
+    resend.Emails.send({
+        "from": "Gestionale Studio <onboarding@resend.dev>",
+        "to": [settings.ALERT_EMAIL],
+        "subject": "Alert scadenze - Gestionale Studio Tecnico",
+        "html": messaggio_html,
+    })
+
+    return 'Email alert scadenze inviata correttamente con Resend.'
 
 
 @login_required
@@ -214,10 +249,11 @@ def invia_alert_email_manuale(request):
     if not request.user.is_superuser:
         return redirect('/')
 
-    messaggio = (
-        'Invio SMTP disattivato sul sito Render per evitare blocchi del server. '
-        'Usare il comando locale python manage.py invia_alert_scadenze oppure passare a Resend API.'
-    )
+    try:
+        messaggio = invia_email_scadenze_leggera()
+
+    except Exception as e:
+        messaggio = f'Errore durante invio email: {e}'
 
     return render(
         request,
@@ -227,15 +263,22 @@ def invia_alert_email_manuale(request):
         }
     )
 
+
 def invia_alert_email_cron(request, codice):
 
     if codice != 'ABCD1234':
         return redirect('/')
 
+    try:
+        messaggio = invia_email_scadenze_leggera()
+
+    except Exception as e:
+        messaggio = f'Errore durante invio email: {e}'
+
     return render(
         request,
         'scadenze/alert_email_inviato.html',
         {
-            'messaggio': 'Cron ricevuto correttamente. Invio SMTP disattivato su Render per evitare blocchi del server.'
+            'messaggio': messaggio
         }
     )
