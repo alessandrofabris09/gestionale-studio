@@ -38,6 +38,11 @@ def dettaglio_pratica(request, pratica_id):
         id=pratica_id
     )
 
+    try:
+        workflow_pratica = pratica.workflow_pratica
+    except Exception:
+        workflow_pratica = None
+
     documenti = pratica.documenti.all()
 
     parcelle = pratica.parcelle.all()
@@ -49,6 +54,7 @@ def dettaglio_pratica(request, pratica_id):
         'documenti': documenti,
         'parcelle': parcelle,
         'attivita': attivita,
+        'workflow_pratica': workflow_pratica,
     }
 
     return render(

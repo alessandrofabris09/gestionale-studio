@@ -27,6 +27,8 @@ urlpatterns = [
 
     path('agenda/', include('agenda.urls')),
 
+    path('workflow/', include('workflow.urls')),
+
 ]
 
 if settings.DEBUG:

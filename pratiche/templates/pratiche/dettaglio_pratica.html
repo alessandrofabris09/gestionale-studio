@@ -11,7 +11,6 @@ Scheda pratica
 {% block content %}
 
 <style>
-
     .card{
         background:white;
         padding:30px;
@@ -23,6 +22,12 @@ Scheda pratica
 
     .row{
         margin-bottom:20px;
+        border-bottom:1px solid #e5e7eb;
+        padding-bottom:14px;
+    }
+
+    .row:last-child{
+        border-bottom:none;
     }
 
     .label{
@@ -61,6 +66,7 @@ Scheda pratica
         border-radius:6px;
         text-decoration:none;
         margin-top:8px;
+        font-size:14px;
     }
 
     .delete-link{
@@ -80,10 +86,6 @@ Scheda pratica
         font-weight:bold;
     }
 
-    .doc-delete:hover{
-        text-decoration:underline;
-    }
-
     .badge{
         display:inline-block;
         background:#f3f4f6;
@@ -94,6 +96,15 @@ Scheda pratica
         margin-right:8px;
     }
 
+    .ok{
+        color:#16a34a;
+        font-weight:bold;
+    }
+
+    .warn{
+        color:#ca8a04;
+        font-weight:bold;
+    }
 </style>
 
 <a class="back" href="/pratiche/">
@@ -101,6 +112,10 @@ Scheda pratica
 </a>
 
 <br>
+
+<a class="btn" href="/workflow/pratica/{{ pratica.id }}/attiva/">
+    Attiva workflow
+</a>
 
 <a class="btn" href="/pratiche/{{ pratica.id }}/modifica/">
     Modifica pratica
@@ -115,6 +130,10 @@ Scheda pratica
 </a>
 
 <div class="card">
+
+    <h2>Dati pratica</h2>
+
+    <br>
 
     <div class="row">
         <div class="label">Tipo pratica</div>
@@ -180,6 +199,128 @@ Scheda pratica
 
 <div class="card">
 
+    <h2>Workflow pratica</h2>
+
+    <br>
+
+    {% if workflow_pratica and workflow_pratica.workflow %}
+
+        <div class="row">
+            <div class="label">Procedimento attivo</div>
+            <div class="value">
+                {{ workflow_pratica.workflow.nome }}
+            </div>
+        </div>
+
+        <h3>Fasi operative</h3>
+
+        <br>
+
+        {% for fase in workflow_pratica.fasi_pratica.all %}
+
+            <div class="row">
+
+                <div class="label">
+                    {{ fase.ordine }}. {{ fase.titolo }}
+                </div>
+
+                <div class="value">
+
+                    {% if fase.completata %}
+                        <span class="ok">✅ Completata</span>
+                    {% else %}
+                        <span class="warn">⏳ Da completare</span>
+                    {% endif %}
+
+                    {% if fase.data_scadenza %}
+                        <br>
+                        Scadenza: {{ fase.data_scadenza }}
+                    {% endif %}
+
+                    <br>
+
+                    <a class="btn-small" href="/workflow/fase/{{ fase.id }}/toggle/">
+                        {% if fase.completata %}
+                            Segna come NON completata
+                        {% else %}
+                            Segna completata
+                        {% endif %}
+                    </a>
+
+                </div>
+
+            </div>
+
+        {% empty %}
+
+            <p>Nessuna fase generata.</p>
+
+        {% endfor %}
+
+        <br>
+
+        <h3>Checklist documenti / attività</h3>
+
+        <br>
+
+        {% for voce in workflow_pratica.checklist_pratica.all %}
+
+            <div class="row">
+
+                <div class="label">
+                    {{ voce.voce }}
+                </div>
+
+                <div class="value">
+
+                    {% if voce.completato %}
+                        <span class="ok">✅ Completato</span>
+                    {% else %}
+                        <span class="warn">□ Da completare</span>
+                    {% endif %}
+
+                    {% if voce.obbligatorio %}
+                        <br>
+                        Obbligatorio
+                    {% else %}
+                        <br>
+                        Facoltativo
+                    {% endif %}
+
+                    <br>
+
+                    <a class="btn-small" href="/workflow/checklist/{{ voce.id }}/toggle/">
+                        {% if voce.completato %}
+                            Segna NON completato
+                        {% else %}
+                            Segna completato
+                        {% endif %}
+                    </a>
+
+                </div>
+
+            </div>
+
+        {% empty %}
+
+            <p>Nessuna checklist generata.</p>
+
+        {% endfor %}
+
+    {% else %}
+
+        <p>Nessun workflow attivato per questa pratica.</p>
+
+        <a class="btn" href="/workflow/pratica/{{ pratica.id }}/attiva/">
+            Attiva workflow
+        </a>
+
+    {% endif %}
+
+</div>
+
+<div class="card">
+
     <h2>Documenti</h2>
 
     <br>
@@ -194,44 +335,33 @@ Scheda pratica
 
     <br><br>
 
-    {% if documenti %}
+    {% for documento in documenti %}
 
-        {% for documento in documenti %}
+        <div class="row">
 
-            <div class="row">
-
-                <div class="label">
-                    {{ documento.titolo }}
-                </div>
-
-                <div class="value">
-
-                    {{ documento.tipo_documento }}
-
-                    -
-
-                    <a href="{{ documento.file.url }}" target="_blank">
-                        Apri file
-                    </a>
-
-                    <a
-                        class="doc-delete"
-                        href="/documenti/{{ documento.id }}/elimina/"
-                    >
-                        Elimina
-                    </a>
-
-                </div>
-
+            <div class="label">
+                {{ documento.titolo }}
             </div>
 
-        {% endfor %}
+            <div class="value">
+                {{ documento.tipo_documento }}
+                -
+                <a href="{{ documento.file.url }}" target="_blank">
+                    Apri file
+                </a>
 
-    {% else %}
+                <a class="doc-delete" href="/documenti/{{ documento.id }}/elimina/">
+                    Elimina
+                </a>
+            </div>
+
+        </div>
+
+    {% empty %}
 
         <p>Nessun documento caricato.</p>
 
-    {% endif %}
+    {% endfor %}
 
 </div>
 
@@ -241,68 +371,60 @@ Scheda pratica
 
     <br>
 
-    {% if parcelle %}
+    {% for parcella in parcelle %}
 
-        {% for parcella in parcelle %}
+        <div class="row">
 
-            <div class="row">
+            <div class="label">
+                {% if parcella.numero_documento %}
+                    {{ parcella.numero_documento }}
+                {% else %}
+                    Documento non numerato
+                {% endif %}
+                -
+                {{ parcella.descrizione }}
+            </div>
 
-                <div class="label">
-                    {% if parcella.numero_documento %}
-                        {{ parcella.numero_documento }}
-                    {% else %}
-                        Documento non numerato
-                    {% endif %}
-                    -
-                    {{ parcella.descrizione }}
-                </div>
+            <div class="value">
 
-                <div class="value">
+                <span class="badge">
+                    {{ parcella.get_tipo_documento_display }}
+                </span>
 
-                    <span class="badge">
-                        {{ parcella.get_tipo_documento_display }}
-                    </span>
+                <span class="badge">
+                    {{ parcella.get_stato_display }}
+                </span>
 
-                    <span class="badge">
-                        {{ parcella.get_stato_display }}
-                    </span>
+                <br><br>
 
-                    <br><br>
+                Importo:
+                € {{ parcella.importo }}
 
-                    Importo:
-                    € {{ parcella.importo }}
+                -
 
-                    -
+                Pagato:
+                € {{ parcella.importo_pagato }}
 
-                    Pagato:
-                    € {{ parcella.importo_pagato }}
+                -
 
-                    -
+                IVA:
+                {{ parcella.iva }}%
 
-                    IVA:
-                    {{ parcella.iva }}%
+                <br>
 
-                    <br>
-
-                    <a
-                        class="btn-small"
-                        href="{% url 'pdf_parcella' parcella.id %}"
-                        target="_blank"
-                    >
-                        PDF documento
-                    </a>
-
-                </div>
+                <a class="btn-small" href="{% url 'pdf_parcella' parcella.id %}" target="_blank">
+                    PDF documento
+                </a>
 
             </div>
 
-        {% endfor %}
+        </div>
 
-    {% else %}
+    {% empty %}
 
         <p>Nessuna parcella collegata.</p>
 
-    {% endif %}
+    {% endfor %}
 
 </div>
 
@@ -312,51 +434,47 @@ Scheda pratica
 
     <br>
 
-    {% if attivita %}
+    {% for a in attivita %}
 
-        {% for a in attivita %}
+        <div style="
+            border-left:4px solid #2563eb;
+            padding-left:15px;
+            margin-bottom:25px;
+        ">
 
             <div style="
-                border-left:4px solid #2563eb;
-                padding-left:15px;
-                margin-bottom:25px;
+                font-weight:bold;
+                font-size:18px;
+                color:#111827;
             ">
-
-                <div style="
-                    font-weight:bold;
-                    font-size:18px;
-                    color:#111827;
-                ">
-                    {{ a.get_tipo_display }}
-                </div>
-
-                <div style="
-                    color:#374151;
-                    margin-top:6px;
-                ">
-                    {{ a.descrizione }}
-                </div>
-
-                <div style="
-                    margin-top:8px;
-                    font-size:14px;
-                    color:#6b7280;
-                ">
-                    {{ a.data }}
-                    {% if a.utente %}
-                        - {{ a.utente }}
-                    {% endif %}
-                </div>
-
+                {{ a.get_tipo_display }}
             </div>
 
-        {% endfor %}
+            <div style="
+                color:#374151;
+                margin-top:6px;
+            ">
+                {{ a.descrizione }}
+            </div>
 
-    {% else %}
+            <div style="
+                margin-top:8px;
+                font-size:14px;
+                color:#6b7280;
+            ">
+                {{ a.data }}
+                {% if a.utente %}
+                    - {{ a.utente }}
+                {% endif %}
+            </div>
+
+        </div>
+
+    {% empty %}
 
         <p>Nessuna attività registrata.</p>
 
-    {% endif %}
+    {% endfor %}
 
 </div>
 
