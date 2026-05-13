@@ -12,8 +12,9 @@
         {% endblock %}
     </title>
 
-    <style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
+    <style>
         *{
             margin:0;
             padding:0;
@@ -25,6 +26,7 @@
             background:#f3f4f6;
             display:flex;
             min-height:100vh;
+            color:#111827;
         }
 
         .sidebar{
@@ -32,6 +34,7 @@
             background:#111827;
             color:white;
             padding:25px 20px;
+            flex-shrink:0;
         }
 
         .sidebar h2{
@@ -45,8 +48,12 @@
             margin-bottom:30px;
         }
 
-        .menu a{
-            display:block;
+        .menu a,
+        .logout-button{
+            width:100%;
+            display:flex;
+            align-items:center;
+            gap:10px;
             color:white;
             text-decoration:none;
             padding:14px 16px;
@@ -54,15 +61,30 @@
             margin-bottom:8px;
             background:#1f2937;
             transition:0.2s;
+            border:0;
+            cursor:pointer;
+            font-size:15px;
+            font-family:Arial, sans-serif;
+            text-align:left;
         }
 
-        .menu a:hover{
+        .menu a:hover,
+        .logout-button:hover{
             background:#374151;
+        }
+
+        .logout-button{
+            background:#991b1b;
+        }
+
+        .logout-button:hover{
+            background:#7f1d1d;
         }
 
         .main{
             flex:1;
             padding:35px;
+            overflow-x:hidden;
         }
 
         .topbar{
@@ -71,6 +93,11 @@
             border-radius:12px;
             margin-bottom:30px;
             box-shadow:0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .topbar h1{
+            font-size:28px;
+            color:#111827;
         }
 
         .content{
@@ -103,15 +130,12 @@
         }
 
         @media(max-width:1100px){
-
             .cards{
                 grid-template-columns:repeat(2,1fr);
             }
-
         }
 
         @media(max-width:700px){
-
             body{
                 flex-direction:column;
             }
@@ -120,12 +144,14 @@
                 width:100%;
             }
 
+            .main{
+                padding:20px;
+            }
+
             .cards{
                 grid-template-columns:1fr;
             }
-
         }
-
     </style>
 
 </head>
@@ -134,7 +160,9 @@
 
     <aside class="sidebar">
 
-        <h2>Studio Tecnico</h2>
+        <h2>
+            Studio Tecnico
+        </h2>
 
         <div class="user-info">
             Utente: {{ request.user.username }}
@@ -143,24 +171,29 @@
         <nav class="menu">
 
             <a href="/">
+                <i class="fa-solid fa-gauge-high"></i>
                 Dashboard
             </a>
 
             <a href="/ricerca/">
+                <i class="fa-solid fa-magnifying-glass"></i>
                 Ricerca globale
             </a>
 
             {% if request.user.is_superuser or request.user|has_group:"Admin Studio" or request.user|has_group:"Tecnico" %}
 
                 <a href="/pratiche/">
+                    <i class="fa-solid fa-folder-open"></i>
                     Pratiche
                 </a>
 
                 <a href="/immobili/">
+                    <i class="fa-solid fa-house"></i>
                     Immobili
                 </a>
 
                 <a href="/documenti/">
+                    <i class="fa-solid fa-file-lines"></i>
                     Documenti
                 </a>
 
@@ -169,33 +202,41 @@
             {% if request.user.is_superuser or request.user|has_group:"Admin Studio" or request.user|has_group:"Segreteria" %}
 
                 <a href="/clienti/">
+                    <i class="fa-solid fa-users"></i>
                     Clienti
                 </a>
 
                 <a href="/parcelle/">
+                    <i class="fa-solid fa-euro-sign"></i>
                     Parcelle
                 </a>
 
             {% endif %}
 
             {% if request.user.is_superuser or request.user|has_group:"Admin Studio" or request.user|has_group:"Tecnico" or request.user|has_group:"Segreteria" %}
+
                 <a href="/scadenze/">
+                    <i class="fa-solid fa-clock"></i>
                     Scadenze
                 </a>
 
                 <a href="/agenda/">
+                    <i class="fa-solid fa-calendar-days"></i>
                     Agenda operativa
                 </a>
 
                 <a href="/scadenze/alert/">
+                    <i class="fa-solid fa-bell"></i>
                     Alert scadenze
                 </a>
 
                 <a href="/scadenze/invia-alert-email/">
+                    <i class="fa-solid fa-envelope"></i>
                     Invia alert email
                 </a>
 
                 <a href="/scadenze/calendario/">
+                    <i class="fa-solid fa-calendar"></i>
                     Calendario
                 </a>
 
@@ -204,33 +245,25 @@
             {% if request.user.is_superuser or request.user|has_group:"Admin Studio" %}
 
                 <a href="/admin/">
-                    Admin tecnico
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    Amministrazione
                 </a>
-                
+
                 <a href="/backups/">
+                    <i class="fa-solid fa-database"></i>
                     Backup database
                 </a>
 
             {% endif %}
 
             <form method="post" action="/logout/" style="margin:0;">
-    {% csrf_token %}
-    <button type="submit" style="
-        width:100%;
-        display:block;
-        color:white;
-        text-align:left;
-        padding:14px 16px;
-        border-radius:8px;
-        margin-bottom:8px;
-        background:#991b1b;
-        border:0;
-        cursor:pointer;
-        font-size:16px;
-    ">
-        Logout
-    </button>
-</form>
+                {% csrf_token %}
+
+                <button type="submit" class="logout-button">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Logout
+                </button>
+            </form>
 
         </nav>
 
@@ -241,11 +274,9 @@
         <div class="topbar">
 
             <h1>
-
                 {% block page_title %}
                 Dashboard
                 {% endblock %}
-
             </h1>
 
         </div>

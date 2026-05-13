@@ -227,10 +227,20 @@ Scheda pratica
                 <div class="value">
 
                     {% if fase.completata %}
-                        <span class="ok">✅ Completata</span>
-                    {% else %}
-                        <span class="warn">⏳ Da completare</span>
-                    {% endif %}
+
+    <span class="ok">
+        <i class="fa-solid fa-circle-check"></i>
+        Completata
+    </span>
+
+    {% else %}
+
+        <span class="warn">
+            <i class="fa-solid fa-circle-dot"></i>
+            Da completare
+        </span>
+
+    {% endif %}
 
                     {% if fase.data_scadenza %}
                         <br>
@@ -276,7 +286,7 @@ Scheda pratica
                     {% if voce.completato %}
                         <span class="ok">✅ Completato</span>
                     {% else %}
-                        <span class="warn">□ Da completare</span>
+                        <span class="warn">📋 Da completare</span>
                     {% endif %}
 
                     {% if voce.obbligatorio %}
