@@ -73,6 +73,17 @@
             background:#374151;
         }
 
+        .menu a.active{
+            background:#2563eb;
+            color:white;
+            font-weight:bold;
+            box-shadow:0 0 0 1px rgba(255,255,255,0.12) inset;
+        }
+
+        .menu a.active i{
+            color:white;
+        }
+
         .logout-button{
             background:#991b1b;
         }
@@ -170,29 +181,29 @@
 
         <nav class="menu">
 
-            <a href="/">
+            <a href="/" class="{% if request.path == '/' %}active{% endif %}">
                 <i class="fa-solid fa-gauge-high"></i>
                 Dashboard
             </a>
 
-            <a href="/ricerca/">
+            <a href="/ricerca/" class="{% if '/ricerca' in request.path %}active{% endif %}">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 Ricerca globale
             </a>
 
             {% if request.user.is_superuser or request.user|has_group:"Admin Studio" or request.user|has_group:"Tecnico" %}
 
-                <a href="/pratiche/">
+                <a href="/pratiche/" class="{% if '/pratiche' in request.path or '/workflow' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-folder-open"></i>
                     Pratiche
                 </a>
 
-                <a href="/immobili/">
+                <a href="/immobili/" class="{% if '/immobili' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-house"></i>
                     Immobili
                 </a>
 
-                <a href="/documenti/">
+                <a href="/documenti/" class="{% if '/documenti' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-file-lines"></i>
                     Documenti
                 </a>
@@ -201,12 +212,12 @@
 
             {% if request.user.is_superuser or request.user|has_group:"Admin Studio" or request.user|has_group:"Segreteria" %}
 
-                <a href="/clienti/">
+                <a href="/clienti/" class="{% if '/clienti' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-users"></i>
                     Clienti
                 </a>
 
-                <a href="/parcelle/">
+                <a href="/parcelle/" class="{% if '/parcelle' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-euro-sign"></i>
                     Parcelle
                 </a>
@@ -215,27 +226,27 @@
 
             {% if request.user.is_superuser or request.user|has_group:"Admin Studio" or request.user|has_group:"Tecnico" or request.user|has_group:"Segreteria" %}
 
-                <a href="/scadenze/">
+                <a href="/scadenze/" class="{% if '/scadenze' in request.path and not '/scadenze/alert' in request.path and not '/scadenze/invia-alert-email' in request.path and not '/scadenze/calendario' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-clock"></i>
                     Scadenze
                 </a>
 
-                <a href="/agenda/">
+                <a href="/agenda/" class="{% if '/agenda' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-calendar-days"></i>
                     Agenda operativa
                 </a>
 
-                <a href="/scadenze/alert/">
+                <a href="/scadenze/alert/" class="{% if '/scadenze/alert' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-bell"></i>
                     Alert scadenze
                 </a>
 
-                <a href="/scadenze/invia-alert-email/">
+                <a href="/scadenze/invia-alert-email/" class="{% if '/scadenze/invia-alert-email' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-envelope"></i>
                     Invia alert email
                 </a>
 
-                <a href="/scadenze/calendario/">
+                <a href="/scadenze/calendario/" class="{% if '/scadenze/calendario' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-calendar"></i>
                     Calendario
                 </a>
@@ -244,12 +255,12 @@
 
             {% if request.user.is_superuser or request.user|has_group:"Admin Studio" %}
 
-                <a href="/admin/">
+                <a href="/admin/" class="{% if '/admin' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-screwdriver-wrench"></i>
                     Amministrazione
                 </a>
 
-                <a href="/backups/">
+                <a href="/backups/" class="{% if '/backups' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-database"></i>
                     Backup database
                 </a>
