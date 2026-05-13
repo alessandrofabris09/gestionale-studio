@@ -19,7 +19,7 @@ TIPI_PRATICA = [
 
 STATI_PRATICA = [
     ('PREVENTIVO', 'Preventivo'),
-    ('IN_CORSO', 'In corso'),
+    ('IN CORSO', 'In_corso'),
     ('DEPOSITATA', 'Depositata'),
     ('INTEGRAZIONE', 'Integrazione'),
     ('APPROVATA', 'Approvata'),
@@ -32,8 +32,7 @@ class Pratica(models.Model):
     immobile = models.ForeignKey(Immobile, on_delete=models.CASCADE)
 
     tipo_pratica = models.CharField(
-        max_length=50,
-        choices=TIPI_PRATICA
+    max_length=255
     )
 
     stato = models.CharField(

@@ -1,17 +1,85 @@
+from datetime import timedelta
 from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse
+from django.utils.timezone import now
 
 from reportlab.pdfgen import canvas
 
-from accounts.decorators import group_required
+from workflow.models import (
+    TipoWorkflow,
+    WorkflowPratica,
+    FasePratica,
+    ChecklistPratica,
+)
+
+from scadenze.models import Scadenza
+from attivita.models import Attivita
 
 from .models import Pratica
 from .forms import PraticaForm
 
-from attivita.models import Attivita
+
+def attiva_workflow_automatico(pratica):
+
+    workflow = TipoWorkflow.objects.filter(
+        nome=pratica.tipo_pratica,
+        attivo=True
+    ).first()
+
+    if not workflow:
+        return None
+
+    workflow_pratica, creato = WorkflowPratica.objects.get_or_create(
+        pratica=pratica,
+        defaults={
+            'workflow': workflow
+        }
+    )
+
+    if not creato:
+        return workflow_pratica
+
+    for fase in workflow.fasi.all().order_by('ordine'):
+
+        data_scadenza = None
+
+        if fase.giorni_scadenza:
+            data_scadenza = now().date() + timedelta(
+                days=fase.giorni_scadenza
+            )
+
+        FasePratica.objects.create(
+            workflow_pratica=workflow_pratica,
+            titolo=fase.titolo,
+            descrizione=fase.descrizione,
+            ordine=fase.ordine,
+            data_scadenza=data_scadenza
+        )
+
+        if data_scadenza:
+
+            Scadenza.objects.create(
+                pratica=pratica,
+                titolo=fase.titolo,
+                descrizione=f'Workflow automatico: {fase.titolo}',
+                data_scadenza=data_scadenza,
+                completata=False
+            )
+
+    for voce in workflow.checklist.all().order_by('ordine'):
+
+        ChecklistPratica.objects.create(
+            workflow_pratica=workflow_pratica,
+            voce=voce.voce,
+            descrizione=voce.descrizione,
+            obbligatorio=voce.obbligatorio,
+            ordine=voce.ordine
+        )
+
+    return workflow_pratica
 
 
 @login_required
@@ -75,13 +143,28 @@ def nuova_pratica(request):
 
             pratica = form.save()
 
+            workflow_pratica = attiva_workflow_automatico(pratica)
+
             Attivita.objects.create(
+                pratica=pratica,
                 utente=request.user,
                 tipo='CREAZIONE',
                 descrizione=f'Creata pratica: {pratica.oggetto}'
             )
 
-            return redirect('lista_pratiche')
+            if workflow_pratica:
+
+                Attivita.objects.create(
+                    pratica=pratica,
+                    utente=request.user,
+                    tipo='AGGIORNAMENTO',
+                    descrizione=f'Workflow automatico attivato: {workflow_pratica.workflow.nome}'
+                )
+
+            return redirect(
+                'dettaglio_pratica',
+                pratica_id=pratica.id
+            )
 
     else:
 
@@ -114,6 +197,7 @@ def modifica_pratica(request, pratica_id):
             pratica = form.save()
 
             Attivita.objects.create(
+                pratica=pratica,
                 utente=request.user,
                 tipo='MODIFICA',
                 descrizione=f'Modificata pratica: {pratica.oggetto}'
@@ -172,6 +256,7 @@ def pdf_pratica(request, pratica_id):
     )
 
     Attivita.objects.create(
+        pratica=pratica,
         utente=request.user,
         tipo='PDF',
         descrizione=f'Generato PDF pratica: {pratica.oggetto}'
@@ -182,8 +267,6 @@ def pdf_pratica(request, pratica_id):
     p = canvas.Canvas(buffer)
 
     p.setTitle(f"Scheda pratica {pratica.id}")
-
-    width, height = 595, 842
 
     logo_path = "static/img/logo.png"
 
