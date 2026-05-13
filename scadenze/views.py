@@ -11,6 +11,7 @@ from datetime import date, timedelta
 
 from .models import Scadenza
 from .forms import ScadenzaForm
+from agenda.models import EventoAgenda
 
 
 @login_required
@@ -31,13 +32,31 @@ def lista_scadenze(request):
 
 @login_required
 def nuova_scadenza(request):
+
     if request.method == 'POST':
+
         form = ScadenzaForm(request.POST)
 
         if form.is_valid():
-            form.save()
+
+            scadenza = form.save()
+
+            if scadenza.pratica:
+
+                EventoAgenda.objects.create(
+                    titolo=f'Scadenza: {scadenza.titolo}',
+                    tipo='SCADENZA',
+                    priorita='MEDIA',
+                    cliente=scadenza.pratica.cliente if scadenza.pratica.cliente else None,
+                    pratica=scadenza.pratica,
+                    data=scadenza.data_scadenza,
+                    descrizione=f'Scadenza collegata alla pratica: {scadenza.pratica}'
+                )
+
             return redirect('lista_scadenze')
+
     else:
+
         form = ScadenzaForm()
 
     return render(
