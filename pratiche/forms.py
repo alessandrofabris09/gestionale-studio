@@ -27,10 +27,10 @@ class PraticaForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         workflow_choices = [
-            (
-                workflow.nome,
-                f'{workflow.get_categoria_display()} - {workflow.nome}'
-            )
+    (
+        workflow.nome,
+        f'{workflow.get_categoria_display()} - {workflow.nome}'
+    )
             for workflow in TipoWorkflow.objects.filter(
                 attivo=True
             ).order_by(

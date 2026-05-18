@@ -7,11 +7,11 @@ CATEGORIE_WORKFLOW = [
     ('EDILIZIA', 'Edilizia'),
     ('CATASTO', 'Catasto'),
     ('ENERGIA', 'Energia'),
-    ('SUCCESSIONI_STIME', 'Successioni e stime'),
-    ('STRUTTURE', 'Strutture / Genio Civile'),
-    ('AMBIENTE', 'Ambiente / VINCA / Scarichi'),
+    ('PRATICHE_IMMOBILIARI_NOTARILI', 'Pratiche immobiliari e notarili'),
+    ('STRUTTURE', 'Strutture'),
+    ('AMBIENTE', 'Ambiente'),
     ('SICUREZZA_CANTIERI', 'Sicurezza cantieri'),
-    ('CONTABILITA', 'Computi / Contabilità lavori'),
+    ('CONTABILITA', 'Contabilità'),
     ('ALTRO', 'Altro'),
 ]
 
