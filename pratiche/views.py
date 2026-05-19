@@ -1,6 +1,7 @@
 from datetime import timedelta
 from io import BytesIO
 
+from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse
@@ -87,8 +88,34 @@ def lista_pratiche(request):
 
     pratiche = Pratica.objects.all().order_by('-id')
 
+    ricerca = request.GET.get('ricerca')
+    stato = request.GET.get('stato')
+    tipo = request.GET.get('tipo')
+
+    if ricerca:
+
+        pratiche = pratiche.filter(
+            Q(oggetto__icontains=ricerca) |
+            Q(comune__icontains=ricerca) |
+            Q(protocollo__icontains=ricerca) |
+            Q(cliente__nome__icontains=ricerca)
+        )
+
+    if stato:
+        pratiche = pratiche.filter(
+            stato=stato
+        )
+
+    if tipo:
+        pratiche = pratiche.filter(
+            tipo_pratica=tipo
+        )
+
     context = {
         'pratiche': pratiche,
+        'ricerca': ricerca,
+        'stato': stato,
+        'tipo': tipo,
     }
 
     return render(

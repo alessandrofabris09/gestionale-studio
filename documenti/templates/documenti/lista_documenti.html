@@ -5,70 +5,148 @@ Documenti
 {% endblock %}
 
 {% block page_title %}
-Documenti
+Archivio documenti
 {% endblock %}
 
 {% block content %}
 
 <style>
-
     .top-actions{
         display:flex;
-        justify-content:space-between;
+        align-items:center;
+        gap:16px;
         margin-bottom:25px;
-        gap:20px;
+        flex-wrap:wrap;
     }
 
     .search{
         flex:1;
+        min-width:280px;
     }
 
     .search input{
         width:100%;
-        padding:12px;
+        padding:13px 15px;
         border:1px solid #d1d5db;
-        border-radius:8px;
+        border-radius:10px;
+        font-size:15px;
+        background:white;
+    }
+
+    .table-card{
+        background:white;
+        border-radius:18px;
+        overflow:hidden;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
     }
 
     table{
         width:100%;
         border-collapse:collapse;
-        background:white;
-        border-radius:12px;
-        overflow:hidden;
-        box-shadow:0 2px 10px rgba(0,0,0,0.08);
     }
 
     th{
         background:#111827;
         color:white;
-        padding:15px;
+        padding:18px 20px;
         text-align:left;
+        font-size:16px;
     }
 
     td{
-        padding:15px;
-        border-bottom:1px solid #eee;
+        padding:18px 20px;
+        border-bottom:1px solid #e5e7eb;
+        vertical-align:middle;
+        font-size:16px;
+    }
+
+    tr:last-child td{
+        border-bottom:none;
     }
 
     tr:hover{
         background:#f9fafb;
     }
 
-    .btn{
-        display:inline-block;
-        background:#111827;
-        color:white;
-        padding:10px 14px;
+    .document-title{
+        font-weight:bold;
+        color:#111827;
+    }
+
+    .type-badge{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:7px 12px;
+        border-radius:999px;
+        background:#eef2ff;
+        color:#3730a3;
+        font-size:14px;
+        font-weight:bold;
+        white-space:nowrap;
+    }
+
+    .practice-link{
+        color:#2563eb;
+        font-weight:bold;
+        text-decoration:none;
+    }
+
+    .practice-link:hover{
+        text-decoration:underline;
+    }
+
+    .actions{
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+    }
+
+    .action-btn{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:8px 12px;
         border-radius:8px;
         text-decoration:none;
-        margin-right:8px;
+        font-size:14px;
+        font-weight:bold;
+        color:white;
+        white-space:nowrap;
     }
 
-    .btn-delete{
-        background:#991b1b;
+    .open-btn{
+        background:#2563eb;
     }
 
+    .open-btn:hover{
+        background:#1d4ed8;
+    }
+
+    .delete-btn{
+        background:#dc2626;
+    }
+
+    .delete-btn:hover{
+        background:#b91c1c;
+    }
+
+    .empty-row{
+        text-align:center;
+        color:#6b7280;
+        padding:35px;
+        font-size:17px;
+    }
+
+    @media(max-width:900px){
+        .table-card{
+            overflow-x:auto;
+        }
+
+        table{
+            min-width:850px;
+        }
+    }
 </style>
 
 <div class="top-actions">
@@ -78,85 +156,96 @@ Documenti
         <input
             type="text"
             name="ricerca"
-            value="{{ ricerca }}"
-            placeholder="Cerca documenti..."
+            value="{{ ricerca|default:'' }}"
+            placeholder="Cerca documenti per titolo, tipo, pratica o cliente..."
         >
 
     </form>
 
 </div>
 
-<table>
+<div class="table-card">
 
-    <thead>
+    <table>
 
-        <tr>
+        <thead>
+            <tr>
+                <th>Titolo</th>
+                <th>Tipo</th>
+                <th>Pratica</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
 
-            <th>Titolo</th>
+        <tbody>
 
-            <th>Tipo</th>
+            {% for documento in documenti %}
 
-            <th>Pratica</th>
+                <tr>
 
-            <th>Azioni</th>
+                    <td>
+                        <div class="document-title">
+                            <i class="fa-solid fa-file-lines"></i>
+                            {{ documento.titolo }}
+                        </div>
+                    </td>
 
-        </tr>
+                    <td>
+                        <span class="type-badge">
+                            <i class="fa-solid fa-tag"></i>
+                            {{ documento.tipo_documento }}
+                        </span>
+                    </td>
 
-    </thead>
+                    <td>
+                        {% if documento.pratica %}
+                            <a class="practice-link" href="/pratiche/{{ documento.pratica.id }}/">
+                                {{ documento.pratica }}
+                            </a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
 
-    <tbody>
+                    <td>
+                        <div class="actions">
 
-        {% for documento in documenti %}
+                            <a
+                                class="action-btn open-btn"
+                                href="{{ documento.file.url }}"
+                                target="_blank"
+                            >
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                Apri
+                            </a>
 
-        <tr>
+                            <a
+                                class="action-btn delete-btn"
+                                href="/documenti/{{ documento.id }}/elimina/"
+                            >
+                                <i class="fa-solid fa-trash"></i>
+                                Elimina
+                            </a>
 
-            <td>
-                {{ documento.titolo }}
-            </td>
+                        </div>
+                    </td>
 
-            <td>
-                {{ documento.tipo_documento }}
-            </td>
+                </tr>
 
-            <td>
-                {{ documento.pratica }}
-            </td>
+            {% empty %}
 
-            <td>
+                <tr>
+                    <td colspan="4" class="empty-row">
+                        Nessun documento presente.
+                    </td>
+                </tr>
 
-                <a
-                    class="btn"
-                    href="{{ documento.file.url }}"
-                    target="_blank"
-                >
-                    Apri
-                </a>
+            {% endfor %}
 
-                <a
-                    class="btn btn-delete"
-                    href="/documenti/{{ documento.id }}/elimina/"
-                >
-                    Elimina
-                </a>
+        </tbody>
 
-            </td>
+    </table>
 
-        </tr>
-
-        {% empty %}
-
-        <tr>
-
-            <td colspan="4">
-                Nessun documento presente
-            </td>
-
-        </tr>
-
-        {% endfor %}
-
-    </tbody>
-
-</table>
+</div>
 
 {% endblock %}

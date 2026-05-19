@@ -4,6 +4,7 @@ from .views import (
     lista_agenda,
     agenda_oggi,
     nuovo_evento,
+    completa_evento,
     modifica_evento,
     elimina_evento,
     invia_agenda_email,
@@ -30,6 +31,8 @@ urlpatterns = [
         nuovo_evento,
         name='nuovo_evento'
     ),
+
+    path('<int:evento_id>/completa/', completa_evento, name='completa_evento'),
 
     path(
         '<int:evento_id>/modifica/',

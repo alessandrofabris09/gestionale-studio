@@ -1,82 +1,210 @@
 {% extends 'base/base.html' %}
 
-{% block title %}Parcelle{% endblock %}
-{% block page_title %}Parcelle e pagamenti{% endblock %}
+{% block title %}
+Parcelle
+{% endblock %}
+
+{% block page_title %}
+Parcelle e pagamenti
+{% endblock %}
 
 {% block content %}
 
 <style>
     .top-actions{
         display:flex;
-        justify-content:space-between;
+        align-items:center;
+        gap:16px;
         margin-bottom:25px;
-        gap:20px;
+        flex-wrap:wrap;
     }
 
     .btn{
-        display:inline-block;
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
         background:#111827;
         color:white;
         padding:12px 18px;
-        border-radius:8px;
+        border-radius:10px;
         text-decoration:none;
-        margin-right:8px;
+        font-weight:bold;
+        font-size:15px;
+        border:0;
+        cursor:pointer;
     }
 
-    .btn-delete{
-        background:#991b1b;
+    .btn:hover{
+        background:#374151;
     }
 
     .search{
         flex:1;
+        min-width:280px;
     }
 
     .search input{
         width:100%;
-        padding:12px;
+        padding:13px 15px;
         border:1px solid #d1d5db;
-        border-radius:8px;
+        border-radius:10px;
+        font-size:15px;
+        background:white;
+    }
+
+    .table-card{
+        background:white;
+        border-radius:18px;
+        overflow:hidden;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
     }
 
     table{
         width:100%;
         border-collapse:collapse;
-        background:white;
-        border-radius:12px;
-        overflow:hidden;
-        box-shadow:0 2px 10px rgba(0,0,0,0.08);
     }
 
     th{
         background:#111827;
         color:white;
-        padding:15px;
+        padding:18px 20px;
         text-align:left;
+        font-size:16px;
     }
 
     td{
-        padding:15px;
-        border-bottom:1px solid #eee;
+        padding:18px 20px;
+        border-bottom:1px solid #e5e7eb;
+        vertical-align:middle;
+        font-size:16px;
+    }
+
+    tr:last-child td{
+        border-bottom:none;
+    }
+
+    tr:hover{
+        background:#f9fafb;
+    }
+
+    .description{
+        font-weight:bold;
+        color:#111827;
+    }
+
+    .practice-link{
+        color:#2563eb;
+        font-weight:bold;
+        text-decoration:none;
+    }
+
+    .practice-link:hover{
+        text-decoration:underline;
+    }
+
+    .money{
+        font-weight:bold;
+        color:#111827;
+        white-space:nowrap;
+    }
+
+    .money-paid{
+        color:#166534;
+        font-weight:bold;
+        white-space:nowrap;
+    }
+
+    .money-due{
+        color:#991b1b;
+        font-weight:bold;
+        white-space:nowrap;
+    }
+
+    .badge{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:7px 12px;
+        border-radius:999px;
+        font-size:14px;
+        font-weight:bold;
+        white-space:nowrap;
     }
 
     .pagato{
+        background:#dcfce7;
         color:#166534;
-        font-weight:bold;
     }
 
     .parziale{
+        background:#fef3c7;
         color:#92400e;
-        font-weight:bold;
     }
 
     .da-pagare{
+        background:#fee2e2;
         color:#991b1b;
+    }
+
+    .actions{
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+    }
+
+    .action-btn{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:8px 12px;
+        border-radius:8px;
+        text-decoration:none;
+        font-size:14px;
         font-weight:bold;
+        color:white;
+        white-space:nowrap;
+    }
+
+    .edit-btn{
+        background:#2563eb;
+    }
+
+    .edit-btn:hover{
+        background:#1d4ed8;
+    }
+
+    .delete-btn{
+        background:#dc2626;
+    }
+
+    .delete-btn:hover{
+        background:#b91c1c;
+    }
+
+    .empty-row{
+        text-align:center;
+        color:#6b7280;
+        padding:35px;
+        font-size:17px;
+    }
+
+    @media(max-width:1000px){
+        .table-card{
+            overflow-x:auto;
+        }
+
+        table{
+            min-width:1050px;
+        }
     }
 </style>
 
 <div class="top-actions">
-    <a class="btn" href="/parcelle/nuova/">+ Nuova parcella</a>
+
+    <a class="btn" href="/parcelle/nuova/">
+        <i class="fa-solid fa-plus"></i>
+        Nuova parcella
+    </a>
 
     <form class="search" method="get">
         <input
@@ -86,53 +214,112 @@
             placeholder="Cerca parcella, pratica o cliente..."
         >
     </form>
+
 </div>
 
-<table>
-    <thead>
-        <tr>
-            <th>Descrizione</th>
-            <th>Pratica</th>
-            <th>Importo</th>
-            <th>Pagato</th>
-            <th>Residuo</th>
-            <th>Stato</th>
-            <th>Azioni</th>
-        </tr>
-    </thead>
+<div class="table-card">
 
-    <tbody>
-        {% for parcella in parcelle %}
-        <tr>
-            <td>{{ parcella.descrizione }}</td>
-            <td>
-                <a href="/pratiche/{{ parcella.pratica.id }}/">
-                    {{ parcella.pratica }}
-                </a>
-            </td>
-            <td>€ {{ parcella.importo }}</td>
-            <td>€ {{ parcella.importo_pagato }}</td>
-            <td>€ {{ parcella.saldo_residuo }}</td>
-            <td>
-                {% if parcella.stato == 'PAGATO' %}
-                    <span class="pagato">Pagato</span>
-                {% elif parcella.stato == 'PARZIALE' %}
-                    <span class="parziale">Parziale</span>
-                {% else %}
-                    <span class="da-pagare">Da pagare</span>
-                {% endif %}
-            </td>
-            <td>
-                <a class="btn" href="/parcelle/{{ parcella.id }}/modifica/">Modifica</a>
-                <a class="btn btn-delete" href="/parcelle/{{ parcella.id }}/elimina/">Elimina</a>
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="7">Nessuna parcella presente</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <table>
+        <thead>
+            <tr>
+                <th>Descrizione</th>
+                <th>Pratica</th>
+                <th>Importo</th>
+                <th>Pagato</th>
+                <th>Residuo</th>
+                <th>Stato</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for parcella in parcelle %}
+
+                <tr>
+
+                    <td>
+                        <div class="description">
+                            {{ parcella.descrizione }}
+                        </div>
+                    </td>
+
+                    <td>
+                        {% if parcella.pratica %}
+                            <a class="practice-link" href="/pratiche/{{ parcella.pratica.id }}/">
+                                {{ parcella.pratica }}
+                            </a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <span class="money">
+                            € {{ parcella.importo }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="money-paid">
+                            € {{ parcella.importo_pagato }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="money-due">
+                            € {{ parcella.saldo_residuo }}
+                        </span>
+                    </td>
+
+                    <td>
+                        {% if parcella.stato == 'PAGATO' or parcella.stato == 'pagato' %}
+                            <span class="badge pagato">
+                                <i class="fa-solid fa-circle-check"></i>
+                                Pagato
+                            </span>
+                        {% elif parcella.stato == 'PARZIALE' or parcella.stato == 'parziale' %}
+                            <span class="badge parziale">
+                                <i class="fa-solid fa-circle-half-stroke"></i>
+                                Parziale
+                            </span>
+                        {% else %}
+                            <span class="badge da-pagare">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                Da pagare
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <div class="actions">
+
+                            <a class="action-btn edit-btn" href="/parcelle/{{ parcella.id }}/modifica/">
+                                <i class="fa-solid fa-pen"></i>
+                                Modifica
+                            </a>
+
+                            <a class="action-btn delete-btn" href="/parcelle/{{ parcella.id }}/elimina/">
+                                <i class="fa-solid fa-trash"></i>
+                                Elimina
+                            </a>
+
+                        </div>
+                    </td>
+
+                </tr>
+
+            {% empty %}
+
+                <tr>
+                    <td colspan="7" class="empty-row">
+                        Nessuna parcella presente.
+                    </td>
+                </tr>
+
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
 
 {% endblock %}

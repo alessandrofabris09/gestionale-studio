@@ -77,6 +77,14 @@ class Parcella(models.Model):
         default='DA_PAGARE'
     )
 
+    @property
+    def saldo_residuo(self):
+
+        importo = self.importo or 0
+        pagato = self.importo_pagato or 0
+
+        return importo - pagato    
+
     note = models.TextField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -110,9 +118,6 @@ def save(self, *args, **kwargs):
 
     super().save(*args, **kwargs)
     
-    def saldo_residuo(self):
-        return self.importo - self.importo_pagato
-
     def totale_con_iva(self):
         return self.importo + (
             self.importo * self.iva / 100

@@ -17,7 +17,9 @@ from .forms import EventoAgendaForm
 @login_required
 def lista_agenda(request):
 
-    eventi = EventoAgenda.objects.all().order_by(
+    eventi = EventoAgenda.objects.filter(
+        completato=False
+    ).order_by(
         'data',
         'ora_inizio'
     )
@@ -248,6 +250,18 @@ def invia_agenda_email(request):
         }
     )
 
+@login_required
+def completa_evento(request, evento_id):
+
+    evento = get_object_or_404(
+        EventoAgenda,
+        id=evento_id
+    )
+
+    evento.completato = True
+    evento.save()
+
+    return redirect('lista_agenda')
 
 def invia_agenda_email_cron(request, codice):
 
@@ -281,10 +295,9 @@ def calendario_ics(request, codice):
     calendario.add('calscale', 'GREGORIAN')
     calendario.add('method', 'PUBLISH')
 
-    eventi = EventoAgenda.objects.all().order_by(
-        'data',
-        'ora_inizio'
-    )
+    eventi = EventoAgenda.objects.filter(
+    completato=False
+    ).order_by('data', 'ora_inizio')
 
     for evento_agenda in eventi:
 

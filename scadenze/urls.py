@@ -10,6 +10,7 @@ from .views import (
     alert_scadenze,
     eventi_calendario,
     invia_alert_email_manuale,
+    completa_scadenza,
 )
 
 urlpatterns = [
@@ -20,6 +21,11 @@ urlpatterns = [
     path('calendario/', calendario_scadenze, name='calendario_scadenze'),
     path('alert/', alert_scadenze, name='alert_scadenze'),
     path('eventi/', eventi_calendario, name='eventi_calendario'),
+    path(
+    '<int:scadenza_id>/completa/',
+    completa_scadenza,
+    name='completa_scadenza'
+),
     path('invia-alert-email/', invia_alert_email_manuale, name='invia_alert_email_manuale'),
     path(
     'invia-alert-email-cron/<str:codice>/',

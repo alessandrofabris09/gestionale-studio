@@ -16,7 +16,9 @@ from agenda.models import EventoAgenda
 
 @login_required
 def lista_scadenze(request):
-    scadenze = Scadenza.objects.all().order_by('data_scadenza')
+    scadenze = Scadenza.objects.filter(
+        completata=False
+    ).order_by('data_scadenza')
 
     context = {
         'scadenze': scadenze,
@@ -111,6 +113,20 @@ def elimina_scadenza(request, scadenza_id):
         'scadenze/elimina_scadenza.html',
         {'scadenza': scadenza}
     )
+
+
+@login_required
+def completa_scadenza(request, scadenza_id):
+
+    scadenza = get_object_or_404(
+        Scadenza,
+        id=scadenza_id
+    )
+
+    scadenza.completata = True
+    scadenza.save()
+
+    return redirect('lista_scadenze')
 
 
 @login_required
@@ -301,3 +317,4 @@ def invia_alert_email_cron(request, codice):
             'messaggio': messaggio
         }
     )
+
