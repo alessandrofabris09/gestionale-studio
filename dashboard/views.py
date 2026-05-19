@@ -83,10 +83,20 @@ def home(request):
         item['totale'] for item in pratiche_per_stato
     ]
 
-    labels_parcelle = [
-        item['stato'] for item in parcelle_per_stato
-    ]
+    labels_parcelle = []
+    dati_parcelle = []
 
+    campo_stato = Parcella._meta.get_field('stato')
+
+    for stato, label in campo_stato.choices:
+
+        totale = Parcella.objects.filter(
+            stato=stato
+        ).count()
+
+    labels_parcelle.append(label)
+    dati_parcelle.append(totale)
+   
     dati_parcelle = [
         item['totale'] for item in parcelle_per_stato
     ]

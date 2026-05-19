@@ -19,7 +19,7 @@ TIPI_PRATICA = [
 
 STATI_PRATICA = [
     ('PREVENTIVO', 'Preventivo'),
-    ('IN CORSO', 'In_corso'),
+    ('IN CORSO', 'In corso'),
     ('DEPOSITATA', 'Depositata'),
     ('INTEGRAZIONE', 'Integrazione'),
     ('APPROVATA', 'Approvata'),
