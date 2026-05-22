@@ -11,317 +11,422 @@ Scheda pratica
 {% block content %}
 
 <style>
+    .page-actions{
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;
+        margin-bottom:25px;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:10px;
+        text-decoration:none;
+        font-weight:bold;
+        font-size:15px;
+    }
+
+    .btn:hover{
+        background:#374151;
+    }
+
+    .danger-btn{
+        background:#dc2626;
+    }
+
+    .danger-btn:hover{
+        background:#b91c1c;
+    }
+
     .card{
         background:white;
-        padding:30px;
-        border-radius:12px;
-        box-shadow:0 2px 10px rgba(0,0,0,0.08);
-        max-width:1100px;
+        padding:28px;
+        border-radius:18px;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
         margin-bottom:30px;
     }
 
-    .row{
+    .card h2{
         margin-bottom:20px;
+        color:#111827;
+    }
+
+    .grid{
+        display:grid;
+        grid-template-columns:repeat(2, 1fr);
+        gap:18px;
+    }
+
+    .row{
         border-bottom:1px solid #e5e7eb;
         padding-bottom:14px;
     }
 
-    .row:last-child{
-        border-bottom:none;
-    }
-
     .label{
+        font-size:14px;
         font-weight:bold;
-        color:#374151;
-        margin-bottom:5px;
+        color:#6b7280;
+        margin-bottom:6px;
     }
 
     .value{
-        font-size:18px;
-    }
-
-    .back{
-        display:inline-block;
-        margin-bottom:20px;
-        text-decoration:none;
+        font-size:17px;
         color:#111827;
-    }
-
-    .btn{
-        display:inline-block;
-        background:#111827;
-        color:white;
-        padding:12px 18px;
-        border-radius:8px;
-        text-decoration:none;
-        margin-right:10px;
-        margin-bottom:20px;
-    }
-
-    .btn-small{
-        display:inline-block;
-        background:#111827;
-        color:white;
-        padding:8px 12px;
-        border-radius:6px;
-        text-decoration:none;
-        margin-top:8px;
-        font-size:14px;
-    }
-
-    .delete-link{
-        display:inline-block;
-        background:#991b1b;
-        color:white;
-        padding:12px 18px;
-        border-radius:8px;
-        text-decoration:none;
-        margin-bottom:20px;
-    }
-
-    .doc-delete{
-        color:#991b1b;
-        margin-left:10px;
-        text-decoration:none;
         font-weight:bold;
     }
 
     .badge{
-        display:inline-block;
-        background:#f3f4f6;
-        color:#111827;
-        padding:4px 8px;
-        border-radius:6px;
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:7px 12px;
+        border-radius:999px;
         font-size:14px;
+        font-weight:bold;
+        white-space:nowrap;
+        background:#f3f4f6;
+        color:#374151;
         margin-right:8px;
+        margin-bottom:8px;
     }
 
     .ok{
-        color:#16a34a;
-        font-weight:bold;
+        background:#dcfce7;
+        color:#166534;
     }
 
     .warn{
-        color:#ca8a04;
+        background:#fef3c7;
+        color:#92400e;
+    }
+
+    .type{
+        background:#eef2ff;
+        color:#3730a3;
+    }
+
+    .money{
+        background:#dcfce7;
+        color:#166534;
+    }
+
+    .action-btn{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:8px 12px;
+        border-radius:8px;
+        text-decoration:none;
+        font-size:14px;
         font-weight:bold;
+        color:white;
+        white-space:nowrap;
+        background:#2563eb;
+        margin-top:8px;
+    }
+
+    .action-btn:hover{
+        background:#1d4ed8;
+    }
+
+    .delete-small{
+        background:#dc2626;
+    }
+
+    .delete-small:hover{
+        background:#b91c1c;
+    }
+
+    .item{
+        padding:16px 0;
+        border-bottom:1px solid #e5e7eb;
+    }
+
+    .item:last-child{
+        border-bottom:none;
+    }
+
+    .item-title{
+        font-weight:bold;
+        color:#111827;
+        margin-bottom:8px;
+        font-size:17px;
+    }
+
+    .muted{
+        color:#6b7280;
+        font-size:14px;
+    }
+
+    .timeline{
+        border-left:4px solid #2563eb;
+        padding-left:16px;
+        margin-bottom:24px;
+    }
+
+    .timeline-title{
+        font-weight:bold;
+        font-size:17px;
+        color:#111827;
+    }
+
+    .timeline-text{
+        color:#374151;
+        margin-top:6px;
+    }
+
+    .timeline-date{
+        margin-top:8px;
+        font-size:14px;
+        color:#6b7280;
+    }
+
+    @media(max-width:900px){
+        .grid{
+            grid-template-columns:1fr;
+        }
     }
 </style>
 
-<a class="back" href="/pratiche/">
-    ← Torna alle pratiche
-</a>
+<div class="page-actions">
 
-<br>
+    <a class="btn" href="/pratiche/">
+        <i class="fa-solid fa-arrow-left"></i>
+        Torna alle pratiche
+    </a>
 
-<a class="btn" href="/workflow/pratica/{{ pratica.id }}/attiva/">
-    Attiva workflow
-</a>
+    <a class="btn" href="/workflow/pratica/{{ pratica.id }}/attiva/">
+        <i class="fa-solid fa-diagram-project"></i>
+        Attiva workflow
+    </a>
 
-<a class="btn" href="/pratiche/{{ pratica.id }}/modifica/">
-    Modifica pratica
-</a>
+    <a class="btn" href="/pratiche/{{ pratica.id }}/modifica/">
+        <i class="fa-solid fa-pen"></i>
+        Modifica pratica
+    </a>
 
-<a class="btn" href="/pratiche/{{ pratica.id }}/pdf/">
-    Esporta PDF
-</a>
+    <a class="btn" href="/pratiche/{{ pratica.id }}/pdf/">
+        <i class="fa-solid fa-file-pdf"></i>
+        Esporta PDF
+    </a>
 
-<a class="delete-link" href="/pratiche/{{ pratica.id }}/elimina/">
-    Elimina pratica
-</a>
+    <a class="btn danger-btn" href="/pratiche/{{ pratica.id }}/elimina/">
+        <i class="fa-solid fa-trash"></i>
+        Elimina pratica
+    </a>
+
+</div>
 
 <div class="card">
 
-    <h2>Dati pratica</h2>
+    <h2>
+        <i class="fa-solid fa-folder-open"></i>
+        Dati pratica
+    </h2>
 
-    <br>
+    <div class="grid">
 
-    <div class="row">
-        <div class="label">Tipo pratica</div>
-        <div class="value">{{ pratica.tipo_pratica }}</div>
-    </div>
+        <div class="row">
+            <div class="label">Tipo pratica</div>
+            <div class="value">
+                <span class="badge type">
+                    <i class="fa-solid fa-tag"></i>
+                    {{ pratica.tipo_pratica }}
+                </span>
+            </div>
+        </div>
 
-    <div class="row">
-        <div class="label">Oggetto</div>
-        <div class="value">{{ pratica.oggetto }}</div>
-    </div>
+        <div class="row">
+            <div class="label">Stato pratica</div>
+            <div class="value">{{ pratica.get_stato_display }}</div>
+        </div>
 
-    <div class="row">
-        <div class="label">Cliente</div>
-        <div class="value">{{ pratica.cliente }}</div>
-    </div>
+        <div class="row">
+            <div class="label">Oggetto</div>
+            <div class="value">{{ pratica.oggetto }}</div>
+        </div>
 
-    <div class="row">
-        <div class="label">Immobile</div>
-        <div class="value">{{ pratica.immobile }}</div>
-    </div>
+        <div class="row">
+            <div class="label">Cliente</div>
+            <div class="value">{{ pratica.cliente|default:"-" }}</div>
+        </div>
 
-    <div class="row">
-        <div class="label">Comune</div>
-        <div class="value">{{ pratica.comune }}</div>
-    </div>
+        <div class="row">
+            <div class="label">Immobile</div>
+            <div class="value">{{ pratica.immobile|default:"-" }}</div>
+        </div>
 
-    <div class="row">
-        <div class="label">Stato pratica</div>
-        <div class="value">{{ pratica.get_stato_display }}</div>
-    </div>
+        <div class="row">
+            <div class="label">Comune</div>
+            <div class="value">{{ pratica.comune|default:"-" }}</div>
+        </div>
 
-    <div class="row">
-        <div class="label">Protocollo</div>
-        <div class="value">{{ pratica.protocollo }}</div>
-    </div>
+        <div class="row">
+            <div class="label">Protocollo</div>
+            <div class="value">{{ pratica.protocollo|default:"-" }}</div>
+        </div>
 
-    <div class="row">
-        <div class="label">Data incarico</div>
-        <div class="value">{{ pratica.data_incarico }}</div>
-    </div>
+        <div class="row">
+            <div class="label">Compenso</div>
+            <div class="value">
+                <span class="badge money">
+                    <i class="fa-solid fa-euro-sign"></i>
+                    {{ pratica.compenso|default:"-" }}
+                </span>
+            </div>
+        </div>
 
-    <div class="row">
-        <div class="label">Data deposito</div>
-        <div class="value">{{ pratica.data_deposito }}</div>
-    </div>
+        <div class="row">
+            <div class="label">Data incarico</div>
+            <div class="value">{{ pratica.data_incarico|default:"-" }}</div>
+        </div>
 
-    <div class="row">
-        <div class="label">Scadenza</div>
-        <div class="value">{{ pratica.scadenza }}</div>
-    </div>
+        <div class="row">
+            <div class="label">Data deposito</div>
+            <div class="value">{{ pratica.data_deposito|default:"-" }}</div>
+        </div>
 
-    <div class="row">
-        <div class="label">Compenso</div>
-        <div class="value">{{ pratica.compenso }}</div>
-    </div>
+        <div class="row">
+            <div class="label">Scadenza</div>
+            <div class="value">{{ pratica.scadenza|default:"-" }}</div>
+        </div>
 
-    <div class="row">
-        <div class="label">Note</div>
-        <div class="value">{{ pratica.note }}</div>
+        <div class="row">
+            <div class="label">Note</div>
+            <div class="value">{{ pratica.note|default:"-" }}</div>
+        </div>
+
     </div>
 
 </div>
 
 <div class="card">
 
-    <h2>Workflow pratica</h2>
-
-    <br>
+    <h2>
+        <i class="fa-solid fa-diagram-project"></i>
+        Workflow pratica
+    </h2>
 
     {% if workflow_pratica and workflow_pratica.workflow %}
 
-        <div class="row">
-            <div class="label">Procedimento attivo</div>
-            <div class="value">
+        <div class="item">
+            <div class="item-title">Procedimento attivo</div>
+            <span class="badge type">
+                <i class="fa-solid fa-folder-tree"></i>
                 {{ workflow_pratica.workflow.nome }}
-            </div>
+            </span>
         </div>
 
         <h3>Fasi operative</h3>
 
-        <br>
-
         {% for fase in workflow_pratica.fasi_pratica.all %}
 
-            <div class="row">
-
-                <div class="label">
+            <div class="item">
+                <div class="item-title">
                     {{ fase.ordine }}. {{ fase.titolo }}
                 </div>
 
-                <div class="value">
+                {% if fase.completata %}
+                    <span class="badge ok">
+                        <i class="fa-solid fa-circle-check"></i>
+                        Completata
+                    </span>
+                {% else %}
+                    <span class="badge warn">
+                        <i class="fa-solid fa-circle-dot"></i>
+                        Da completare
+                    </span>
+                {% endif %}
 
+                {% if fase.data_scadenza %}
+                    <span class="badge">
+                        <i class="fa-solid fa-calendar"></i>
+                        {{ fase.data_scadenza }}
+                    </span>
+                {% endif %}
+
+                <br>
+
+                <a class="action-btn" href="/workflow/fase/{{ fase.id }}/toggle/">
                     {% if fase.completata %}
-
-    <span class="ok">
-        <i class="fa-solid fa-circle-check"></i>
-        Completata
-    </span>
-
-    {% else %}
-
-        <span class="warn">
-            <i class="fa-solid fa-circle-dot"></i>
-            Da completare
-        </span>
-
-    {% endif %}
-
-                    {% if fase.data_scadenza %}
-                        <br>
-                        Scadenza: {{ fase.data_scadenza }}
+                        <i class="fa-solid fa-rotate-left"></i>
+                        Segna NON completata
+                    {% else %}
+                        <i class="fa-solid fa-check"></i>
+                        Segna completata
                     {% endif %}
-
-                    <br>
-
-                    <a class="btn-small" href="/workflow/fase/{{ fase.id }}/toggle/">
-                        {% if fase.completata %}
-                            Segna come NON completata
-                        {% else %}
-                            Segna completata
-                        {% endif %}
-                    </a>
-
-                </div>
-
+                </a>
             </div>
 
         {% empty %}
 
-            <p>Nessuna fase generata.</p>
+            <p class="muted">Nessuna fase generata.</p>
 
         {% endfor %}
-
-        <br>
 
         <h3>Checklist documenti / attività</h3>
 
-        <br>
-
         {% for voce in workflow_pratica.checklist_pratica.all %}
 
-            <div class="row">
-
-                <div class="label">
+            <div class="item">
+                <div class="item-title">
                     {{ voce.voce }}
                 </div>
 
-                <div class="value">
+                {% if voce.completato %}
+                    <span class="badge ok">
+                        <i class="fa-solid fa-circle-check"></i>
+                        Completato
+                    </span>
+                {% else %}
+                    <span class="badge warn">
+                        <i class="fa-regular fa-clipboard"></i>
+                        Da completare
+                    </span>
+                {% endif %}
 
-                    {% if voce.completato %}
-                        <span class="ok">✅ Completato</span>
-                    {% else %}
-                        <span class="warn">📋 Da completare</span>
-                    {% endif %}
-
-                    {% if voce.obbligatorio %}
-                        <br>
+                {% if voce.obbligatorio %}
+                    <span class="badge">
+                        <i class="fa-solid fa-circle-exclamation"></i>
                         Obbligatorio
-                    {% else %}
-                        <br>
+                    </span>
+                {% else %}
+                    <span class="badge">
+                        <i class="fa-regular fa-circle"></i>
                         Facoltativo
+                    </span>
+                {% endif %}
+
+                <br>
+
+                <a class="action-btn" href="/workflow/checklist/{{ voce.id }}/toggle/">
+                    {% if voce.completato %}
+                        <i class="fa-solid fa-rotate-left"></i>
+                        Segna NON completato
+                    {% else %}
+                        <i class="fa-solid fa-check"></i>
+                        Segna completato
                     {% endif %}
-
-                    <br>
-
-                    <a class="btn-small" href="/workflow/checklist/{{ voce.id }}/toggle/">
-                        {% if voce.completato %}
-                            Segna NON completato
-                        {% else %}
-                            Segna completato
-                        {% endif %}
-                    </a>
-
-                </div>
-
+                </a>
             </div>
 
         {% empty %}
 
-            <p>Nessuna checklist generata.</p>
+            <p class="muted">Nessuna checklist generata.</p>
 
         {% endfor %}
 
     {% else %}
 
-        <p>Nessun workflow attivato per questa pratica.</p>
+        <p class="muted">Nessun workflow attivato per questa pratica.</p>
 
         <a class="btn" href="/workflow/pratica/{{ pratica.id }}/attiva/">
+            <i class="fa-solid fa-diagram-project"></i>
             Attiva workflow
         </a>
 
@@ -331,45 +436,54 @@ Scheda pratica
 
 <div class="card">
 
-    <h2>Documenti</h2>
+    <h2>
+        <i class="fa-solid fa-file-lines"></i>
+        Documenti
+    </h2>
 
-    <br>
+    <div class="page-actions">
 
-    <a class="btn" href="/documenti/pratica/{{ pratica.id }}/carica/">
-        + Carica documento
-    </a>
+        <a class="btn" href="/documenti/pratica/{{ pratica.id }}/carica/">
+            <i class="fa-solid fa-upload"></i>
+            Carica documento
+        </a>
 
-    <a class="btn" href="/documenti/pratica/{{ pratica.id }}/carica-multipli/">
-        + Carica multipli
-    </a>
+        <a class="btn" href="/documenti/pratica/{{ pratica.id }}/carica-multipli/">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            Carica multipli
+        </a>
 
-    <br><br>
+    </div>
 
     {% for documento in documenti %}
 
-        <div class="row">
-
-            <div class="label">
+        <div class="item">
+            <div class="item-title">
+                <i class="fa-solid fa-file"></i>
                 {{ documento.titolo }}
             </div>
 
-            <div class="value">
+            <span class="badge type">
+                <i class="fa-solid fa-tag"></i>
                 {{ documento.tipo_documento }}
-                -
-                <a href="{{ documento.file.url }}" target="_blank">
-                    Apri file
-                </a>
+            </span>
 
-                <a class="doc-delete" href="/documenti/{{ documento.id }}/elimina/">
-                    Elimina
-                </a>
-            </div>
+            <br>
 
+            <a class="action-btn" href="{{ documento.file.url }}" target="_blank">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                Apri file
+            </a>
+
+            <a class="action-btn delete-small" href="/documenti/{{ documento.id }}/elimina/">
+                <i class="fa-solid fa-trash"></i>
+                Elimina
+            </a>
         </div>
 
     {% empty %}
 
-        <p>Nessun documento caricato.</p>
+        <p class="muted">Nessun documento caricato.</p>
 
     {% endfor %}
 
@@ -377,62 +491,52 @@ Scheda pratica
 
 <div class="card">
 
-    <h2>Parcelle / Preventivi / Fatture</h2>
-
-    <br>
+    <h2>
+        <i class="fa-solid fa-euro-sign"></i>
+        Parcelle / Preventivi / Fatture
+    </h2>
 
     {% for parcella in parcelle %}
 
-        <div class="row">
+        <div class="item">
 
-            <div class="label">
+            <div class="item-title">
                 {% if parcella.numero_documento %}
                     {{ parcella.numero_documento }}
                 {% else %}
                     Documento non numerato
                 {% endif %}
-                -
-                {{ parcella.descrizione }}
+                - {{ parcella.descrizione }}
             </div>
 
-            <div class="value">
+            <span class="badge type">
+                {{ parcella.get_tipo_documento_display }}
+            </span>
 
-                <span class="badge">
-                    {{ parcella.get_tipo_documento_display }}
-                </span>
+            <span class="badge">
+                {{ parcella.get_stato_display }}
+            </span>
 
-                <span class="badge">
-                    {{ parcella.get_stato_display }}
-                </span>
+            <span class="badge money">
+                Importo: € {{ parcella.importo }}
+            </span>
 
-                <br><br>
+            <span class="badge ok">
+                Pagato: € {{ parcella.importo_pagato }}
+            </span>
 
-                Importo:
-                € {{ parcella.importo }}
+            <br>
 
-                -
-
-                Pagato:
-                € {{ parcella.importo_pagato }}
-
-                -
-
-                IVA:
-                {{ parcella.iva }}%
-
-                <br>
-
-                <a class="btn-small" href="{% url 'pdf_parcella' parcella.id %}" target="_blank">
-                    PDF documento
-                </a>
-
-            </div>
+            <a class="action-btn" href="{% url 'pdf_parcella' parcella.id %}" target="_blank">
+                <i class="fa-solid fa-file-pdf"></i>
+                PDF documento
+            </a>
 
         </div>
 
     {% empty %}
 
-        <p>Nessuna parcella collegata.</p>
+        <p class="muted">Nessuna parcella collegata.</p>
 
     {% endfor %}
 
@@ -440,38 +544,24 @@ Scheda pratica
 
 <div class="card">
 
-    <h2>Timeline attività</h2>
-
-    <br>
+    <h2>
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        Timeline attività
+    </h2>
 
     {% for a in attivita %}
 
-        <div style="
-            border-left:4px solid #2563eb;
-            padding-left:15px;
-            margin-bottom:25px;
-        ">
+        <div class="timeline">
 
-            <div style="
-                font-weight:bold;
-                font-size:18px;
-                color:#111827;
-            ">
+            <div class="timeline-title">
                 {{ a.get_tipo_display }}
             </div>
 
-            <div style="
-                color:#374151;
-                margin-top:6px;
-            ">
+            <div class="timeline-text">
                 {{ a.descrizione }}
             </div>
 
-            <div style="
-                margin-top:8px;
-                font-size:14px;
-                color:#6b7280;
-            ">
+            <div class="timeline-date">
                 {{ a.data }}
                 {% if a.utente %}
                     - {{ a.utente }}
@@ -482,7 +572,7 @@ Scheda pratica
 
     {% empty %}
 
-        <p>Nessuna attività registrata.</p>
+        <p class="muted">Nessuna attività registrata.</p>
 
     {% endfor %}
 

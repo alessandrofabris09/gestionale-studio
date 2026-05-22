@@ -5,7 +5,7 @@ Immobili
 {% endblock %}
 
 {% block page_title %}
-Immobili
+Archivio immobili
 {% endblock %}
 
 {% block content %}
@@ -13,67 +13,141 @@ Immobili
 <style>
     .top-actions{
         display:flex;
-        justify-content:space-between;
+        align-items:center;
+        gap:16px;
         margin-bottom:25px;
-        gap:20px;
+        flex-wrap:wrap;
     }
 
     .btn{
-        display:inline-block;
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
         background:#111827;
         color:white;
         padding:12px 18px;
-        border-radius:8px;
+        border-radius:10px;
         text-decoration:none;
+        font-weight:bold;
+        font-size:15px;
+    }
+
+    .btn:hover{
+        background:#374151;
     }
 
     .search{
         flex:1;
+        min-width:280px;
     }
 
     .search input{
         width:100%;
-        padding:12px;
+        padding:13px 15px;
         border:1px solid #d1d5db;
-        border-radius:8px;
+        border-radius:10px;
+        font-size:15px;
+        background:white;
+    }
+
+    .table-card{
+        background:white;
+        border-radius:18px;
+        overflow:hidden;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
     }
 
     table{
         width:100%;
         border-collapse:collapse;
-        background:white;
-        border-radius:12px;
-        overflow:hidden;
-        box-shadow:0 2px 10px rgba(0,0,0,0.08);
     }
 
     th{
         background:#111827;
         color:white;
-        padding:15px;
+        padding:18px 20px;
         text-align:left;
+        font-size:16px;
     }
 
     td{
-        padding:15px;
-        border-bottom:1px solid #eee;
+        padding:18px 20px;
+        border-bottom:1px solid #e5e7eb;
+        vertical-align:middle;
+        font-size:16px;
+    }
+
+    tr:last-child td{
+        border-bottom:none;
     }
 
     tr:hover{
         background:#f9fafb;
     }
 
-    .link{
-        color:#111827;
+    .property-link{
+        color:#2563eb;
         font-weight:bold;
         text-decoration:none;
+    }
+
+    .property-link:hover{
+        text-decoration:underline;
+    }
+
+    .badge{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:7px 12px;
+        border-radius:999px;
+        font-size:14px;
+        font-weight:bold;
+        white-space:nowrap;
+    }
+
+    .address-badge{
+        background:#eef2ff;
+        color:#3730a3;
+    }
+
+    .client-badge{
+        background:#dcfce7;
+        color:#166534;
+    }
+
+    .catasto-badge{
+        background:#f3f4f6;
+        color:#374151;
+    }
+
+    .muted{
+        color:#6b7280;
+    }
+
+    .empty-row{
+        text-align:center;
+        color:#6b7280;
+        padding:35px;
+        font-size:17px;
+    }
+
+    @media(max-width:900px){
+        .table-card{
+            overflow-x:auto;
+        }
+
+        table{
+            min-width:950px;
+        }
     }
 </style>
 
 <div class="top-actions">
 
     <a class="btn" href="/immobili/nuovo/">
-        + Nuovo immobile
+        <i class="fa-solid fa-plus"></i>
+        Nuovo immobile
     </a>
 
     <form class="search" method="get">
@@ -87,47 +161,105 @@ Immobili
 
 </div>
 
-<table>
+<div class="table-card">
 
-    <thead>
-        <tr>
-            <th>Comune</th>
-            <th>Indirizzo</th>
-            <th>Cliente</th>
-            <th>Foglio</th>
-            <th>Mappale</th>
-            <th>Sub.</th>
-        </tr>
-    </thead>
+    <table>
 
-    <tbody>
+        <thead>
+            <tr>
+                <th>Comune</th>
+                <th>Indirizzo</th>
+                <th>Cliente</th>
+                <th>Foglio</th>
+                <th>Mappale</th>
+                <th>Sub.</th>
+            </tr>
+        </thead>
 
-        {% for immobile in immobili %}
+        <tbody>
 
-        <tr>
-            <td>
-                <a class="link" href="/immobili/{{ immobile.id }}/">
-                    {{ immobile.comune }}
-                </a>
-            </td>
+            {% for immobile in immobili %}
 
-            <td>{{ immobile.indirizzo }}</td>
-            <td>{{ immobile.cliente }}</td>
-            <td>{{ immobile.foglio }}</td>
-            <td>{{ immobile.mappale }}</td>
-            <td>{{ immobile.subalterno }}</td>
-        </tr>
+                <tr>
 
-        {% empty %}
+                    <td>
+                        <a class="property-link" href="/immobili/{{ immobile.id }}/">
+                            <i class="fa-solid fa-location-dot"></i>
+                            {{ immobile.comune }}
+                        </a>
+                    </td>
 
-        <tr>
-            <td colspan="6">Nessun immobile presente</td>
-        </tr>
+                    <td>
+                        {% if immobile.indirizzo %}
+                            <span class="badge address-badge">
+                                <i class="fa-solid fa-road"></i>
+                                {{ immobile.indirizzo }}
+                            </span>
+                        {% else %}
+                            <span class="muted">-</span>
+                        {% endif %}
+                    </td>
 
-        {% endfor %}
+                    <td>
+                        {% if immobile.cliente %}
+                            <span class="badge client-badge">
+                                <i class="fa-solid fa-user"></i>
+                                {{ immobile.cliente }}
+                            </span>
+                        {% else %}
+                            <span class="muted">-</span>
+                        {% endif %}
+                    </td>
 
-    </tbody>
+                    <td>
+                        {% if immobile.foglio %}
+                            <span class="badge catasto-badge">
+                                <i class="fa-solid fa-map"></i>
+                                Fg. {{ immobile.foglio }}
+                            </span>
+                        {% else %}
+                            <span class="muted">-</span>
+                        {% endif %}
+                    </td>
 
-</table>
+                    <td>
+                        {% if immobile.mappale %}
+                            <span class="badge catasto-badge">
+                                <i class="fa-solid fa-vector-square"></i>
+                                Map. {{ immobile.mappale }}
+                            </span>
+                        {% else %}
+                            <span class="muted">-</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if immobile.subalterno %}
+                            <span class="badge catasto-badge">
+                                <i class="fa-solid fa-layer-group"></i>
+                                Sub. {{ immobile.subalterno }}
+                            </span>
+                        {% else %}
+                            <span class="muted">-</span>
+                        {% endif %}
+                    </td>
+
+                </tr>
+
+            {% empty %}
+
+                <tr>
+                    <td colspan="6" class="empty-row">
+                        Nessun immobile presente.
+                    </td>
+                </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
 
 {% endblock %}

@@ -39,7 +39,8 @@ def agenda_oggi(request):
     oggi = date.today()
 
     eventi = EventoAgenda.objects.filter(
-        data=oggi
+        data=oggi,
+        completato=False
     ).order_by(
         'ora_inizio'
     )
@@ -134,12 +135,27 @@ def elimina_evento(request, evento_id):
     )
 
 
+@login_required
+def completa_evento(request, evento_id):
+
+    evento = get_object_or_404(
+        EventoAgenda,
+        id=evento_id
+    )
+
+    evento.completato = True
+    evento.save()
+
+    return redirect('lista_agenda')
+
+
 def invia_email_agenda_giornaliera():
 
     oggi = now().date()
 
     eventi = EventoAgenda.objects.filter(
-        data=oggi
+        data=oggi,
+        completato=False
     ).order_by(
         'ora_inizio'
     )
@@ -159,25 +175,15 @@ def invia_email_agenda_giornaliera():
         righe.append(
             f"""
             <tr>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
-                    {ora}
-                </td>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">{ora}</td>
                 <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
                     <strong>{evento.titolo}</strong><br>
                     <span style="color:#6b7280;">{descrizione}</span>
                 </td>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
-                    {evento.get_tipo_display()}
-                </td>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
-                    {evento.get_priorita_display()}
-                </td>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
-                    {cliente}
-                </td>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
-                    {pratica}
-                </td>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">{evento.get_tipo_display()}</td>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">{evento.get_priorita_display()}</td>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">{cliente}</td>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">{pratica}</td>
             </tr>
             """
         )
@@ -187,9 +193,7 @@ def invia_email_agenda_giornaliera():
 
         <h2>Agenda operativa di oggi</h2>
 
-        <p>
-            Di seguito gli eventi programmati per oggi.
-        </p>
+        <p>Di seguito gli eventi programmati per oggi.</p>
 
         <table style="border-collapse:collapse;width:100%;margin-top:20px;">
             <thead>
@@ -250,18 +254,6 @@ def invia_agenda_email(request):
         }
     )
 
-@login_required
-def completa_evento(request, evento_id):
-
-    evento = get_object_or_404(
-        EventoAgenda,
-        id=evento_id
-    )
-
-    evento.completato = True
-    evento.save()
-
-    return redirect('lista_agenda')
 
 def invia_agenda_email_cron(request, codice):
 
@@ -287,7 +279,7 @@ def calendario_ics(request, codice):
 
     if codice != 'AGENDAICS1234':
         return redirect('/')
-        
+
     calendario = Calendar()
 
     calendario.add('prodid', '-//Gestionale Studio Tecnico//Agenda Operativa//IT')
@@ -296,8 +288,11 @@ def calendario_ics(request, codice):
     calendario.add('method', 'PUBLISH')
 
     eventi = EventoAgenda.objects.filter(
-    completato=False
-    ).order_by('data', 'ora_inizio')
+        completato=False
+    ).order_by(
+        'data',
+        'ora_inizio'
+    )
 
     for evento_agenda in eventi:
 
@@ -307,17 +302,17 @@ def calendario_ics(request, codice):
 
         descrizione = ''
 
-        descrizione += f'Tipo: {evento_agenda.get_tipo_display()}\\n'
-        descrizione += f'Priorità: {evento_agenda.get_priorita_display()}\\n'
+        descrizione += f'Tipo: {evento_agenda.get_tipo_display()}\n'
+        descrizione += f'Priorità: {evento_agenda.get_priorita_display()}\n'
 
         if evento_agenda.cliente:
-            descrizione += f'Cliente: {evento_agenda.cliente}\\n'
+            descrizione += f'Cliente: {evento_agenda.cliente}\n'
 
         if evento_agenda.pratica:
-            descrizione += f'Pratica: {evento_agenda.pratica}\\n'
+            descrizione += f'Pratica: {evento_agenda.pratica}\n'
 
         if evento_agenda.descrizione:
-            descrizione += f'Note: {evento_agenda.descrizione}\\n'
+            descrizione += f'Note: {evento_agenda.descrizione}\n'
 
         evento.add('description', descrizione)
 

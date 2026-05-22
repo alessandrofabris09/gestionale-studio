@@ -1,50 +1,363 @@
 {% extends 'base/base.html' %}
 
-{% block title %}Immobile{% endblock %}
-{% block page_title %}Scheda immobile{% endblock %}
+{% block title %}
+Immobile
+{% endblock %}
+
+{% block page_title %}
+Scheda immobile
+{% endblock %}
 
 {% block content %}
 
 <style>
-    .card{background:white;padding:30px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.08);margin-bottom:30px;}
-    .row{margin-bottom:20px;}
-    .label{font-weight:bold;color:#6b7280;margin-bottom:5px;}
-    .value{font-size:18px;}
-    .btn{display:inline-block;background:#111827;color:white;padding:12px 18px;border-radius:8px;text-decoration:none;margin-right:10px;margin-bottom:20px;}
-    .btn-delete{background:#991b1b;}
-    .pratica{padding:15px;border-bottom:1px solid #eee;}
-    .pratica a{color:#111827;font-weight:bold;text-decoration:none;}
+    .page-actions{
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;
+        margin-bottom:25px;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:10px;
+        text-decoration:none;
+        font-weight:bold;
+        font-size:15px;
+    }
+
+    .btn:hover{
+        background:#374151;
+    }
+
+    .danger-btn{
+        background:#dc2626;
+    }
+
+    .danger-btn:hover{
+        background:#b91c1c;
+    }
+
+    .card{
+        background:white;
+        padding:28px;
+        border-radius:18px;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
+        margin-bottom:30px;
+    }
+
+    .card h2{
+        margin-bottom:20px;
+        color:#111827;
+    }
+
+    .grid{
+        display:grid;
+        grid-template-columns:repeat(2, 1fr);
+        gap:18px;
+    }
+
+    .row{
+        border-bottom:1px solid #e5e7eb;
+        padding-bottom:14px;
+    }
+
+    .label{
+        font-size:14px;
+        font-weight:bold;
+        color:#6b7280;
+        margin-bottom:6px;
+    }
+
+    .value{
+        font-size:17px;
+        color:#111827;
+        font-weight:bold;
+    }
+
+    .badge{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:7px 12px;
+        border-radius:999px;
+        font-size:14px;
+        font-weight:bold;
+        white-space:nowrap;
+        background:#f3f4f6;
+        color:#374151;
+        margin-right:8px;
+        margin-bottom:8px;
+    }
+
+    .client{
+        background:#dcfce7;
+        color:#166534;
+    }
+
+    .address{
+        background:#eef2ff;
+        color:#3730a3;
+    }
+
+    .catasto{
+        background:#f3f4f6;
+        color:#374151;
+    }
+
+    .urbanistica{
+        background:#e0f2fe;
+        color:#075985;
+    }
+
+    .vincoli{
+        background:#fee2e2;
+        color:#991b1b;
+    }
+
+    .practice-item{
+        padding:16px 0;
+        border-bottom:1px solid #e5e7eb;
+    }
+
+    .practice-item:last-child{
+        border-bottom:none;
+    }
+
+    .practice-title{
+        color:#2563eb;
+        font-weight:bold;
+        text-decoration:none;
+        font-size:17px;
+    }
+
+    .practice-title:hover{
+        text-decoration:underline;
+    }
+
+    .muted{
+        color:#6b7280;
+        font-size:14px;
+        margin-top:8px;
+    }
+
+    .status-badge{
+        background:#fef3c7;
+        color:#92400e;
+    }
+
+    @media(max-width:900px){
+        .grid{
+            grid-template-columns:1fr;
+        }
+    }
 </style>
 
-<a class="btn" href="/immobili/{{ immobile.id }}/modifica/">Modifica immobile</a>
-<a class="btn btn-delete" href="/immobili/{{ immobile.id }}/elimina/">Elimina immobile</a>
+<div class="page-actions">
 
-<div class="card">
-    <div class="row"><div class="label">Cliente</div><div class="value">{{ immobile.cliente }}</div></div>
-    <div class="row"><div class="label">Comune</div><div class="value">{{ immobile.comune }}</div></div>
-    <div class="row"><div class="label">Indirizzo</div><div class="value">{{ immobile.indirizzo }}</div></div>
-    <div class="row"><div class="label">Foglio</div><div class="value">{{ immobile.foglio }}</div></div>
-    <div class="row"><div class="label">Mappale</div><div class="value">{{ immobile.mappale }}</div></div>
-    <div class="row"><div class="label">Subalterno</div><div class="value">{{ immobile.subalterno }}</div></div>
-    <div class="row"><div class="label">Categoria catastale</div><div class="value">{{ immobile.categoria_catastale }}</div></div>
-    <div class="row"><div class="label">Zona urbanistica</div><div class="value">{{ immobile.zona_urbanistica }}</div></div>
-    <div class="row"><div class="label">Vincoli</div><div class="value">{{ immobile.vincoli }}</div></div>
-    <div class="row"><div class="label">Note</div><div class="value">{{ immobile.note }}</div></div>
+    <a class="btn" href="/immobili/">
+        <i class="fa-solid fa-arrow-left"></i>
+        Torna agli immobili
+    </a>
+
+    <a class="btn" href="/immobili/{{ immobile.id }}/modifica/">
+        <i class="fa-solid fa-pen"></i>
+        Modifica immobile
+    </a>
+
+    <a class="btn danger-btn" href="/immobili/{{ immobile.id }}/elimina/">
+        <i class="fa-solid fa-trash"></i>
+        Elimina immobile
+    </a>
+
 </div>
 
 <div class="card">
-    <h2>Pratiche collegate</h2>
-    <br>
+
+    <h2>
+        <i class="fa-solid fa-house"></i>
+        Dati immobile
+    </h2>
+
+    <div class="grid">
+
+        <div class="row">
+            <div class="label">Cliente</div>
+            <div class="value">
+                {% if immobile.cliente %}
+                    <span class="badge client">
+                        <i class="fa-solid fa-user"></i>
+                        {{ immobile.cliente }}
+                    </span>
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="label">Comune</div>
+            <div class="value">
+                {% if immobile.comune %}
+                    <span class="badge address">
+                        <i class="fa-solid fa-location-dot"></i>
+                        {{ immobile.comune }}
+                    </span>
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="label">Indirizzo</div>
+            <div class="value">
+                {% if immobile.indirizzo %}
+                    <span class="badge address">
+                        <i class="fa-solid fa-road"></i>
+                        {{ immobile.indirizzo }}
+                    </span>
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="label">Foglio</div>
+            <div class="value">
+                {% if immobile.foglio %}
+                    <span class="badge catasto">
+                        <i class="fa-solid fa-map"></i>
+                        Fg. {{ immobile.foglio }}
+                    </span>
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="label">Mappale</div>
+            <div class="value">
+                {% if immobile.mappale %}
+                    <span class="badge catasto">
+                        <i class="fa-solid fa-vector-square"></i>
+                        Map. {{ immobile.mappale }}
+                    </span>
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="label">Subalterno</div>
+            <div class="value">
+                {% if immobile.subalterno %}
+                    <span class="badge catasto">
+                        <i class="fa-solid fa-layer-group"></i>
+                        Sub. {{ immobile.subalterno }}
+                    </span>
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="label">Categoria catastale</div>
+            <div class="value">
+                {% if immobile.categoria_catastale %}
+                    <span class="badge catasto">
+                        <i class="fa-solid fa-building"></i>
+                        {{ immobile.categoria_catastale }}
+                    </span>
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="label">Zona urbanistica</div>
+            <div class="value">
+                {% if immobile.zona_urbanistica %}
+                    <span class="badge urbanistica">
+                        <i class="fa-solid fa-city"></i>
+                        {{ immobile.zona_urbanistica }}
+                    </span>
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="label">Vincoli</div>
+            <div class="value">
+                {% if immobile.vincoli %}
+                    <span class="badge vincoli">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        {{ immobile.vincoli }}
+                    </span>
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="label">Note</div>
+            <div class="value">{{ immobile.note|default:"-" }}</div>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card">
+
+    <h2>
+        <i class="fa-solid fa-folder-open"></i>
+        Pratiche collegate
+    </h2>
 
     {% for pratica in pratiche %}
-        <div class="pratica">
-            <a href="/pratiche/{{ pratica.id }}/">{{ pratica.oggetto }}</a>
-            <br>
-            {{ pratica.comune }} - {{ pratica.stato }}
+
+        <div class="practice-item">
+
+            <a class="practice-title" href="/pratiche/{{ pratica.id }}/">
+                <i class="fa-solid fa-folder"></i>
+                {{ pratica.oggetto }}
+            </a>
+
+            <div class="muted">
+                {% if pratica.comune %}
+                    <i class="fa-solid fa-location-dot"></i>
+                    {{ pratica.comune }}
+                {% endif %}
+
+                {% if pratica.stato %}
+                    <span class="badge status-badge">
+                        {{ pratica.get_stato_display }}
+                    </span>
+                {% endif %}
+            </div>
+
         </div>
+
     {% empty %}
-        <p>Nessuna pratica collegata.</p>
+
+        <p class="muted">Nessuna pratica collegata.</p>
+
     {% endfor %}
+
 </div>
 
 {% endblock %}

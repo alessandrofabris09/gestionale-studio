@@ -1,23 +1,331 @@
 {% extends 'base/base.html' %}
 
-{% block title %}Modifica immobile{% endblock %}
-{% block page_title %}Modifica immobile{% endblock %}
+{% block title %}
+Modifica immobile
+{% endblock %}
+
+{% block page_title %}
+Modifica immobile
+{% endblock %}
 
 {% block content %}
 
 <style>
-    form{background:white;padding:30px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.08);max-width:900px;}
-    p{margin-bottom:18px;}
-    label{display:block;font-weight:bold;margin-bottom:6px;}
-    input, select, textarea{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;}
-    button{background:#111827;color:white;border:0;padding:13px 20px;border-radius:8px;cursor:pointer;}
+
+    .page-actions{
+        margin-bottom:25px;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:12px;
+        text-decoration:none;
+        font-weight:bold;
+        font-size:15px;
+        border:0;
+        cursor:pointer;
+        transition:0.2s;
+    }
+
+    .btn:hover{
+        transform:translateY(-1px);
+        background:#1f2937;
+    }
+
+    .save-btn{
+        background:#2563eb;
+    }
+
+    .save-btn:hover{
+        background:#1d4ed8;
+    }
+
+    .cancel-btn{
+        background:#374151;
+    }
+
+    .cancel-btn:hover{
+        background:#1f2937;
+    }
+
+    .form-card{
+        background:white;
+        padding:40px;
+        border-radius:24px;
+        box-shadow:0 10px 30px rgba(0,0,0,0.08);
+        max-width:1200px;
+    }
+
+    .header{
+        margin-bottom:35px;
+    }
+
+    .header h2{
+        font-size:30px;
+        color:#111827;
+        margin-bottom:10px;
+    }
+
+    .subtitle{
+        color:#6b7280;
+        font-size:15px;
+    }
+
+    .badges{
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        margin-top:18px;
+    }
+
+    .badge{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        background:#eef2ff;
+        color:#3730a3;
+        padding:8px 14px;
+        border-radius:999px;
+        font-size:14px;
+        font-weight:bold;
+    }
+
+    .section{
+        margin-bottom:35px;
+    }
+
+    .section-title{
+        font-size:18px;
+        font-weight:bold;
+        margin-bottom:20px;
+        color:#111827;
+        padding-bottom:10px;
+        border-bottom:1px solid #e5e7eb;
+    }
+
+    .form-grid{
+        display:grid;
+        grid-template-columns:repeat(2, 1fr);
+        gap:22px;
+    }
+
+    .full{
+        grid-column:1 / -1;
+    }
+
+    .field label{
+        display:block;
+        font-weight:bold;
+        margin-bottom:8px;
+        color:#374151;
+        font-size:14px;
+    }
+
+    .field input,
+    .field select,
+    .field textarea{
+        width:100%;
+        padding:14px 16px;
+        border:1px solid #d1d5db;
+        border-radius:14px;
+        font-size:15px;
+        transition:0.2s;
+        background:#f9fafb;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus{
+        outline:none;
+        border-color:#2563eb;
+        background:white;
+        box-shadow:0 0 0 4px rgba(37,99,235,0.12);
+    }
+
+    textarea{
+        min-height:140px;
+        resize:vertical;
+    }
+
+    .actions{
+        margin-top:35px;
+        display:flex;
+        gap:14px;
+        flex-wrap:wrap;
+    }
+
+    @media(max-width:900px){
+
+        .form-grid{
+            grid-template-columns:1fr;
+        }
+
+        .form-card{
+            padding:25px;
+        }
+
+    }
+
 </style>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
+<div class="page-actions">
 
-    <button type="submit">Salva modifiche</button>
-</form>
+    <a class="btn" href="/immobili/{{ immobile.id }}/">
+        <i class="fa-solid fa-arrow-left"></i>
+        Torna all'immobile
+    </a>
+
+</div>
+
+<div class="form-card">
+
+    <div class="header">
+
+        <h2>
+            <i class="fa-solid fa-pen"></i>
+            Modifica immobile
+        </h2>
+
+        <div class="subtitle">
+            Aggiorna i dati catastali, urbanistici e descrittivi dell'immobile.
+        </div>
+
+        <div class="badges">
+
+            <span class="badge">
+                <i class="fa-solid fa-hashtag"></i>
+                ID {{ immobile.id }}
+            </span>
+
+            {% if immobile.comune %}
+                <span class="badge">
+                    <i class="fa-solid fa-location-dot"></i>
+                    {{ immobile.comune }}
+                </span>
+            {% endif %}
+
+            {% if immobile.mappale %}
+                <span class="badge">
+                    <i class="fa-solid fa-vector-square"></i>
+                    Map. {{ immobile.mappale }}
+                </span>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        <div class="section">
+
+            <div class="section-title">
+                Dati principali
+            </div>
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <label>Cliente</label>
+                    {{ form.cliente }}
+                </div>
+
+                <div class="field">
+                    <label>Comune</label>
+                    {{ form.comune }}
+                </div>
+
+                <div class="field full">
+                    <label>Indirizzo</label>
+                    {{ form.indirizzo }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="section">
+
+            <div class="section-title">
+                Dati catastali
+            </div>
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <label>Foglio</label>
+                    {{ form.foglio }}
+                </div>
+
+                <div class="field">
+                    <label>Mappale</label>
+                    {{ form.mappale }}
+                </div>
+
+                <div class="field">
+                    <label>Subalterno</label>
+                    {{ form.subalterno }}
+                </div>
+
+                <div class="field">
+                    <label>Categoria catastale</label>
+                    {{ form.categoria_catastale }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="section">
+
+            <div class="section-title">
+                Urbanistica e vincoli
+            </div>
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <label>Zona urbanistica</label>
+                    {{ form.zona_urbanistica }}
+                </div>
+
+                <div class="field">
+                    <label>Vincoli</label>
+                    {{ form.vincoli }}
+                </div>
+
+                <div class="field full">
+                    <label>Note</label>
+                    {{ form.note }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="actions">
+
+            <button class="btn save-btn" type="submit">
+                <i class="fa-solid fa-floppy-disk"></i>
+                Salva modifiche
+            </button>
+
+            <a class="btn cancel-btn" href="/immobili/{{ immobile.id }}/">
+                <i class="fa-solid fa-xmark"></i>
+                Annulla
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
 
 {% endblock %}
