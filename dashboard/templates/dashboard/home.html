@@ -19,6 +19,19 @@ Dashboard gestionale
         gap:24px;
     }
 
+    .hero{
+        background:white;
+        padding:32px;
+        border-radius:24px;
+        box-shadow:0 10px 28px rgba(0,0,0,0.08);
+    }
+
+    .hero h2{
+        font-size:32px;
+        color:#111827;
+        margin-bottom:8px;
+    }
+
     .cards{
         display:grid;
         grid-template-columns:repeat(5,1fr);
@@ -27,11 +40,17 @@ Dashboard gestionale
 
     .card{
         background:white;
-        padding:22px;
-        border-radius:18px;
-        box-shadow:0 8px 22px rgba(0,0,0,0.08);
+        padding:24px;
+        border-radius:22px;
+        box-shadow:0 10px 28px rgba(0,0,0,0.08);
         border-left:6px solid #2563eb;
-        min-height:95px;
+        min-height:110px;
+        transition:.25s;
+    }
+
+    .card:hover{
+        transform:translateY(-4px);
+        box-shadow:0 18px 35px rgba(0,0,0,0.12);
     }
 
     .card.green{border-left-color:#16a34a;}
@@ -42,14 +61,15 @@ Dashboard gestionale
     .card-title{
         color:#6b7280;
         font-size:15px;
-        font-weight:600;
+        font-weight:700;
         margin-bottom:10px;
     }
 
     .number{
-        font-size:30px;
-        font-weight:800;
+        font-size:34px;
+        font-weight:900;
         color:#111827;
+        letter-spacing:-1px;
     }
 
     .grid-2{
@@ -66,19 +86,19 @@ Dashboard gestionale
 
     .section{
         background:white;
-        padding:28px;
-        border-radius:18px;
-        box-shadow:0 8px 22px rgba(0,0,0,0.08);
+        padding:30px;
+        border-radius:24px;
+        box-shadow:0 10px 28px rgba(0,0,0,0.08);
     }
 
     .section h2{
-        margin:0 0 18px 0;
+        margin:0 0 20px 0;
         font-size:22px;
         color:#111827;
     }
 
     .item{
-        padding:14px 0;
+        padding:15px 0;
         border-bottom:1px solid #e5e7eb;
         font-size:15px;
         line-height:1.45;
@@ -90,8 +110,8 @@ Dashboard gestionale
 
     .item a{
         text-decoration:none;
-        color:#111827;
-        font-weight:700;
+        color:#2563eb;
+        font-weight:800;
     }
 
     .muted{
@@ -100,14 +120,16 @@ Dashboard gestionale
     }
 
     .badge{
-        display:inline-block;
-        padding:4px 9px;
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:6px 11px;
         border-radius:999px;
-        font-size:12px;
-        font-weight:700;
+        font-size:13px;
+        font-weight:800;
         background:#eef2ff;
         color:#3730a3;
-        margin-top:6px;
+        margin-top:8px;
     }
 
     .badge-red{
@@ -126,15 +148,23 @@ Dashboard gestionale
     }
 
     .btn{
-        display:inline-block;
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
         background:#111827;
         color:white;
-        padding:11px 15px;
-        border-radius:9px;
+        padding:12px 18px;
+        border-radius:12px;
         text-decoration:none;
         margin-top:18px;
-        font-weight:700;
+        font-weight:800;
         font-size:14px;
+        transition:.2s;
+    }
+
+    .btn:hover{
+        background:#1f2937;
+        transform:translateY(-1px);
     }
 
     .quick-links{
@@ -144,23 +174,27 @@ Dashboard gestionale
     }
 
     .quick-links a{
-        display:block;
-        background:#f3f4f6;
-        border-radius:12px;
-        padding:14px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        background:#f8fafc;
+        border:1px solid #e5e7eb;
+        border-radius:16px;
+        padding:16px;
         text-decoration:none;
         color:#111827;
-        font-weight:700;
+        font-weight:800;
         transition:.2s;
     }
 
     .quick-links a:hover{
         background:#111827;
         color:white;
+        transform:translateY(-2px);
     }
 
     .chart-box{
-        height:290px;
+        height:300px;
     }
 
     @media(max-width:1400px){
@@ -192,6 +226,17 @@ Dashboard gestionale
 </style>
 
 <div class="dashboard-wrapper">
+
+    <div class="hero">
+        <h2>
+            <i class="fa-solid fa-gauge-high"></i>
+            Benvenuto nel gestionale
+        </h2>
+
+        <div class="muted" style="font-size:16px;">
+            Panoramica operativa dello studio tecnico: pratiche, scadenze, agenda, documenti e situazione economica.
+        </div>
+    </div>
 
     <div class="cards">
 
@@ -245,7 +290,10 @@ Dashboard gestionale
     <div class="grid-main">
 
         <div class="section">
-            <h2>Agenda di oggi</h2>
+            <h2>
+                <i class="fa-solid fa-calendar-day"></i>
+                Agenda di oggi
+            </h2>
 
             {% for evento in eventi_oggi %}
                 <div class="item">
@@ -266,15 +314,17 @@ Dashboard gestionale
 
                     {% if evento.cliente %}
                         <br>
-                        <span class="muted">
-                            Cliente: {{ evento.cliente }}
+                        <span class="badge badge-green">
+                            <i class="fa-solid fa-user"></i>
+                            {{ evento.cliente }}
                         </span>
                     {% endif %}
 
                     {% if evento.pratica %}
                         <br>
-                        <span class="muted">
-                            Pratica: {{ evento.pratica }}
+                        <span class="badge">
+                            <i class="fa-solid fa-folder-open"></i>
+                            {{ evento.pratica }}
                         </span>
                     {% endif %}
                 </div>
@@ -285,18 +335,23 @@ Dashboard gestionale
             {% endfor %}
 
             <a class="btn" href="/agenda/oggi/">
+                <i class="fa-solid fa-arrow-right"></i>
                 Apri agenda di oggi
             </a>
         </div>
 
         <div class="section">
-            <h2>Prossime scadenze</h2>
+            <h2>
+                <i class="fa-solid fa-clock"></i>
+                Prossime scadenze
+            </h2>
 
             {% for scadenza in ultime_scadenze %}
                 <div class="item">
                     <strong>{{ scadenza.titolo }}</strong>
                     <br>
-                    <span class="muted">
+                    <span class="badge badge-red">
+                        <i class="fa-solid fa-calendar"></i>
                         {{ scadenza.data_scadenza }}
                     </span>
                 </div>
@@ -307,6 +362,7 @@ Dashboard gestionale
             {% endfor %}
 
             <a class="btn" href="/scadenze/">
+                <i class="fa-solid fa-arrow-right"></i>
                 Apri scadenze
             </a>
         </div>
@@ -316,7 +372,10 @@ Dashboard gestionale
     <div class="grid-2">
 
         <div class="section">
-            <h2>Ultime pratiche</h2>
+            <h2>
+                <i class="fa-solid fa-folder-open"></i>
+                Ultime pratiche
+            </h2>
 
             {% for pratica in ultime_pratiche %}
                 <div class="item">
@@ -324,7 +383,8 @@ Dashboard gestionale
                         {{ pratica.oggetto }}
                     </a>
                     <br>
-                    <span class="muted">
+                    <span class="badge">
+                        <i class="fa-solid fa-user"></i>
                         {{ pratica.cliente }}
                     </span>
                 </div>
@@ -335,12 +395,16 @@ Dashboard gestionale
             {% endfor %}
 
             <a class="btn" href="/pratiche/">
+                <i class="fa-solid fa-arrow-right"></i>
                 Apri pratiche
             </a>
         </div>
 
         <div class="section">
-            <h2>Ultime parcelle / fatture</h2>
+            <h2>
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                Ultime parcelle / fatture
+            </h2>
 
             {% for parcella in ultime_parcelle %}
                 <div class="item">
@@ -360,9 +424,13 @@ Dashboard gestionale
 
                     <br>
 
-                    € {{ parcella.importo }}
-                    -
-                    {{ parcella.get_stato_display }}
+                    <span class="badge badge-green">
+                        € {{ parcella.importo }}
+                    </span>
+
+                    <span class="badge badge-yellow">
+                        {{ parcella.get_stato_display }}
+                    </span>
                 </div>
             {% empty %}
                 <p class="muted">
@@ -371,6 +439,7 @@ Dashboard gestionale
             {% endfor %}
 
             <a class="btn" href="/parcelle/">
+                <i class="fa-solid fa-arrow-right"></i>
                 Apri parcelle
             </a>
         </div>
@@ -380,7 +449,10 @@ Dashboard gestionale
     <div class="grid-2">
 
         <div class="section">
-            <h2>Riepilogo economico</h2>
+            <h2>
+                <i class="fa-solid fa-chart-line"></i>
+                Riepilogo economico
+            </h2>
 
             <div class="item">
                 <strong>Totale fatturato:</strong>
@@ -404,15 +476,18 @@ Dashboard gestionale
         </div>
 
         <div class="section">
-            <h2>Collegamenti rapidi</h2>
+            <h2>
+                <i class="fa-solid fa-bolt"></i>
+                Collegamenti rapidi
+            </h2>
 
             <div class="quick-links">
-                <a href="/agenda/">Agenda operativa</a>
-                <a href="/pratiche/">Pratiche</a>
-                <a href="/scadenze/">Scadenze</a>
-                <a href="/parcelle/">Parcelle / Fatture</a>
-                <a href="/documenti/">Documenti</a>
-                <a href="/backups/">Backup database</a>
+                <a href="/agenda/">Agenda operativa <i class="fa-solid fa-arrow-right"></i></a>
+                <a href="/pratiche/">Pratiche <i class="fa-solid fa-arrow-right"></i></a>
+                <a href="/scadenze/">Scadenze <i class="fa-solid fa-arrow-right"></i></a>
+                <a href="/parcelle/">Parcelle / Fatture <i class="fa-solid fa-arrow-right"></i></a>
+                <a href="/documenti/">Documenti <i class="fa-solid fa-arrow-right"></i></a>
+                <a href="/backups/">Backup database <i class="fa-solid fa-arrow-right"></i></a>
             </div>
         </div>
 
@@ -421,14 +496,20 @@ Dashboard gestionale
     <div class="grid-2">
 
         <div class="section">
-            <h2>Stato pratiche</h2>
+            <h2>
+                <i class="fa-solid fa-chart-pie"></i>
+                Stato pratiche
+            </h2>
             <div class="chart-box">
                 <canvas id="graficoPratiche"></canvas>
             </div>
         </div>
 
         <div class="section">
-            <h2>Stato parcelle</h2>
+            <h2>
+                <i class="fa-solid fa-chart-column"></i>
+                Stato parcelle
+            </h2>
             <div class="chart-box">
                 <canvas id="graficoParcelle"></canvas>
             </div>

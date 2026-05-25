@@ -12,48 +12,280 @@ Elimina cliente
 
 <style>
 
-    .card{
+    .delete-wrapper{
+        display:flex;
+        justify-content:center;
+        padding:20px 0;
+    }
+
+    .delete-card{
+        width:100%;
+        max-width:760px;
         background:white;
-        padding:30px;
-        border-radius:12px;
-        box-shadow:0 2px 10px rgba(0,0,0,0.08);
-        max-width:700px;
+        border-radius:28px;
+        padding:40px;
+        box-shadow:0 12px 30px rgba(0,0,0,0.10);
+        overflow:hidden;
+        position:relative;
+    }
+
+    .danger-top{
+        position:absolute;
+        top:0;
+        left:0;
+        right:0;
+        height:8px;
+        background:linear-gradient(90deg,#dc2626,#ef4444);
+    }
+
+    .icon-box{
+        width:90px;
+        height:90px;
+        border-radius:22px;
+        background:#fee2e2;
+        color:#b91c1c;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:38px;
+        margin-bottom:25px;
+    }
+
+    .title{
+        font-size:34px;
+        font-weight:900;
+        color:#111827;
+        margin-bottom:10px;
+        line-height:1.1;
+    }
+
+    .subtitle{
+        color:#6b7280;
+        font-size:16px;
+        line-height:1.6;
+        margin-bottom:30px;
+    }
+
+    .info-box{
+        background:#f9fafb;
+        border:1px solid #e5e7eb;
+        border-radius:20px;
+        padding:24px;
+        margin-bottom:30px;
+    }
+
+    .info-grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:22px;
+    }
+
+    .info-item{
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+    }
+
+    .label{
+        font-size:13px;
+        font-weight:800;
+        color:#6b7280;
+        text-transform:uppercase;
+        letter-spacing:.5px;
+    }
+
+    .value{
+        font-size:18px;
+        font-weight:700;
+        color:#111827;
+        line-height:1.4;
+    }
+
+    .warning-box{
+        background:#fff7ed;
+        border:1px solid #fdba74;
+        color:#9a3412;
+        border-radius:18px;
+        padding:18px 20px;
+        font-size:15px;
+        font-weight:600;
+        margin-bottom:35px;
+        line-height:1.6;
+    }
+
+    .actions{
+        display:flex;
+        gap:16px;
+        flex-wrap:wrap;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:10px;
+        padding:14px 22px;
+        border-radius:14px;
+        text-decoration:none;
+        border:none;
+        cursor:pointer;
+        font-size:15px;
+        font-weight:800;
+        transition:.2s;
     }
 
     .btn-danger{
-        background:#991b1b;
+        background:#dc2626;
         color:white;
-        border:0;
-        padding:12px 18px;
-        border-radius:8px;
-        cursor:pointer;
+    }
+
+    .btn-danger:hover{
+        background:#b91c1c;
+        transform:translateY(-2px);
+    }
+
+    .btn-secondary{
+        background:#f3f4f6;
+        color:#111827;
+        border:1px solid #d1d5db;
+    }
+
+    .btn-secondary:hover{
+        background:#e5e7eb;
+        transform:translateY(-2px);
+    }
+
+    @media(max-width:700px){
+
+        .delete-card{
+            padding:28px;
+        }
+
+        .info-grid{
+            grid-template-columns:1fr;
+        }
+
+        .title{
+            font-size:28px;
+        }
+
+        .actions{
+            flex-direction:column;
+        }
+
+        .btn{
+            justify-content:center;
+        }
+
     }
 
 </style>
 
-<div class="card">
+<div class="delete-wrapper">
 
-    <h2>
-        Sei sicuro di voler eliminare:
-    </h2>
+    <div class="delete-card">
 
-    <br>
+        <div class="danger-top"></div>
 
-    <h3>
-        {{ cliente.nome }}
-    </h3>
+        <div class="icon-box">
+            <i class="fa-solid fa-user-xmark"></i>
+        </div>
 
-    <br><br>
+        <div class="title">
+            Eliminare il cliente?
+        </div>
 
-    <form method="post">
+        <div class="subtitle">
+            Stai per eliminare definitivamente questo cliente dal gestionale.
+            L'operazione non potrà essere annullata.
+        </div>
 
-        {% csrf_token %}
+        <div class="info-box">
 
-        <button class="btn-danger" type="submit">
-            Elimina definitivamente
-        </button>
+            <div class="info-grid">
 
-    </form>
+                <div class="info-item">
+                    <div class="label">
+                        Nome cliente
+                    </div>
+
+                    <div class="value">
+                        {{ cliente.nome }}
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">
+                        Telefono
+                    </div>
+
+                    <div class="value">
+                        {{ cliente.telefono }}
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">
+                        Email
+                    </div>
+
+                    <div class="value">
+                        {{ cliente.email }}
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">
+                        Codice fiscale
+                    </div>
+
+                    <div class="value">
+                        {{ cliente.codice_fiscale }}
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="warning-box">
+
+            <i class="fa-solid fa-circle-exclamation"></i>
+
+            Potrebbero essere presenti pratiche, immobili o documenti
+            collegati a questo cliente.
+
+        </div>
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <div class="actions">
+
+                <button class="btn btn-danger" type="submit">
+
+                    <i class="fa-solid fa-trash"></i>
+
+                    Elimina definitivamente
+
+                </button>
+
+                <a
+                    href="/clienti/{{ cliente.id }}/"
+                    class="btn btn-secondary"
+                >
+
+                    <i class="fa-solid fa-arrow-left"></i>
+
+                    Annulla
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
 
 </div>
 

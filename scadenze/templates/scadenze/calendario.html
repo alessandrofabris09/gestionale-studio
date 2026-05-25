@@ -5,7 +5,7 @@ Calendario scadenze
 {% endblock %}
 
 {% block page_title %}
-Calendario
+Calendario operativo
 {% endblock %}
 
 {% block content %}
@@ -18,38 +18,190 @@ Calendario
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 
 <style>
+    .calendar-header{
+        background:white;
+        padding:30px;
+        border-radius:24px;
+        box-shadow:0 10px 28px rgba(0,0,0,0.08);
+        margin-bottom:25px;
+    }
+
+    .calendar-header h2{
+        font-size:30px;
+        color:#111827;
+        margin-bottom:8px;
+    }
+
+    .subtitle{
+        color:#6b7280;
+        font-size:15px;
+    }
+
+    .page-actions{
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;
+        margin-top:22px;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:12px;
+        text-decoration:none;
+        font-weight:bold;
+        font-size:15px;
+        transition:.2s;
+    }
+
+    .btn:hover{
+        background:#1f2937;
+        transform:translateY(-1px);
+    }
 
     .calendar-container{
         background:white;
-        padding:25px;
-        border-radius:18px;
-        box-shadow:0 2px 12px rgba(0,0,0,0.08);
+        padding:30px;
+        border-radius:24px;
+        box-shadow:0 10px 28px rgba(0,0,0,0.08);
+    }
+
+    .fc{
+        font-family:Arial, sans-serif;
+    }
+
+    .fc-toolbar{
+        margin-bottom:25px !important;
+        gap:12px;
+        flex-wrap:wrap;
     }
 
     .fc-toolbar-title{
         font-size:28px !important;
-        font-weight:700;
+        font-weight:800;
+        color:#111827;
     }
 
     .fc-button{
         background:#111827 !important;
         border:none !important;
-        padding:10px 14px !important;
-        border-radius:10px !important;
+        padding:10px 15px !important;
+        border-radius:12px !important;
+        font-weight:bold !important;
+        box-shadow:none !important;
     }
 
     .fc-button:hover{
-        opacity:0.9;
+        background:#1f2937 !important;
+    }
+
+    .fc-button-active{
+        background:#2563eb !important;
+    }
+
+    .fc-daygrid-day{
+        transition:.2s;
+    }
+
+    .fc-daygrid-day:hover{
+        background:#f9fafb;
+    }
+
+    .fc-day-today{
+        background:#eff6ff !important;
+    }
+
+    .fc-col-header-cell{
+        background:#111827;
+        color:white;
+        padding:12px 0 !important;
+    }
+
+    .fc-col-header-cell a{
+        color:white;
+        text-decoration:none;
+        font-weight:bold;
+    }
+
+    .fc-daygrid-day-number{
+        color:#111827;
+        text-decoration:none;
+        font-weight:bold;
+        padding:10px !important;
     }
 
     .fc-daygrid-event{
         border:none !important;
-        padding:4px !important;
-        border-radius:8px !important;
+        padding:6px 8px !important;
+        border-radius:10px !important;
         font-size:13px;
+        font-weight:bold;
+        box-shadow:0 3px 8px rgba(0,0,0,0.10);
     }
 
+    .fc-event{
+        cursor:pointer;
+    }
+
+    .fc-list{
+        border-radius:18px;
+        overflow:hidden;
+    }
+
+    .fc-list-event-title a{
+        color:#111827;
+        font-weight:bold;
+        text-decoration:none;
+    }
+
+    @media(max-width:800px){
+        .calendar-container{
+            padding:18px;
+            overflow-x:auto;
+        }
+
+        .fc-toolbar{
+            flex-direction:column;
+            align-items:flex-start !important;
+        }
+    }
 </style>
+
+<div class="calendar-header">
+
+    <h2>
+        <i class="fa-solid fa-calendar-days"></i>
+        Calendario operativo
+    </h2>
+
+    <div class="subtitle">
+        Visualizza scadenze e attività operative dello studio in formato calendario.
+    </div>
+
+    <div class="page-actions">
+
+        <a class="btn" href="/scadenze/">
+            <i class="fa-solid fa-arrow-left"></i>
+            Torna alle scadenze
+        </a>
+
+        <a class="btn" href="/scadenze/nuova/">
+            <i class="fa-solid fa-plus"></i>
+            Nuova scadenza
+        </a>
+
+        <a class="btn" href="/agenda/">
+            <i class="fa-solid fa-calendar-check"></i>
+            Agenda operativa
+        </a>
+
+    </div>
+
+</div>
 
 <div class="calendar-container">
 
@@ -58,7 +210,6 @@ Calendario
 </div>
 
 <script>
-
 document.addEventListener('DOMContentLoaded', function() {
 
     const calendarEl = document.getElementById('calendar');
@@ -72,6 +223,8 @@ document.addEventListener('DOMContentLoaded', function() {
         height: 'auto',
 
         firstDay: 1,
+
+        nowIndicator: true,
 
         headerToolbar: {
             left: 'prev,next today',
@@ -103,7 +256,6 @@ document.addEventListener('DOMContentLoaded', function() {
     calendar.render();
 
 });
-
 </script>
 
 {% endblock %}

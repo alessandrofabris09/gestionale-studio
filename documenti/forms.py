@@ -20,6 +20,16 @@ class DocumentoForm(forms.ModelForm):
 class MultipleFileInput(forms.ClearableFileInput):
     allow_multiple_selected = True
 
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault(
+            'attrs',
+            {
+                'accept': '.pdf,.p7m,.doc,.docx,.xls,.xlsx,.dwg,.dxf,.jpg,.jpeg,.png,.zip',
+                'multiple': True,
+            }
+        )
+        super().__init__(*args, **kwargs)
+
 
 class MultipleFileField(forms.FileField):
     def __init__(self, *args, **kwargs):

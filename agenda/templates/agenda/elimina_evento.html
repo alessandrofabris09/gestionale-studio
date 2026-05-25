@@ -10,46 +10,362 @@ Elimina evento agenda
 
 {% block content %}
 
-<div style="
-    background:white;
-    padding:30px;
-    border-radius:18px;
-    box-shadow:0 8px 22px rgba(0,0,0,0.08);
-    max-width:700px;
-">
+<style>
 
-    <h2>
-        Confermi l'eliminazione?
-    </h2>
+    .delete-wrapper{
+        display:flex;
+        justify-content:center;
+        padding:20px 0;
+    }
 
-    <p>
-        Stai per eliminare l'evento:
-        <strong>{{ evento.titolo }}</strong>
-    </p>
+    .delete-card{
+        width:100%;
+        max-width:760px;
+        background:white;
+        border-radius:28px;
+        padding:40px;
+        box-shadow:0 12px 30px rgba(0,0,0,0.10);
+        overflow:hidden;
+        position:relative;
+    }
 
-    <form method="post">
-        {% csrf_token %}
+    .danger-top{
+        position:absolute;
+        top:0;
+        left:0;
+        right:0;
+        height:8px;
+        background:linear-gradient(90deg,#dc2626,#ef4444);
+    }
 
-        <button type="submit" style="
-            background:#991b1b;
-            color:white;
-            border:0;
-            padding:12px 18px;
-            border-radius:8px;
-            cursor:pointer;
-        ">
-            Elimina evento
-        </button>
+    .icon-box{
+        width:90px;
+        height:90px;
+        border-radius:22px;
+        background:#fee2e2;
+        color:#b91c1c;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:38px;
+        margin-bottom:25px;
+    }
 
-        <a href="/agenda/" style="
-            display:inline-block;
-            margin-left:10px;
-            color:#111827;
-            text-decoration:none;
-        ">
-            Annulla
-        </a>
-    </form>
+    .title{
+        font-size:34px;
+        font-weight:900;
+        color:#111827;
+        margin-bottom:10px;
+        line-height:1.1;
+    }
+
+    .subtitle{
+        color:#6b7280;
+        font-size:16px;
+        line-height:1.6;
+        margin-bottom:30px;
+    }
+
+    .info-box{
+        background:#f9fafb;
+        border:1px solid #e5e7eb;
+        border-radius:20px;
+        padding:24px;
+        margin-bottom:30px;
+    }
+
+    .info-grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:22px;
+    }
+
+    .info-item{
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+    }
+
+    .label{
+        font-size:13px;
+        font-weight:800;
+        color:#6b7280;
+        text-transform:uppercase;
+        letter-spacing:.5px;
+    }
+
+    .value{
+        font-size:18px;
+        font-weight:700;
+        color:#111827;
+        line-height:1.4;
+    }
+
+    .badge{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:8px 12px;
+        border-radius:999px;
+        font-size:14px;
+        font-weight:800;
+        margin-top:10px;
+    }
+
+    .badge-blue{
+        background:#dbeafe;
+        color:#1d4ed8;
+    }
+
+    .badge-red{
+        background:#fee2e2;
+        color:#991b1b;
+    }
+
+    .badge-yellow{
+        background:#fef3c7;
+        color:#92400e;
+    }
+
+    .badge-green{
+        background:#dcfce7;
+        color:#166534;
+    }
+
+    .warning-box{
+        background:#fff7ed;
+        border:1px solid #fdba74;
+        color:#9a3412;
+        border-radius:18px;
+        padding:18px 20px;
+        font-size:15px;
+        font-weight:600;
+        margin-bottom:35px;
+        line-height:1.6;
+    }
+
+    .actions{
+        display:flex;
+        gap:16px;
+        flex-wrap:wrap;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:10px;
+        padding:14px 22px;
+        border-radius:14px;
+        text-decoration:none;
+        border:none;
+        cursor:pointer;
+        font-size:15px;
+        font-weight:800;
+        transition:.2s;
+    }
+
+    .btn-danger{
+        background:#dc2626;
+        color:white;
+    }
+
+    .btn-danger:hover{
+        background:#b91c1c;
+        transform:translateY(-2px);
+    }
+
+    .btn-secondary{
+        background:#f3f4f6;
+        color:#111827;
+        border:1px solid #d1d5db;
+    }
+
+    .btn-secondary:hover{
+        background:#e5e7eb;
+        transform:translateY(-2px);
+    }
+
+    @media(max-width:700px){
+
+        .delete-card{
+            padding:28px;
+        }
+
+        .info-grid{
+            grid-template-columns:1fr;
+        }
+
+        .title{
+            font-size:28px;
+        }
+
+        .actions{
+            flex-direction:column;
+        }
+
+        .btn{
+            justify-content:center;
+        }
+
+    }
+
+</style>
+
+<div class="delete-wrapper">
+
+    <div class="delete-card">
+
+        <div class="danger-top"></div>
+
+        <div class="icon-box">
+            <i class="fa-solid fa-calendar-xmark"></i>
+        </div>
+
+        <div class="title">
+            Eliminare l'evento?
+        </div>
+
+        <div class="subtitle">
+            Stai per eliminare definitivamente questo evento agenda dal gestionale.
+            L'operazione non potrà essere annullata.
+        </div>
+
+        <div class="info-box">
+
+            <div class="info-grid">
+
+                <div class="info-item">
+                    <div class="label">
+                        Titolo evento
+                    </div>
+
+                    <div class="value">
+                        {{ evento.titolo }}
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">
+                        Tipo evento
+                    </div>
+
+                    <div class="value">
+
+                        <span class="badge badge-blue">
+                            {{ evento.get_tipo_display }}
+                        </span>
+
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">
+                        Data
+                    </div>
+
+                    <div class="value">
+
+                        <span class="badge badge-red">
+                            <i class="fa-solid fa-calendar"></i>
+                            {{ evento.data }}
+                        </span>
+
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">
+                        Priorità
+                    </div>
+
+                    <div class="value">
+
+                        {% if evento.priorita == 'ALTA' %}
+
+                            <span class="badge badge-red">
+                                Alta
+                            </span>
+
+                        {% elif evento.priorita == 'MEDIA' %}
+
+                            <span class="badge badge-yellow">
+                                Media
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge badge-green">
+                                Bassa
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">
+                        Cliente
+                    </div>
+
+                    <div class="value">
+                        {{ evento.cliente }}
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">
+                        Pratica collegata
+                    </div>
+
+                    <div class="value">
+                        {{ evento.pratica }}
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="warning-box">
+
+            <i class="fa-solid fa-circle-exclamation"></i>
+
+            Attenzione: l'evento verrà rimosso definitivamente
+            dall'agenda operativa e dal calendario dello studio.
+
+        </div>
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <div class="actions">
+
+                <button class="btn btn-danger" type="submit">
+
+                    <i class="fa-solid fa-trash"></i>
+
+                    Elimina evento
+
+                </button>
+
+                <a
+                    href="/agenda/"
+                    class="btn btn-secondary"
+                >
+
+                    <i class="fa-solid fa-arrow-left"></i>
+
+                    Annulla
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
 
 </div>
 
