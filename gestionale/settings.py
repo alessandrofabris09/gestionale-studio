@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'attivita',
     'agenda',
     'workflow',
+    'studi',
+    'utenti',
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,187 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Registrazione studio
+{% endblock %}
+
+{% block page_title %}
+Crea il tuo studio
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .register-wrapper{
+        display:flex;
+        justify-content:center;
+        padding:30px 0;
+    }
+
+    .register-card{
+        width:100%;
+        max-width:760px;
+        background:white;
+        border-radius:28px;
+        padding:40px;
+        box-shadow:0 12px 30px rgba(0,0,0,0.10);
+    }
+
+    .register-card h2{
+        font-size:34px;
+        margin-bottom:10px;
+        color:#111827;
+    }
+
+    .subtitle{
+        color:#6b7280;
+        margin-bottom:30px;
+        line-height:1.6;
+    }
+
+    .form-grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:20px;
+    }
+
+    .full{
+        grid-column:1 / -1;
+    }
+
+    label{
+        display:block;
+        font-weight:800;
+        margin-bottom:8px;
+        color:#374151;
+        font-size:14px;
+    }
+
+    input{
+        width:100%;
+        padding:14px 16px;
+        border:1px solid #d1d5db;
+        border-radius:14px;
+        font-size:15px;
+        background:#f9fafb;
+    }
+
+    input:focus{
+        outline:none;
+        border-color:#2563eb;
+        background:white;
+        box-shadow:0 0 0 4px rgba(37,99,235,0.12);
+    }
+
+    .errors{
+        background:#fee2e2;
+        color:#991b1b;
+        padding:14px;
+        border-radius:14px;
+        margin-bottom:20px;
+        font-weight:bold;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:14px 22px;
+        border-radius:14px;
+        border:0;
+        font-weight:800;
+        font-size:15px;
+        cursor:pointer;
+        margin-top:30px;
+    }
+
+    .btn:hover{
+        background:#1f2937;
+    }
+
+    @media(max-width:800px){
+        .form-grid{
+            grid-template-columns:1fr;
+        }
+
+        .register-card{
+            padding:28px;
+        }
+    }
+</style>
+
+<div class="register-wrapper">
+
+    <div class="register-card">
+
+        <h2>
+            <i class="fa-solid fa-building-user"></i>
+            Crea il tuo studio
+        </h2>
+
+        <div class="subtitle">
+            Registra il tuo studio tecnico e accedi subito al gestionale.
+        </div>
+
+        {% if form.errors %}
+            <div class="errors">
+                Controlla i dati inseriti: alcuni campi non sono corretti.
+            </div>
+        {% endif %}
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <div class="form-grid">
+
+                <div class="full">
+                    <label>Nome studio</label>
+                    {{ form.nome_studio }}
+                </div>
+
+                <div>
+                    <label>Email</label>
+                    {{ form.email }}
+                </div>
+
+                <div>
+                    <label>Telefono</label>
+                    {{ form.telefono }}
+                </div>
+
+                <div>
+                    <label>Username</label>
+                    {{ form.username }}
+                </div>
+
+                <div>
+                    <label>Partita IVA</label>
+                    {{ form.partita_iva }}
+                </div>
+
+                <div>
+                    <label>Password</label>
+                    {{ form.password }}
+                </div>
+
+                <div>
+                    <label>Conferma password</label>
+                    {{ form.conferma_password }}
+                </div>
+
+            </div>
+
+            <button class="btn" type="submit">
+                <i class="fa-solid fa-circle-check"></i>
+                Crea studio e accedi
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

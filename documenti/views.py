@@ -4,8 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 
+from studi.utils import get_studio_utente
+
 from attivita.models import Attivita
 from pratiche.models import Pratica
+
 from .models import Documento
 from .forms import DocumentoForm, DocumentoMultiploForm
 
@@ -13,11 +16,16 @@ from .forms import DocumentoForm, DocumentoMultiploForm
 @login_required
 def lista_documenti(request):
 
-    documenti = Documento.objects.all().order_by('-id')
+    studio = get_studio_utente(request)
+
+    documenti = Documento.objects.filter(
+        pratica__studio=studio
+    ).order_by('-id')
 
     ricerca = request.GET.get('ricerca')
 
     if ricerca:
+
         documenti = documenti.filter(
             Q(titolo__icontains=ricerca) |
             Q(tipo_documento__icontains=ricerca) |
@@ -40,9 +48,12 @@ def lista_documenti(request):
 @login_required
 def carica_documento(request, pratica_id):
 
+    studio = get_studio_utente(request)
+
     pratica = get_object_or_404(
         Pratica,
-        id=pratica_id
+        id=pratica_id,
+        studio=studio
     )
 
     if request.method == 'POST':
@@ -55,7 +66,9 @@ def carica_documento(request, pratica_id):
         if form.is_valid():
 
             documento = form.save(commit=False)
+
             documento.pratica = pratica
+
             documento.save()
 
             Attivita.objects.create(
@@ -89,9 +102,12 @@ def carica_documento(request, pratica_id):
 @login_required
 def carica_documenti_multipli(request, pratica_id):
 
+    studio = get_studio_utente(request)
+
     pratica = get_object_or_404(
         Pratica,
-        id=pratica_id
+        id=pratica_id,
+        studio=studio
     )
 
     if request.method == 'POST':
@@ -105,13 +121,25 @@ def carica_documenti_multipli(request, pratica_id):
 
             files = request.FILES.getlist('files')
 
-            titolo_base = form.cleaned_data.get('titolo_base')
-            tipo_documento = form.cleaned_data.get('tipo_documento')
-            note = form.cleaned_data.get('note')
+            titolo_base = form.cleaned_data.get(
+                'titolo_base'
+            )
+
+            tipo_documento = form.cleaned_data.get(
+                'tipo_documento'
+            )
+
+            note = form.cleaned_data.get(
+                'note'
+            )
 
             for file in files:
 
-                titolo = titolo_base if titolo_base else file.name
+                titolo = (
+                    titolo_base
+                    if titolo_base
+                    else file.name
+                )
 
                 documento = Documento.objects.create(
                     pratica=pratica,
@@ -152,18 +180,24 @@ def carica_documenti_multipli(request, pratica_id):
 @login_required
 def elimina_documento(request, documento_id):
 
+    studio = get_studio_utente(request)
+
     documento = get_object_or_404(
         Documento,
-        id=documento_id
+        id=documento_id,
+        pratica__studio=studio
     )
 
     pratica = documento.pratica
+
     pratica_id = pratica.id
+
     titolo_documento = documento.titolo
 
     if request.method == 'POST':
 
         documento.file.delete(save=False)
+
         documento.delete()
 
         Attivita.objects.create(
@@ -181,20 +215,27 @@ def elimina_documento(request, documento_id):
     return render(
         request,
         'documenti/elimina_documento.html',
-        {'documento': documento}
+        {
+            'documento': documento
+        }
     )
 
 
 @login_required
 def verifica_documenti_cloud(request):
 
+    studio = get_studio_utente(request)
+
     risultati = []
 
-    documenti = Documento.objects.all().order_by('id')
+    documenti = Documento.objects.filter(
+        pratica__studio=studio
+    ).order_by('id')
 
     for documento in documenti:
 
         stato = 'OK'
+
         file_url = ''
 
         try:
@@ -208,7 +249,11 @@ def verifica_documenti_cloud(request):
             )
 
             if response.status_code not in [200, 301, 302]:
-                stato = f'FILE NON RAGGIUNGIBILE ({response.status_code})'
+
+                stato = (
+                    f'FILE NON RAGGIUNGIBILE '
+                    f'({response.status_code})'
+                )
 
         except Exception:
 

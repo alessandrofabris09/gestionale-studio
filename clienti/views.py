@@ -6,14 +6,24 @@ from .models import Cliente
 from .forms import ClienteForm
 
 
+def get_studio_utente(request):
+
+    return request.user.profilo_studio.studio
+
+
 @login_required
 def lista_clienti(request):
 
-    clienti = Cliente.objects.all().order_by('nome')
+    studio = get_studio_utente(request)
+
+    clienti = Cliente.objects.filter(
+        studio=studio
+    ).order_by('nome')
 
     ricerca = request.GET.get('ricerca')
 
     if ricerca:
+
         clienti = clienti.filter(
             Q(nome__icontains=ricerca) |
             Q(email__icontains=ricerca) |
@@ -37,13 +47,17 @@ def lista_clienti(request):
 @login_required
 def nuovo_cliente(request):
 
+    studio = get_studio_utente(request)
+
     if request.method == 'POST':
 
         form = ClienteForm(request.POST)
 
         if form.is_valid():
 
-            form.save()
+            cliente = form.save(commit=False)
+            cliente.studio = studio
+            cliente.save()
 
             return redirect('lista_clienti')
 
@@ -61,12 +75,17 @@ def nuovo_cliente(request):
 @login_required
 def dettaglio_cliente(request, cliente_id):
 
+    studio = get_studio_utente(request)
+
     cliente = get_object_or_404(
         Cliente,
-        id=cliente_id
+        id=cliente_id,
+        studio=studio
     )
 
-    pratiche = cliente.pratica_set.all()
+    pratiche = cliente.pratica_set.filter(
+        studio=studio
+    )
 
     context = {
         'cliente': cliente,
@@ -83,9 +102,12 @@ def dettaglio_cliente(request, cliente_id):
 @login_required
 def modifica_cliente(request, cliente_id):
 
+    studio = get_studio_utente(request)
+
     cliente = get_object_or_404(
         Cliente,
-        id=cliente_id
+        id=cliente_id,
+        studio=studio
     )
 
     if request.method == 'POST':
@@ -97,7 +119,9 @@ def modifica_cliente(request, cliente_id):
 
         if form.is_valid():
 
-            form.save()
+            cliente = form.save(commit=False)
+            cliente.studio = studio
+            cliente.save()
 
             return redirect(
                 'dettaglio_cliente',
@@ -121,9 +145,12 @@ def modifica_cliente(request, cliente_id):
 @login_required
 def elimina_cliente(request, cliente_id):
 
+    studio = get_studio_utente(request)
+
     cliente = get_object_or_404(
         Cliente,
-        id=cliente_id
+        id=cliente_id,
+        studio=studio
     )
 
     if request.method == 'POST':

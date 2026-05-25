@@ -29,6 +29,8 @@ urlpatterns = [
 
     path('workflow/', include('workflow.urls')),
 
+    path('utenti/', include('utenti.urls')),
+
 ]
 
 if settings.DEBUG:

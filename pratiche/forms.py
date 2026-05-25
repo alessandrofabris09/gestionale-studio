@@ -2,6 +2,8 @@ from django import forms
 
 from .models import Pratica
 from workflow.models import TipoWorkflow
+from clienti.models import Cliente
+from immobili.models import Immobile
 
 
 class PraticaForm(forms.ModelForm):
@@ -13,7 +15,9 @@ class PraticaForm(forms.ModelForm):
 
     class Meta:
         model = Pratica
-        fields = '__all__'
+        exclude = [
+            'studio',
+        ]
 
         widgets = {
             'data_incarico': forms.DateInput(attrs={'type': 'date'}),
@@ -24,13 +28,15 @@ class PraticaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
 
+        studio = kwargs.pop('studio', None)
+
         super().__init__(*args, **kwargs)
 
         workflow_choices = [
-    (
-        workflow.nome,
-        f'{workflow.get_categoria_display()} - {workflow.nome}'
-    )
+            (
+                workflow.nome,
+                f'{workflow.get_categoria_display()} - {workflow.nome}'
+            )
             for workflow in TipoWorkflow.objects.filter(
                 attivo=True
             ).order_by(
@@ -43,3 +49,13 @@ class PraticaForm(forms.ModelForm):
         self.fields['tipo_pratica'].choices = [
             ('', '---------')
         ] + workflow_choices
+
+        if studio:
+
+            self.fields['cliente'].queryset = Cliente.objects.filter(
+                studio=studio
+            ).order_by('nome')
+
+            self.fields['immobile'].queryset = Immobile.objects.filter(
+                studio=studio
+            ).order_by('comune', 'indirizzo')

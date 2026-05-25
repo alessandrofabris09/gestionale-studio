@@ -1,6 +1,8 @@
 from django.db import models
+
 from clienti.models import Cliente
 from immobili.models import Immobile
+from studi.models import Studio
 
 
 TIPI_PRATICA = [
@@ -19,7 +21,7 @@ TIPI_PRATICA = [
 
 STATI_PRATICA = [
     ('PREVENTIVO', 'Preventivo'),
-    ('IN CORSO', 'In corso'),
+    ('IN_CORSO', 'In corso'),
     ('DEPOSITATA', 'Depositata'),
     ('INTEGRAZIONE', 'Integrazione'),
     ('APPROVATA', 'Approvata'),
@@ -28,11 +30,25 @@ STATI_PRATICA = [
 
 
 class Pratica(models.Model):
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
-    immobile = models.ForeignKey(Immobile, on_delete=models.CASCADE)
+
+    studio = models.ForeignKey(
+        Studio,
+        on_delete=models.CASCADE,
+        related_name='pratiche'
+    )
+
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.CASCADE
+    )
+
+    immobile = models.ForeignKey(
+        Immobile,
+        on_delete=models.CASCADE
+    )
 
     tipo_pratica = models.CharField(
-    max_length=255
+        max_length=255
     )
 
     stato = models.CharField(
@@ -50,11 +66,20 @@ class Pratica(models.Model):
         blank=True
     )
 
-    data_incarico = models.DateField(null=True, blank=True)
+    data_incarico = models.DateField(
+        null=True,
+        blank=True
+    )
 
-    data_deposito = models.DateField(null=True, blank=True)
+    data_deposito = models.DateField(
+        null=True,
+        blank=True
+    )
 
-    scadenza = models.DateField(null=True, blank=True)
+    scadenza = models.DateField(
+        null=True,
+        blank=True
+    )
 
     compenso = models.DecimalField(
         max_digits=10,

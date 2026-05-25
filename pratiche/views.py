@@ -23,6 +23,11 @@ from .models import Pratica
 from .forms import PraticaForm
 
 
+def get_studio_utente(request):
+
+    return request.user.profilo_studio.studio
+
+
 def attiva_workflow_automatico(pratica):
 
     workflow = TipoWorkflow.objects.filter(
@@ -86,7 +91,11 @@ def attiva_workflow_automatico(pratica):
 @login_required
 def lista_pratiche(request):
 
-    pratiche = Pratica.objects.all().order_by('-id')
+    studio = get_studio_utente(request)
+
+    pratiche = Pratica.objects.filter(
+        studio=studio
+    ).order_by('-id')
 
     ricerca = request.GET.get('ricerca')
     stato = request.GET.get('stato')
@@ -102,11 +111,13 @@ def lista_pratiche(request):
         )
 
     if stato:
+
         pratiche = pratiche.filter(
             stato=stato
         )
 
     if tipo:
+
         pratiche = pratiche.filter(
             tipo_pratica=tipo
         )
@@ -128,9 +139,12 @@ def lista_pratiche(request):
 @login_required
 def dettaglio_pratica(request, pratica_id):
 
+    studio = get_studio_utente(request)
+
     pratica = get_object_or_404(
         Pratica,
-        id=pratica_id
+        id=pratica_id,
+        studio=studio
     )
 
     try:
@@ -162,13 +176,20 @@ def dettaglio_pratica(request, pratica_id):
 @login_required
 def nuova_pratica(request):
 
+    studio = get_studio_utente(request)
+
     if request.method == 'POST':
 
-        form = PraticaForm(request.POST)
+        form = PraticaForm(
+            request.POST,
+            studio=studio
+        )
 
         if form.is_valid():
 
-            pratica = form.save()
+            pratica = form.save(commit=False)
+            pratica.studio = studio
+            pratica.save()
 
             workflow_pratica = attiva_workflow_automatico(pratica)
 
@@ -195,33 +216,43 @@ def nuova_pratica(request):
 
     else:
 
-        form = PraticaForm()
+        form = PraticaForm(
+            studio=studio
+        )
 
     return render(
         request,
         'pratiche/nuova_pratica.html',
-        {'form': form}
+        {
+            'form': form
+        }
     )
 
 
 @login_required
 def modifica_pratica(request, pratica_id):
 
+    studio = get_studio_utente(request)
+
     pratica = get_object_or_404(
         Pratica,
-        id=pratica_id
+        id=pratica_id,
+        studio=studio
     )
 
     if request.method == 'POST':
 
         form = PraticaForm(
             request.POST,
-            instance=pratica
+            instance=pratica,
+            studio=studio
         )
 
         if form.is_valid():
 
-            pratica = form.save()
+            pratica = form.save(commit=False)
+            pratica.studio = studio
+            pratica.save()
 
             Attivita.objects.create(
                 pratica=pratica,
@@ -237,7 +268,10 @@ def modifica_pratica(request, pratica_id):
 
     else:
 
-        form = PraticaForm(instance=pratica)
+        form = PraticaForm(
+            instance=pratica,
+            studio=studio
+        )
 
     return render(
         request,
@@ -252,9 +286,12 @@ def modifica_pratica(request, pratica_id):
 @login_required
 def elimina_pratica(request, pratica_id):
 
+    studio = get_studio_utente(request)
+
     pratica = get_object_or_404(
         Pratica,
-        id=pratica_id
+        id=pratica_id,
+        studio=studio
     )
 
     if request.method == 'POST':
@@ -277,9 +314,12 @@ def elimina_pratica(request, pratica_id):
 @login_required
 def pdf_pratica(request, pratica_id):
 
+    studio = get_studio_utente(request)
+
     pratica = get_object_or_404(
         Pratica,
-        id=pratica_id
+        id=pratica_id,
+        studio=studio
     )
 
     Attivita.objects.create(
@@ -296,8 +336,6 @@ def pdf_pratica(request, pratica_id):
     p.setTitle(f"Scheda pratica {pratica.id}")
 
     logo_path = "static/img/logo.png"
-
-    y = 790
 
     try:
         p.drawImage(
@@ -371,7 +409,7 @@ def pdf_pratica(request, pratica_id):
     y = row("ID pratica", pratica.id, y)
     y = row("Tipo pratica", pratica.tipo_pratica, y)
     y = row("Oggetto", pratica.oggetto, y)
-    y = row("Stato", pratica.stato, y)
+    y = row("Stato", pratica.get_stato_display(), y)
     y = row("Comune", pratica.comune, y)
     y = row("Protocollo", pratica.protocollo, y)
 

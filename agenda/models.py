@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 
 from clienti.models import Cliente
 from pratiche.models import Pratica
+from studi.models import Studio
 
 
 TIPI_EVENTO = [
@@ -23,6 +24,12 @@ PRIORITA = [
 
 
 class EventoAgenda(models.Model):
+
+    studio = models.ForeignKey(
+        Studio,
+        on_delete=models.CASCADE,
+        related_name='eventi_agenda'
+    )
 
     titolo = models.CharField(max_length=255)
 

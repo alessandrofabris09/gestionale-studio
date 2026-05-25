@@ -10,6 +10,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now
 
+from studi.utils import get_studio_utente
+
 from .models import EventoAgenda
 from .forms import EventoAgendaForm
 
@@ -17,7 +19,10 @@ from .forms import EventoAgendaForm
 @login_required
 def lista_agenda(request):
 
+    studio = get_studio_utente(request)
+
     eventi = EventoAgenda.objects.filter(
+        studio=studio,
         completato=False
     ).order_by(
         'data',
@@ -36,9 +41,12 @@ def lista_agenda(request):
 @login_required
 def agenda_oggi(request):
 
+    studio = get_studio_utente(request)
+
     oggi = date.today()
 
     eventi = EventoAgenda.objects.filter(
+        studio=studio,
         data=oggi,
         completato=False
     ).order_by(
@@ -58,17 +66,32 @@ def agenda_oggi(request):
 @login_required
 def nuovo_evento(request):
 
+    studio = get_studio_utente(request)
+
     if request.method == 'POST':
 
-        form = EventoAgendaForm(request.POST)
+        form = EventoAgendaForm(
+            request.POST,
+            studio=studio
+        )
 
         if form.is_valid():
-            form.save()
-            return redirect('lista_agenda')
+
+            evento = form.save(commit=False)
+
+            evento.studio = studio
+
+            evento.save()
+
+            return redirect(
+                'lista_agenda'
+            )
 
     else:
 
-        form = EventoAgendaForm()
+        form = EventoAgendaForm(
+            studio=studio
+        )
 
     return render(
         request,
@@ -82,25 +105,40 @@ def nuovo_evento(request):
 @login_required
 def modifica_evento(request, evento_id):
 
+    studio = get_studio_utente(request)
+
     evento = get_object_or_404(
         EventoAgenda,
-        id=evento_id
+        id=evento_id,
+        studio=studio
     )
 
     if request.method == 'POST':
 
         form = EventoAgendaForm(
             request.POST,
-            instance=evento
+            instance=evento,
+            studio=studio
         )
 
         if form.is_valid():
-            form.save()
-            return redirect('lista_agenda')
+
+            evento = form.save(commit=False)
+
+            evento.studio = studio
+
+            evento.save()
+
+            return redirect(
+                'lista_agenda'
+            )
 
     else:
 
-        form = EventoAgendaForm(instance=evento)
+        form = EventoAgendaForm(
+            instance=evento,
+            studio=studio
+        )
 
     return render(
         request,
@@ -115,16 +153,21 @@ def modifica_evento(request, evento_id):
 @login_required
 def elimina_evento(request, evento_id):
 
+    studio = get_studio_utente(request)
+
     evento = get_object_or_404(
         EventoAgenda,
-        id=evento_id
+        id=evento_id,
+        studio=studio
     )
 
     if request.method == 'POST':
 
         evento.delete()
 
-        return redirect('lista_agenda')
+        return redirect(
+            'lista_agenda'
+        )
 
     return render(
         request,
@@ -138,22 +181,29 @@ def elimina_evento(request, evento_id):
 @login_required
 def completa_evento(request, evento_id):
 
+    studio = get_studio_utente(request)
+
     evento = get_object_or_404(
         EventoAgenda,
-        id=evento_id
+        id=evento_id,
+        studio=studio
     )
 
     evento.completato = True
+
     evento.save()
 
-    return redirect('lista_agenda')
+    return redirect(
+        'lista_agenda'
+    )
 
 
-def invia_email_agenda_giornaliera():
+def invia_email_agenda_giornaliera(studio):
 
     oggi = now().date()
 
     eventi = EventoAgenda.objects.filter(
+        studio=studio,
         data=oggi,
         completato=False
     ).order_by(
@@ -161,29 +211,69 @@ def invia_email_agenda_giornaliera():
     )
 
     if not eventi.exists():
+
         return 'Nessun evento agenda per oggi.'
 
     righe = []
 
     for evento in eventi:
 
-        ora = evento.ora_inizio if evento.ora_inizio else '-'
-        cliente = evento.cliente if evento.cliente else '-'
-        pratica = evento.pratica if evento.pratica else '-'
-        descrizione = evento.descrizione if evento.descrizione else '-'
+        ora = (
+            evento.ora_inizio
+            if evento.ora_inizio
+            else '-'
+        )
+
+        cliente = (
+            evento.cliente
+            if evento.cliente
+            else '-'
+        )
+
+        pratica = (
+            evento.pratica
+            if evento.pratica
+            else '-'
+        )
+
+        descrizione = (
+            evento.descrizione
+            if evento.descrizione
+            else '-'
+        )
 
         righe.append(
             f"""
             <tr>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">{ora}</td>
+
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
+                    {ora}
+                </td>
+
                 <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
                     <strong>{evento.titolo}</strong><br>
-                    <span style="color:#6b7280;">{descrizione}</span>
+
+                    <span style="color:#6b7280;">
+                        {descrizione}
+                    </span>
                 </td>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">{evento.get_tipo_display()}</td>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">{evento.get_priorita_display()}</td>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">{cliente}</td>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">{pratica}</td>
+
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
+                    {evento.get_tipo_display()}
+                </td>
+
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
+                    {evento.get_priorita_display()}
+                </td>
+
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
+                    {cliente}
+                </td>
+
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
+                    {pratica}
+                </td>
+
             </tr>
             """
         )
@@ -191,25 +281,54 @@ def invia_email_agenda_giornaliera():
     messaggio_html = f"""
     <div style="font-family:Arial, sans-serif; color:#111827;">
 
-        <h2>Agenda operativa di oggi</h2>
+        <h2>
+            Agenda operativa di oggi
+        </h2>
 
-        <p>Di seguito gli eventi programmati per oggi.</p>
+        <p>
+            Di seguito gli eventi programmati per oggi.
+        </p>
 
         <table style="border-collapse:collapse;width:100%;margin-top:20px;">
+
             <thead>
+
                 <tr style="background:#111827;color:white;">
-                    <th style="padding:10px;text-align:left;">Ora</th>
-                    <th style="padding:10px;text-align:left;">Evento</th>
-                    <th style="padding:10px;text-align:left;">Tipo</th>
-                    <th style="padding:10px;text-align:left;">Priorità</th>
-                    <th style="padding:10px;text-align:left;">Cliente</th>
-                    <th style="padding:10px;text-align:left;">Pratica</th>
+
+                    <th style="padding:10px;text-align:left;">
+                        Ora
+                    </th>
+
+                    <th style="padding:10px;text-align:left;">
+                        Evento
+                    </th>
+
+                    <th style="padding:10px;text-align:left;">
+                        Tipo
+                    </th>
+
+                    <th style="padding:10px;text-align:left;">
+                        Priorità
+                    </th>
+
+                    <th style="padding:10px;text-align:left;">
+                        Cliente
+                    </th>
+
+                    <th style="padding:10px;text-align:left;">
+                        Pratica
+                    </th>
+
                 </tr>
+
             </thead>
 
             <tbody>
+
                 {''.join(righe)}
+
             </tbody>
+
         </table>
 
         <p style="margin-top:25px;color:#6b7280;font-size:13px;">
@@ -219,9 +338,12 @@ def invia_email_agenda_giornaliera():
     </div>
     """
 
-    resend.api_key = os.environ.get('RESEND_API_KEY')
+    resend.api_key = os.environ.get(
+        'RESEND_API_KEY'
+    )
 
     if not resend.api_key:
+
         return 'Errore: RESEND_API_KEY non configurata.'
 
     resend.Emails.send({
@@ -237,14 +359,23 @@ def invia_email_agenda_giornaliera():
 @login_required
 def invia_agenda_email(request):
 
+    studio = get_studio_utente(request)
+
     if not request.user.is_superuser:
+
         return redirect('/')
 
     try:
-        messaggio = invia_email_agenda_giornaliera()
+
+        messaggio = invia_email_agenda_giornaliera(
+            studio
+        )
 
     except Exception as e:
-        messaggio = f'Errore durante invio email: {e}'
+
+        messaggio = (
+            f'Errore durante invio email: {e}'
+        )
 
     return render(
         request,
@@ -258,13 +389,22 @@ def invia_agenda_email(request):
 def invia_agenda_email_cron(request, codice):
 
     if codice != 'AGENDA1234':
+
         return redirect('/')
 
+    studio = get_studio_utente(request)
+
     try:
-        messaggio = invia_email_agenda_giornaliera()
+
+        messaggio = invia_email_agenda_giornaliera(
+            studio
+        )
 
     except Exception as e:
-        messaggio = f'Errore durante invio email: {e}'
+
+        messaggio = (
+            f'Errore durante invio email: {e}'
+        )
 
     return render(
         request,
@@ -278,16 +418,26 @@ def invia_agenda_email_cron(request, codice):
 def calendario_ics(request, codice):
 
     if codice != 'AGENDAICS1234':
+
         return redirect('/')
+
+    studio = get_studio_utente(request)
 
     calendario = Calendar()
 
-    calendario.add('prodid', '-//Gestionale Studio Tecnico//Agenda Operativa//IT')
+    calendario.add(
+        'prodid',
+        '-//Gestionale Studio Tecnico//Agenda Operativa//IT'
+    )
+
     calendario.add('version', '2.0')
+
     calendario.add('calscale', 'GREGORIAN')
+
     calendario.add('method', 'PUBLISH')
 
     eventi = EventoAgenda.objects.filter(
+        studio=studio,
         completato=False
     ).order_by(
         'data',
@@ -298,26 +448,60 @@ def calendario_ics(request, codice):
 
         evento = Event()
 
-        evento.add('summary', evento_agenda.titolo)
+        evento.add(
+            'summary',
+            evento_agenda.titolo
+        )
 
         descrizione = ''
 
-        descrizione += f'Tipo: {evento_agenda.get_tipo_display()}\n'
-        descrizione += f'Priorità: {evento_agenda.get_priorita_display()}\n'
+        descrizione += (
+            f'Tipo: '
+            f'{evento_agenda.get_tipo_display()}\n'
+        )
+
+        descrizione += (
+            f'Priorità: '
+            f'{evento_agenda.get_priorita_display()}\n'
+        )
 
         if evento_agenda.cliente:
-            descrizione += f'Cliente: {evento_agenda.cliente}\n'
+
+            descrizione += (
+                f'Cliente: '
+                f'{evento_agenda.cliente}\n'
+            )
 
         if evento_agenda.pratica:
-            descrizione += f'Pratica: {evento_agenda.pratica}\n'
+
+            descrizione += (
+                f'Pratica: '
+                f'{evento_agenda.pratica}\n'
+            )
 
         if evento_agenda.descrizione:
-            descrizione += f'Note: {evento_agenda.descrizione}\n'
 
-        evento.add('description', descrizione)
+            descrizione += (
+                f'Note: '
+                f'{evento_agenda.descrizione}\n'
+            )
 
-        ora_inizio = evento_agenda.ora_inizio if evento_agenda.ora_inizio else time(9, 0)
-        ora_fine = evento_agenda.ora_fine if evento_agenda.ora_fine else time(10, 0)
+        evento.add(
+            'description',
+            descrizione
+        )
+
+        ora_inizio = (
+            evento_agenda.ora_inizio
+            if evento_agenda.ora_inizio
+            else time(9, 0)
+        )
+
+        ora_fine = (
+            evento_agenda.ora_fine
+            if evento_agenda.ora_fine
+            else time(10, 0)
+        )
 
         inizio = datetime.combine(
             evento_agenda.data,
@@ -330,6 +514,7 @@ def calendario_ics(request, codice):
         )
 
         evento.add('dtstart', inizio)
+
         evento.add('dtend', fine)
 
         evento.add(
@@ -337,7 +522,10 @@ def calendario_ics(request, codice):
             f'evento-agenda-{evento_agenda.id}@gestionale-studio'
         )
 
-        evento.add('dtstamp', datetime.now())
+        evento.add(
+            'dtstamp',
+            datetime.now()
+        )
 
         calendario.add_component(evento)
 
@@ -346,6 +534,8 @@ def calendario_ics(request, codice):
         content_type='text/calendar'
     )
 
-    response['Content-Disposition'] = 'inline; filename="agenda_operativa.ics"'
+    response[
+        'Content-Disposition'
+    ] = 'inline; filename="agenda_operativa.ics"'
 
     return response
