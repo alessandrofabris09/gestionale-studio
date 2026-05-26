@@ -255,6 +255,11 @@
 
             {% if request.user.is_superuser or request.user|has_group:"Admin Studio" %}
 
+                <a href="/studi/abbonamento/" class="{% if '/studi/abbonamento' in request.path %}active{% endif %}">
+                    <i class="fa-solid fa-crown"></i>
+                    Abbonamento
+                </a>
+
                 <a href="/admin/" class="{% if '/admin' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-screwdriver-wrench"></i>
                     Amministrazione
