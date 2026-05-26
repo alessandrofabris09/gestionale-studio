@@ -183,9 +183,9 @@ def nuova_pratica(request):
 
     if studio.piano == 'FREE':
 
-    pratiche_attuali = Pratica.objects.filter(
-        studio=studio
-    ).count()
+        pratiche_attuali = Pratica.objects.filter(
+            studio=studio
+        ).count()
 
     if pratiche_attuali >= studio.limite_pratiche:
 
