@@ -4,7 +4,11 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
+
 from studi.utils import get_studio_utente
+from studi.models import Studio
 
 @csrf_exempt
 def stripe_webhook(request):
