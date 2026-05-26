@@ -1,0 +1,123 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Abbonamento{% endblock %}
+{% block page_title %}Abbonamento studio{% endblock %}
+
+{% block content %}
+
+<style>
+    .billing-card{
+        background:white;
+        padding:40px;
+        border-radius:28px;
+        box-shadow:0 12px 30px rgba(0,0,0,0.10);
+        max-width:900px;
+    }
+
+    .badge{
+        display:inline-block;
+        padding:8px 14px;
+        border-radius:999px;
+        font-weight:800;
+        background:#eef2ff;
+        color:#3730a3;
+        margin-bottom:20px;
+    }
+
+    .grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:20px;
+        margin:30px 0;
+    }
+
+    .box{
+        background:#f9fafb;
+        border:1px solid #e5e7eb;
+        border-radius:18px;
+        padding:22px;
+    }
+
+    .label{
+        color:#6b7280;
+        font-weight:800;
+        margin-bottom:8px;
+    }
+
+    .value{
+        font-size:24px;
+        font-weight:900;
+        color:#111827;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:14px 22px;
+        border-radius:14px;
+        text-decoration:none;
+        font-weight:800;
+    }
+
+    @media(max-width:800px){
+        .grid{
+            grid-template-columns:1fr;
+        }
+    }
+</style>
+
+<div class="billing-card">
+
+    <span class="badge">
+        Piano {{ studio.get_piano_display }}
+    </span>
+
+    <h2>
+        {{ studio.nome }}
+    </h2>
+
+    <p>
+        Stato abbonamento: <strong>{{ studio.get_stato_abbonamento_display }}</strong>
+    </p>
+
+    <div class="grid">
+
+        <div class="box">
+            <div class="label">Limite pratiche</div>
+            <div class="value">{{ studio.limite_pratiche }}</div>
+        </div>
+
+        <div class="box">
+            <div class="label">Limite utenti</div>
+            <div class="value">{{ studio.limite_utenti }}</div>
+        </div>
+
+        <div class="box">
+            <div class="label">Storage incluso</div>
+            <div class="value">{{ studio.limite_storage_mb }} MB</div>
+        </div>
+
+        <div class="box">
+            <div class="label">Giorni trial rimanenti</div>
+            <div class="value">
+                {% if giorni_trial is not None %}
+                    {{ giorni_trial }}
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <a href="/billing/checkout/pro/" class="btn">
+        <i class="fa-solid fa-crown"></i>
+        Passa al piano PRO
+    </a>
+
+</div>
+
+{% endblock %}

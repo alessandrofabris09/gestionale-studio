@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     'workflow',
     'studi',
     'utenti',
+    'landing',
+    'billing',
 ]
 
 MIDDLEWARE = [
@@ -71,7 +73,7 @@ ROOT_URLCONF = 'gestionale.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -134,8 +136,8 @@ STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
@@ -196,3 +198,18 @@ EMAIL_HOST_PASSWORD = 'pcegpeapnnnritxw'
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 ALERT_EMAIL = os.environ.get('ALERT_EMAIL')
+
+# STRIPE
+
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
+
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+
+STRIPE_PRICE_PRO_MONTHLY = os.environ.get('STRIPE_PRICE_PRO_MONTHLY', '')
+
+SITE_URL = os.environ.get(
+    'SITE_URL',
+    'http://127.0.0.1:8000'
+)

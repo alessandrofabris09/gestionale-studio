@@ -19,6 +19,7 @@ requests==2.33.1
 resend==2.30.0
 six==1.17.0
 sqlparse==0.5.5
+stripe==15.1.0
 typing_extensions==4.15.0
 tzdata==2026.2
 urllib3==2.7.0

@@ -1,6 +1,8 @@
 from datetime import timedelta
 from io import BytesIO
 
+from studi.utils import get_studio_utente, studio_puo_creare_pratiche
+
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
@@ -177,6 +179,27 @@ def dettaglio_pratica(request, pratica_id):
 def nuova_pratica(request):
 
     studio = get_studio_utente(request)
+
+    if not studio:
+
+        return redirect('login')
+
+    if not studio_puo_creare_pratiche(studio):
+
+        return render(
+            request,
+            'studi/upgrade_required.html',
+            {
+                'studio': studio,
+                'titolo': 'Limite pratiche raggiunto',
+                'messaggio': (
+                    f'Il piano FREE consente di creare massimo '
+                    f'{studio.limite_pratiche} pratiche. '
+                    f'Per continuare a creare nuove pratiche passa al piano PRO.'
+                ),
+                'azione': 'Passa al piano PRO',
+            }
+        )
 
     if request.method == 'POST':
 
