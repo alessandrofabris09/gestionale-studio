@@ -41,9 +41,9 @@ def stripe_webhook(request):
 
         session = event['data']['object']
 
-        metadata = session.get('metadata', {})
+        metadata = session['metadata']
 
-        studio_id = metadata.get('studio_id')
+        studio_id = metadata['studio_id']
 
         if studio_id:
 
@@ -57,15 +57,9 @@ def stripe_webhook(request):
 
                 studio.stato_abbonamento = 'ATTIVO'
 
-                studio.stripe_customer_id = session.get(
-                    'customer',
-                    ''
-                )
+                studio.stripe_customer_id = session['customer']
 
-                studio.stripe_subscription_id = session.get(
-                    'subscription',
-                    ''
-                )
+                studio.stripe_subscription_id = session['subscription']
 
                 studio.limite_pratiche = 999999
 
