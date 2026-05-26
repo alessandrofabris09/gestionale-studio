@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse
 from django.utils.timezone import now
+from django.contrib import messages
 
 from reportlab.pdfgen import canvas
 
@@ -179,6 +180,21 @@ def dettaglio_pratica(request, pratica_id):
 def nuova_pratica(request):
 
     studio = get_studio_utente(request)
+
+    if studio.piano == 'FREE':
+
+    pratiche_attuali = Pratica.objects.filter(
+        studio=studio
+    ).count()
+
+    if pratiche_attuali >= studio.limite_pratiche:
+
+        messages.error(
+            request,
+            'Hai raggiunto il limite del piano FREE. Passa al piano PRO.'
+        )
+
+        return redirect('/studi/abbonamento/')
 
     if not studio:
 
