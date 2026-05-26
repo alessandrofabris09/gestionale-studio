@@ -12,6 +12,9 @@ from .forms import ImmobileForm
 def lista_immobili(request):
 
     studio = get_studio_utente(request)
+    
+    if not studio:
+        return redirect('login')
 
     immobili = Immobile.objects.filter(
         studio=studio

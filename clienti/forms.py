@@ -5,9 +5,10 @@ from .models import Cliente
 class ClienteForm(forms.ModelForm):
 
     class Meta:
+
         model = Cliente
 
-        fields = '__all__'
+        exclude = ['studio']
 
         widgets = {
             'note': forms.Textarea(attrs={'rows': 4}),

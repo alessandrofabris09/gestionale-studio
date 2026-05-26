@@ -181,41 +181,31 @@ def nuova_pratica(request):
 
     studio = get_studio_utente(request)
 
+    if not studio:
+        return redirect('login')
+
     if studio.piano == 'FREE':
 
         pratiche_attuali = Pratica.objects.filter(
             studio=studio
         ).count()
 
-    if pratiche_attuali >= studio.limite_pratiche:
+        if pratiche_attuali >= studio.limite_pratiche:
 
-        messages.error(
-            request,
-            'Hai raggiunto il limite del piano FREE. Passa al piano PRO.'
-        )
-
-        return redirect('/studi/abbonamento/')
-
-    if not studio:
-
-        return redirect('login')
-
-    if not studio_puo_creare_pratiche(studio):
-
-        return render(
-            request,
-            'studi/upgrade_required.html',
-            {
-                'studio': studio,
-                'titolo': 'Limite pratiche raggiunto',
-                'messaggio': (
-                    f'Il piano FREE consente di creare massimo '
-                    f'{studio.limite_pratiche} pratiche. '
-                    f'Per continuare a creare nuove pratiche passa al piano PRO.'
-                ),
-                'azione': 'Passa al piano PRO',
-            }
-        )
+            return render(
+                request,
+                'studi/upgrade_required.html',
+                {
+                    'studio': studio,
+                    'titolo': 'Limite pratiche raggiunto',
+                    'messaggio': (
+                        f'Il piano FREE consente di creare massimo '
+                        f'{studio.limite_pratiche} pratiche. '
+                        f'Per continuare a creare nuove pratiche passa al piano PRO.'
+                    ),
+                    'azione': 'Passa al piano PRO',
+                }
+            )
 
     if request.method == 'POST':
 
@@ -266,7 +256,6 @@ def nuova_pratica(request):
             'form': form
         }
     )
-
 
 @login_required
 def modifica_pratica(request, pratica_id):

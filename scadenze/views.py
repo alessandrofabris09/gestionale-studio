@@ -59,12 +59,23 @@ def nuova_scadenza(request):
             if scadenza.pratica:
 
                 EventoAgenda.objects.create(
+
+                    studio=studio,
+
                     titolo=f'Scadenza: {scadenza.titolo}',
+
                     tipo='SCADENZA',
+
                     priorita='MEDIA',
-                    cliente=scadenza.pratica.cliente if scadenza.pratica.cliente else None,
+
+                    cliente=scadenza.pratica.cliente
+                    if scadenza.pratica.cliente
+                    else None,
+
                     pratica=scadenza.pratica,
+
                     data=scadenza.data_scadenza,
+
                     descrizione=f'Scadenza collegata alla pratica: {scadenza.pratica}'
                 )
 
@@ -228,11 +239,11 @@ def eventi_calendario(request):
 
     studio = get_studio_utente(request)
 
+    eventi = []
+
     scadenze = Scadenza.objects.filter(
         pratica__studio=studio
     )
-
-    eventi = []
 
     for scadenza in scadenze:
 
@@ -262,17 +273,42 @@ def eventi_calendario(request):
             )
 
         eventi.append({
-            'title': scadenza.titolo,
+            'title': f'📌 {scadenza.titolo}',
             'start': scadenza.data_scadenza.isoformat(),
             'color': colore,
             'url': url,
+        })
+
+    eventi_agenda = EventoAgenda.objects.filter(
+        studio=studio
+    )
+
+    for evento in eventi_agenda:
+
+        colore = '#2563eb'
+
+        if evento.priorita == 'ALTA':
+
+            colore = '#dc2626'
+
+        elif evento.priorita == 'MEDIA':
+
+            colore = '#ca8a04'
+
+        elif evento.priorita == 'BASSA':
+
+            colore = '#16a34a'
+
+        eventi.append({
+            'title': f'🗓️ {evento.titolo}',
+            'start': evento.data.isoformat(),
+            'color': colore,
         })
 
     return JsonResponse(
         eventi,
         safe=False
     )
-
 
 def invia_email_scadenze_leggera(studio):
 

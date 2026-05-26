@@ -186,11 +186,11 @@
                 Dashboard
             </a>
 
-            <a hhref="{% url 'ricerca_globale' %}" ref="/ricerca/" class="{% if '/ricerca' in request.path %}active{% endif %}">
+            <a href="/dashboard/ricerca/" class="{% if '/dashboard/ricerca' in request.path %}active{% endif %}">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 Ricerca globale
-            </a>
-
+            </a>  
+            
             {% if request.user.is_superuser or request.user|has_group:"Admin Studio" or request.user|has_group:"Tecnico" %}
 
                 <a href="/pratiche/" class="{% if '/pratiche' in request.path or '/workflow' in request.path %}active{% endif %}">

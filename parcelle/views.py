@@ -8,17 +8,25 @@ from django.http import FileResponse
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 
+from studi.utils import get_studio_utente
+
 from .models import Parcella
 from .forms import ParcellaForm
 
 
 @login_required
 def lista_parcelle(request):
-    parcelle = Parcella.objects.all().order_by('-id')
+
+    studio = get_studio_utente(request)
+
+    parcelle = Parcella.objects.filter(
+        pratica__studio=studio
+    ).order_by('-id')
 
     ricerca = request.GET.get('ricerca')
 
     if ricerca:
+
         parcelle = parcelle.filter(
             Q(descrizione__icontains=ricerca) |
             Q(pratica__oggetto__icontains=ricerca) |
@@ -37,17 +45,30 @@ def lista_parcelle(request):
 
 @login_required
 def nuova_parcella(request):
+
+    studio = get_studio_utente(request)
+
+    if not studio:
+        return redirect('login')
+
     if request.method == 'POST':
-        form = ParcellaForm(request.POST)
+
+        form = ParcellaForm(
+            request.POST,
+            studio=studio
+        )
 
         if form.is_valid():
 
             parcella = form.save(commit=False)
 
+            if parcella.pratica.studio != studio:
+
+                return redirect('lista_parcelle')
+
             if not parcella.numero_documento:
 
                 anno = 2026
-
                 prefisso = 'PAR'
 
                 if parcella.tipo_documento == 'PREVENTIVO':
@@ -57,28 +78,45 @@ def nuova_parcella(request):
                     prefisso = 'FAT'
 
                 ultimo = Parcella.objects.filter(
+                    pratica__studio=studio,
                     tipo_documento=parcella.tipo_documento
                 ).count() + 1
 
                 parcella.numero_documento = f'{prefisso}-{anno}-{ultimo}'
 
+            if parcella.iva is None:
+                parcella.iva = 0
             parcella.save()
 
             return redirect('lista_parcelle')
 
+        else:
+
+            print(form.errors)
+
     else:
-        form = ParcellaForm()
+
+        form = ParcellaForm(
+            studio=studio
+        )
 
     return render(
         request,
         'parcelle/nuova_parcella.html',
-        {'form': form}
+        {
+            'form': form
+        }
     )
-
 
 @login_required
 def modifica_parcella(request, parcella_id):
-    parcella = get_object_or_404(Parcella, id=parcella_id)
+    studio = get_studio_utente(request)
+
+    parcella = get_object_or_404(
+        Parcella,
+        id=parcella_id,
+        pratica__studio=studio
+    )
 
     if request.method == 'POST':
         form = ParcellaForm(request.POST, instance=parcella)
@@ -101,7 +139,13 @@ def modifica_parcella(request, parcella_id):
 
 @login_required
 def elimina_parcella(request, parcella_id):
-    parcella = get_object_or_404(Parcella, id=parcella_id)
+    studio = get_studio_utente(request)
+
+    parcella = get_object_or_404(
+        Parcella,
+        id=parcella_id,
+        pratica__studio=studio
+    )
 
     if request.method == 'POST':
         parcella.delete()
@@ -117,9 +161,12 @@ def elimina_parcella(request, parcella_id):
 @login_required
 def pdf_parcella(request, parcella_id):
 
+    studio = get_studio_utente(request)
+
     parcella = get_object_or_404(
         Parcella,
-        id=parcella_id
+        id=parcella_id,
+        pratica__studio=studio
     )
 
     buffer = BytesIO()

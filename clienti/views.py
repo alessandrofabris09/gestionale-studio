@@ -5,10 +5,7 @@ from django.db.models import Q
 from .models import Cliente
 from .forms import ClienteForm
 
-
-def get_studio_utente(request):
-
-    return request.user.profilo_studio.studio
+from studi.utils import get_studio_utente
 
 
 @login_required
@@ -49,6 +46,9 @@ def nuovo_cliente(request):
 
     studio = get_studio_utente(request)
 
+    if not studio:
+        return redirect('login')
+
     if request.method == 'POST':
 
         form = ClienteForm(request.POST)
@@ -68,7 +68,9 @@ def nuovo_cliente(request):
     return render(
         request,
         'clienti/nuovo_cliente.html',
-        {'form': form}
+        {
+            'form': form
+        }
     )
 
 
