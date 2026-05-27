@@ -450,6 +450,90 @@ Ricerca globale
 
         </div>
 
+        <div class="section">
+
+            <div class="section-title">
+                <i class="fa-solid fa-euro-sign"></i>
+                Parcelle
+            </div>
+
+            {% for parcella in parcelle %}
+
+                <div class="item">
+
+                    <a class="item-link" href="/parcelle/">
+                        {{ parcella.descrizione }}
+                    </a>
+
+                    <div class="meta">
+                        <span class="badge green">
+                            € {{ parcella.importo }}
+                        </span>
+
+                        <span class="badge yellow">
+                            {{ parcella.get_stato_display }}
+                        </span>
+
+                        {% if parcella.pratica %}
+                            <span class="badge blue">
+                                {{ parcella.pratica }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+            {% empty %}
+
+                <div class="empty">
+                    Nessuna parcella trovata.
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+        <div class="section">
+
+            <div class="section-title">
+                <i class="fa-solid fa-calendar-days"></i>
+                Agenda
+            </div>
+
+            {% for evento in eventi %}
+
+                <div class="item">
+
+                    <a class="item-link" href="/agenda/">
+                        {{ evento.titolo }}
+                    </a>
+
+                    <div class="meta">
+                        <span class="badge red">
+                        {{ evento.data }}
+                        </span>
+
+                        <span class="badge yellow">
+                            {{ evento.get_priorita_display }}
+                        </span>
+
+                        <span class="badge blue">
+                            {{ evento.get_tipo_display }}
+                        </span>
+                    </div>
+
+                </div>
+
+            {% empty %}
+
+                <div class="empty">
+                    Nessun evento agenda trovato.
+                </div>
+
+            {% endfor %}
+
+        </div> 
+
     </div>
 
 {% else %}

@@ -554,7 +554,48 @@ Scheda pratica
         <div class="timeline">
 
             <div class="timeline-title">
-                {{ a.get_tipo_display }}
+                {% if a.tipo == 'CREAZIONE' %}
+                    <span class="badge type">
+                        <i class="fa-solid fa-plus"></i>
+                        Creazione
+                    </span>
+                {% endif %}
+
+                {% if a.tipo == 'MODIFICA' %}
+                    <span class="badge warn">
+                        <i class="fa-solid fa-pen"></i>
+                        Modifica
+                    </span>
+                {% endif %}
+
+                {% if a.tipo == 'UPLOAD' %}
+                    <span class="badge ok">
+                        <i class="fa-solid fa-upload"></i>
+                        Upload documento
+                    </span>
+                {% endif %}
+
+                {% if a.tipo == 'PDF' %}
+                    <span class="badge type">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        PDF
+                    </span>
+                {% endif %}
+
+                {% if a.tipo == 'ELIMINAZIONE' %}
+                    <span class="badge danger-btn">
+                        <i class="fa-solid fa-trash"></i>
+                        Eliminazione
+                    </span>
+                {% endif %}
+
+                {% if a.tipo == 'ALTRO' %}
+                    <span class="badge">
+                        <i class="fa-solid fa-circle-info"></i>
+                        Attività
+                    </span>
+                {% endif %}
+
             </div>
 
             <div class="timeline-text">

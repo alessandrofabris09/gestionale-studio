@@ -238,6 +238,56 @@ Dashboard gestionale
         </div>
     </div>
 
+    {% if notifiche %}
+
+    <div class="section">
+
+        <h2>
+            <i class="fa-solid fa-bell"></i>
+            Centro notifiche operative
+        </h2>
+
+        {% for n in notifiche %}
+
+            <div class="item">
+
+                <div class="item-title">
+
+                    <span class="badge
+                        {% if n.tipo == 'danger' %}
+                            badge-red
+                        {% elif n.tipo == 'warning' %}
+                            badge-yellow
+                        {% elif n.tipo == 'success' %}
+                            badge-green
+                        {% endif %}
+                    ">
+
+                        <i class="fa-solid {{ n.icona }}"></i>
+
+                        {{ n.titolo }}
+
+                    </span>
+
+                </div>
+
+                <div class="muted" style="margin-top:10px;">
+                    {{ n.testo }}
+                </div>
+
+                <a class="action-btn" href="{{ n.link }}">
+                    <i class="fa-solid fa-arrow-right"></i>
+                    Apri
+                </a>
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+    {% endif %}
+
     <div class="cards">
 
         <div class="card">
@@ -493,6 +543,88 @@ Dashboard gestionale
 
     </div>
 
+    <div class="section">
+
+        <h2>
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            Attività recenti
+        </h2>
+
+        {% for attivita in attivita_recenti %}
+
+            <div class="item">
+
+                <strong>
+                    {{ attivita.descrizione }}
+                </strong>
+
+                <br>
+
+                <span class="muted">
+
+                    {% if attivita.utente %}
+                        {{ attivita.utente.username }}
+                    {% else %}
+                        Sistema
+                    {% endif %}
+
+                    ·
+
+                    {{ attivita.data|date:"d/m/Y H:i" }}
+
+                </span>
+
+                {% if attivita.pratica %}
+
+                    <br>
+
+                    <span class="badge">
+                        <i class="fa-solid fa-folder-open"></i>
+                        {{ attivita.pratica }}
+                    </span>
+
+                {% endif %}
+
+                {% if attivita.tipo == 'UPLOAD' %}
+                    <span class="badge badge-green">
+                        <i class="fa-solid fa-upload"></i>
+                        Upload
+                    </span>
+                {% endif %}
+
+                {% if attivita.tipo == 'MODIFICA' %}
+                    <span class="badge badge-yellow">
+                        <i class="fa-solid fa-pen"></i>
+                        Modifica
+                    </span>
+                {% endif %}
+
+                {% if attivita.tipo == 'CREAZIONE' %}
+                    <span class="badge">
+                        <i class="fa-solid fa-plus"></i>
+                        Creazione
+                    </span>
+                {% endif %}
+
+                {% if attivita.tipo == 'ELIMINAZIONE' %}
+                    <span class="badge badge-red">
+                        <i class="fa-solid fa-trash"></i>
+                        Eliminazione
+                    </span>
+                {% endif %}
+
+            </div>           
+
+        {% empty %}
+
+            <p class="muted">
+                Nessuna attività recente presente.
+            </p>
+
+        {% endfor %}
+
+    </div>
+    
     <div class="grid-2">
 
         <div class="section">

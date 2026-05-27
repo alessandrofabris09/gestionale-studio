@@ -10,13 +10,14 @@ import resend
 
 from datetime import date, timedelta
 
+from attivita.models import Attivita
+
 from studi.utils import get_studio_utente
 
 from .models import Scadenza
 from .forms import ScadenzaForm
 
 from agenda.models import EventoAgenda
-
 
 @login_required
 def lista_scadenze(request):
@@ -55,6 +56,18 @@ def nuova_scadenza(request):
         if form.is_valid():
 
             scadenza = form.save()
+
+            if scadenza.pratica:
+
+                Attivita.objects.create(
+                    pratica=scadenza.pratica,
+                    utente=request.user,
+                    tipo='SCADENZA',
+                    descrizione=(
+                        f'Creata scadenza: '
+                        f'{scadenza.titolo}'
+                )
+            )
 
             if scadenza.pratica:
 
@@ -119,7 +132,19 @@ def modifica_scadenza(request, scadenza_id):
 
         if form.is_valid():
 
-            form.save()
+            scadenza = form.save()
+
+            if scadenza.pratica:
+
+                Attivita.objects.create(
+                    pratica=scadenza.pratica,
+                    utente=request.user,
+                    tipo='MODIFICA',
+                    descrizione=(
+                        f'Modificata scadenza: '
+                        f'{scadenza.titolo}'
+                )
+            )
 
             return redirect(
                 'lista_scadenze'
@@ -155,6 +180,18 @@ def elimina_scadenza(request, scadenza_id):
 
     if request.method == 'POST':
 
+        if scadenza.pratica:
+
+            Attivita.objects.create(
+                pratica=scadenza.pratica,
+                utente=request.user,
+                tipo='ELIMINAZIONE',
+                descrizione=(
+                    f'Eliminata scadenza: '
+                    f'{scadenza.titolo}'
+            )
+        )
+        
         scadenza.delete()
 
         return redirect(
@@ -181,6 +218,17 @@ def completa_scadenza(request, scadenza_id):
         pratica__studio=studio
     )
 
+    if scadenza.pratica:
+
+        Attivita.objects.create(
+            pratica=scadenza.pratica,
+            utente=request.user,
+            tipo='SCADENZA',
+            descrizione=(
+                f'Completata scadenza: '
+                f'{scadenza.titolo}'
+            )
+        )
     scadenza.completata = True
 
     scadenza.save()

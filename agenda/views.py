@@ -12,6 +12,8 @@ from django.utils.timezone import now
 
 from studi.utils import get_studio_utente
 
+from attivita.models import Attivita
+
 from .models import EventoAgenda
 from .forms import EventoAgendaForm
 
@@ -83,6 +85,17 @@ def nuovo_evento(request):
 
             evento.save()
 
+            if evento.pratica:
+
+                Attivita.objects.create(
+                    pratica=evento.pratica,
+                    utente=request.user,
+                    tipo='ALTRO',
+                    descrizione=(
+                        f'Creato evento agenda: '
+                        f'{evento.titolo}'
+                    )
+                )
             return redirect(
                 'lista_agenda'
             )
@@ -129,6 +142,17 @@ def modifica_evento(request, evento_id):
 
             evento.save()
 
+            if evento.pratica:
+
+                Attivita.objects.create(
+                    pratica=evento.pratica,
+                    utente=request.user,
+                    tipo='MODIFICA',
+                    descrizione=(
+                        f'Modificato evento agenda: '
+                        f'{evento.titolo}'
+                    )
+                )
             return redirect(
                 'lista_agenda'
             )
@@ -165,6 +189,17 @@ def elimina_evento(request, evento_id):
 
         evento.delete()
 
+        if evento.pratica:
+
+            Attivita.objects.create(
+                pratica=evento.pratica,
+                utente=request.user,
+                tipo='ELIMINAZIONE',
+                descrizione=(
+                    f'Eliminato evento agenda: '
+                    f'{evento.titolo}'
+                )
+            )
         return redirect(
             'lista_agenda'
         )
@@ -189,6 +224,17 @@ def completa_evento(request, evento_id):
         studio=studio
     )
 
+    if evento.pratica:
+
+        Attivita.objects.create(
+            pratica=evento.pratica,
+            utente=request.user,
+            tipo='ALTRO',
+            descrizione=(
+                f'Completato evento agenda: '
+                f'{evento.titolo}'
+            )
+        )
     evento.completato = True
 
     evento.save()

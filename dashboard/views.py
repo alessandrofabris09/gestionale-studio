@@ -1,4 +1,5 @@
 import shutil
+from workflow.models import FasePratica, ChecklistPratica
 
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -19,21 +20,25 @@ from scadenze.models import Scadenza
 from documenti.models import Documento
 from parcelle.models import Parcella
 from agenda.models import EventoAgenda
+from attivita.models import Attivita
 
 
 def get_studio_sicuro(request):
-    studio = get_studio_utente(request)
 
-    if studio:
-        return studio
+    try:
+        return get_studio_utente(request)
 
-    return Studio.objects.first()
+    except:
+        return None
 
 
 @login_required
 def home(request):
 
     studio = get_studio_sicuro(request)
+
+    if not studio:
+        return redirect('logout')
 
     pratiche = Pratica.objects.filter(
         studio=studio
@@ -58,6 +63,13 @@ def home(request):
     eventi = EventoAgenda.objects.filter(
         studio=studio
     )
+
+    attivita_recenti = Attivita.objects.filter(
+        pratica__studio=studio
+    ).select_related(
+        'utente',
+        'pratica'
+    ).order_by('-data')[:10]
 
     scadenze_imminenti = scadenze.filter(
         data_scadenza__lte=now().date() + timedelta(days=30),
@@ -93,6 +105,83 @@ def home(request):
     ).order_by(
         'ora_inizio'
     )[:5]
+
+    oggi = now().date()
+
+    notifiche = []
+
+    parcelle_scadute_qs = parcelle.filter(
+        stato='DA_PAGARE',
+        data_scadenza__lt=oggi
+    )
+
+    if parcelle_scadute_qs.exists():
+        notifiche.append({
+            'tipo': 'danger',
+            'icona': 'fa-file-invoice-dollar',
+            'titolo': 'Parcelle scadute',
+            'testo': f'Hai {parcelle_scadute_qs.count()} parcelle scadute da incassare.',
+            'link': '/parcelle/',
+        })
+
+    scadenze_urgenti_qs = scadenze.filter(
+        completata=False,
+        data_scadenza__gte=oggi,
+        data_scadenza__lte=oggi + timedelta(days=7)
+    )
+
+    if scadenze_urgenti_qs.exists():
+        notifiche.append({
+            'tipo': 'warning',
+            'icona': 'fa-clock',
+            'titolo': 'Scadenze imminenti',
+            'testo': f'Hai {scadenze_urgenti_qs.count()} scadenze nei prossimi 7 giorni.',
+            'link': '/scadenze/alert/',
+        })
+
+    fasi_scadute_qs = FasePratica.objects.filter(
+        workflow_pratica__pratica__studio=studio,
+        completata=False,
+        data_scadenza__lt=oggi
+    )
+
+    if fasi_scadute_qs.exists():
+        notifiche.append({
+            'tipo': 'danger',
+            'icona': 'fa-diagram-project',
+            'titolo': 'Workflow in ritardo',
+            'testo': f'Hai {fasi_scadute_qs.count()} fasi workflow scadute.',
+            'link': '/pratiche/',
+        })
+
+    checklist_incomplete_qs = ChecklistPratica.objects.filter(
+        workflow_pratica__pratica__studio=studio,
+        obbligatorio=True,
+        completato=False
+    )
+
+    if checklist_incomplete_qs.exists():
+        notifiche.append({
+            'tipo': 'info',
+            'icona': 'fa-list-check',
+            'titolo': 'Checklist incomplete',
+            'testo': f'Hai {checklist_incomplete_qs.count()} voci obbligatorie ancora da completare.',
+            'link': '/pratiche/',
+        })
+
+    eventi_oggi_qs = eventi.filter(
+        data=oggi,
+        completato=False
+    )
+
+    if eventi_oggi_qs.exists():
+        notifiche.append({
+            'tipo': 'success',
+            'icona': 'fa-calendar-day',
+            'titolo': 'Agenda di oggi',
+            'testo': f'Hai {eventi_oggi_qs.count()} eventi in agenda oggi.',
+            'link': '/agenda/oggi/',
+        })
 
     pratiche_per_stato = list(
         pratiche.values(
@@ -168,6 +257,10 @@ def home(request):
 
         'labels_parcelle': labels_parcelle,
         'dati_parcelle': dati_parcelle,
+
+        'attivita_recenti': attivita_recenti,
+
+        'notifiche': notifiche,
     }
 
     return render(
@@ -189,6 +282,8 @@ def ricerca_globale(request):
     pratiche = []
     scadenze = []
     documenti = []
+    parcelle = []
+    eventi = []
 
     if query:
 
@@ -236,6 +331,21 @@ def ricerca_globale(request):
             Q(note__icontains=query)
         )
 
+        parcelle = Parcella.objects.filter(
+            pratica__studio=studio
+        ).filter(
+            Q(descrizione__icontains=query) |
+            Q(note__icontains=query) |
+            Q(pratica__oggetto__icontains=query)
+        )
+
+        eventi = EventoAgenda.objects.filter(
+            studio=studio
+        ).filter(
+            Q(titolo__icontains=query) |
+            Q(descrizione__icontains=query)
+        )
+
     return render(
         request,
         'dashboard/ricerca.html',
@@ -246,6 +356,8 @@ def ricerca_globale(request):
             'pratiche': pratiche,
             'scadenze': scadenze,
             'documenti': documenti,
+            'parcelle': parcelle,
+            'eventi': eventi, 
         }
     )
 

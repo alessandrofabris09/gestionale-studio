@@ -13,6 +13,8 @@ from studi.utils import get_studio_utente
 from .models import Parcella
 from .forms import ParcellaForm
 
+from attivita.models import Attivita
+
 
 @login_required
 def lista_parcelle(request):
@@ -88,6 +90,16 @@ def nuova_parcella(request):
                 parcella.iva = 0
             parcella.save()
 
+            Attivita.objects.create(
+                pratica=parcella.pratica,
+                utente=request.user,
+                tipo='PARCELLA',
+                descrizione=(
+                    f'Creata {parcella.get_tipo_documento_display()}: '
+                    f'{parcella.numero_documento}'
+                )
+            )
+
             return redirect('lista_parcelle')
 
         else:
@@ -122,8 +134,18 @@ def modifica_parcella(request, parcella_id):
         form = ParcellaForm(request.POST, instance=parcella)
 
         if form.is_valid():
-            form.save()
-            return redirect('lista_parcelle')
+            parcella = form.save()
+
+            Attivita.objects.create(
+                pratica=parcella.pratica,
+                utente=request.user,
+                tipo='MODIFICA',
+                descrizione=(
+                    f'Modificata parcella: '
+                    f'{parcella.numero_documento}'
+                )
+            )
+            return redirect('lista_parcelle')      
     else:
         form = ParcellaForm(instance=parcella)
 
@@ -148,6 +170,15 @@ def elimina_parcella(request, parcella_id):
     )
 
     if request.method == 'POST':
+        Attivita.objects.create(
+            pratica=parcella.pratica,
+            utente=request.user,
+            tipo='ELIMINAZIONE',
+            descrizione=(
+                f'Eliminata parcella: '
+                f'{parcella.numero_documento}'
+            )
+        )
         parcella.delete()
         return redirect('lista_parcelle')
 
@@ -163,10 +194,20 @@ def pdf_parcella(request, parcella_id):
 
     studio = get_studio_utente(request)
 
-    parcella = get_object_or_404(
+    parcella = get_object_or_404(      
         Parcella,
         id=parcella_id,
         pratica__studio=studio
+    )
+
+    Attivita.objects.create(
+        pratica=parcella.pratica,
+        utente=request.user,
+        tipo='PDF',
+        descrizione=(
+            f'Generato PDF parcella: '
+            f'{parcella.numero_documento}'
+        )
     )
 
     buffer = BytesIO()

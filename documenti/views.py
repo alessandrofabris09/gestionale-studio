@@ -121,25 +121,39 @@ def carica_documenti_multipli(request, pratica_id):
 
             files = request.FILES.getlist('files')
 
-            titolo_base = form.cleaned_data.get(
-                'titolo_base'
-            )
+            for file in files:
 
-            tipo_documento = form.cleaned_data.get(
-                'tipo_documento'
-            )
+                print("FILE:", file.name)
 
-            note = form.cleaned_data.get(
-                'note'
-            )
+                nome_file = file.name.lower()
+
+                if (
+                    nome_file.endswith('.zip') or
+                    nome_file.endswith('.rar') or
+                    nome_file.endswith('.7z')
+                ):
+
+                    form.add_error(
+                        'files',
+                        'I file ZIP/RAR/7Z non sono supportati dal caricamento cloud.'
+                    )
+
+                    return render(
+                        request,
+                        'documenti/carica_documenti_multipli.html',
+                        {
+                            'form': form,
+                            'pratica': pratica,
+                        }
+                    )
+
+            titolo_base = form.cleaned_data.get('titolo_base')
+            tipo_documento = form.cleaned_data.get('tipo_documento')
+            note = form.cleaned_data.get('note')
 
             for file in files:
 
-                titolo = (
-                    titolo_base
-                    if titolo_base
-                    else file.name
-                )
+                titolo = titolo_base if titolo_base else file.name
 
                 documento = Documento.objects.create(
                     pratica=pratica,
@@ -161,21 +175,20 @@ def carica_documenti_multipli(request, pratica_id):
                 pratica_id=pratica.id
             )
 
+        print(form.errors)
+
     else:
 
         form = DocumentoMultiploForm()
 
-    context = {
-        'form': form,
-        'pratica': pratica,
-    }
-
     return render(
         request,
         'documenti/carica_documenti_multipli.html',
-        context
+        {
+            'form': form,
+            'pratica': pratica,
+        }
     )
-
 
 @login_required
 def elimina_documento(request, documento_id):
