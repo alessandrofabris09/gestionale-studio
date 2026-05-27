@@ -1,4 +1,4 @@
-{% load role_tags %}
+{% load permessi_tags %}
 
 <!DOCTYPE html>
 <html lang="it">
@@ -210,7 +210,7 @@
 
             {% endif %}
 
-            {% if request.user.is_superuser or request.user|has_group:"Admin Studio" or request.user|has_group:"Segreteria" %}
+            {% if request.user|can_view_parcelle %}
 
                 <a href="/clienti/" class="{% if '/clienti' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-users"></i>
@@ -224,8 +224,7 @@
 
             {% endif %}
 
-            {% if request.user.is_superuser or request.user|has_group:"Admin Studio" or request.user|has_group:"Tecnico" or request.user|has_group:"Segreteria" %}
-
+            {% if request.user|can_use_agenda %}
                 <a href="/scadenze/" class="{% if '/scadenze' in request.path and not '/scadenze/alert' in request.path and not '/scadenze/invia-alert-email' in request.path and not '/scadenze/calendario' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-clock"></i>
                     Scadenze
@@ -253,7 +252,7 @@
 
             {% endif %}
 
-            {% if request.user.is_superuser or request.user|has_group:"Admin Studio" %}
+            {% if request.user|can_manage_subscription %}            
 
                 <a href="/studi/abbonamento/" class="{% if '/studi/abbonamento' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-crown"></i>
@@ -265,10 +264,12 @@
                     Amministrazione
                 </a>
 
-                <a href="/backups/" class="{% if '/backups' in request.path %}active{% endif %}">
-                    <i class="fa-solid fa-database"></i>
-                    Backup database
-                </a>
+                {% if request.user|can_manage_backup %}
+                    <a href="/backups/" class="{% if '/backups' in request.path %}active{% endif %}">
+                        <i class="fa-solid fa-database"></i>
+                        Backup database
+                    </a>
+                {% endif %}
 
             {% endif %}
 

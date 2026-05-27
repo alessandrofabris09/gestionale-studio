@@ -10,7 +10,10 @@ from django.db.models import Q, Sum, Count
 from django.shortcuts import render, redirect
 from django.utils.timezone import now
 
-from studi.utils import get_studio_utente
+from studi.utils import (
+    get_studio_utente,
+    studio_deve_upgrade,
+)
 from studi.models import Studio
 
 from clienti.models import Cliente
@@ -39,6 +42,10 @@ def home(request):
 
     if not studio:
         return redirect('logout')
+
+    if studio_deve_upgrade(studio):
+
+        return redirect('abbonamento')
 
     pratiche = Pratica.objects.filter(
         studio=studio
@@ -365,8 +372,7 @@ def ricerca_globale(request):
 @login_required
 def backup_manuale(request):
 
-    if not request.user.is_superuser:
-        return redirect('/')
+    from studi.permessi import puo_gestire_backup
 
     base_dir = Path(settings.BASE_DIR)
 
@@ -383,6 +389,9 @@ def backup_manuale(request):
         parents=True,
         exist_ok=True
     )
+
+    if not puo_gestire_backup(request):
+        return redirect('home')
 
     if db_file.exists():
         shutil.copy2(

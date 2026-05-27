@@ -4,7 +4,10 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 
-from studi.utils import get_studio_utente
+from studi.utils import (
+    get_studio_utente,
+    studio_puo_caricare_file,
+)
 
 from attivita.models import Attivita
 from pratiche.models import Pratica
@@ -65,6 +68,29 @@ def carica_documento(request, pratica_id):
 
         if form.is_valid():
 
+            file = request.FILES.get('file')
+
+            if file:
+
+                if not studio_puo_caricare_file(
+                    studio,
+                    file.size
+                ):
+
+                    return render(
+                        request,
+                        'studi/upgrade_required.html',
+                        {
+                            'studio': studio,
+                            'titolo': 'Limite storage raggiunto',
+                            'messaggio': (
+                                f'Il piano FREE consente massimo '
+                                f'{studio.limite_storage_mb} MB di spazio.'
+                            ),
+                            'azione': 'Passa al piano PRO',
+                        }
+                    )
+            
             documento = form.save(commit=False)
 
             documento.pratica = pratica
@@ -120,6 +146,30 @@ def carica_documenti_multipli(request, pratica_id):
         if form.is_valid():
 
             files = request.FILES.getlist('files')
+
+            dimensione_totale = 0
+
+            for file in files:
+                dimensione_totale += file.size
+
+            if not studio_puo_caricare_file(
+                studio,
+                dimensione_totale
+            ):
+
+                return render(
+                    request,
+                    'studi/upgrade_required.html',
+                    {
+                        'studio': studio,
+                        'titolo': 'Limite storage raggiunto',
+                        'messaggio': (
+                            f'Il piano FREE consente massimo '
+                            f'{studio.limite_storage_mb} MB di spazio.'
+                        ),
+                        'azione': 'Passa al piano PRO',
+                    }
+                ) 
 
             for file in files:
 

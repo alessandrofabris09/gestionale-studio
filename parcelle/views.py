@@ -9,6 +9,11 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 
 from studi.utils import get_studio_utente
+from studi.permessi import (
+    puo_vedere_parcelle,
+    puo_modificare_parcelle,
+    puo_eliminare_parcelle,
+)
 
 from .models import Parcella
 from .forms import ParcellaForm
@@ -26,6 +31,9 @@ def lista_parcelle(request):
     ).order_by('-id')
 
     ricerca = request.GET.get('ricerca')
+
+    if not puo_vedere_parcelle(request):
+        return redirect('home')
 
     if ricerca:
 
@@ -52,6 +60,9 @@ def nuova_parcella(request):
 
     if not studio:
         return redirect('login')
+
+    if not puo_modificare_parcelle(request):
+        return redirect('home')    
 
     if request.method == 'POST':
 
@@ -130,6 +141,9 @@ def modifica_parcella(request, parcella_id):
         pratica__studio=studio
     )
 
+    if not puo_modificare_parcelle(request):
+        return redirect('home')
+
     if request.method == 'POST':
         form = ParcellaForm(request.POST, instance=parcella)
 
@@ -168,6 +182,9 @@ def elimina_parcella(request, parcella_id):
         id=parcella_id,
         pratica__studio=studio
     )
+
+    if not puo_eliminare_parcelle(request):
+        return redirect('home')
 
     if request.method == 'POST':
         Attivita.objects.create(

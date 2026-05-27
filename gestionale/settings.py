@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-0bbk_^4!744z-79r-&(0i#prg1^&t32l92k-*v#o7z1^m_4k6f'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = []
 
@@ -122,7 +122,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Rome'
 
 USE_I18N = True
 
@@ -141,8 +141,6 @@ LOGOUT_REDIRECT_URL = '/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
-
-DEBUG = True
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
@@ -180,7 +178,7 @@ CLOUDINARY_STORAGE = {
 
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
@@ -211,5 +209,5 @@ STRIPE_PRICE_PRO_MONTHLY = os.environ.get('STRIPE_PRICE_PRO_MONTHLY', '')
 
 SITE_URL = os.environ.get(
     'SITE_URL',
-    'http://127.0.0.1:8000'
+    'https://gestionale-studio-ti32.onrender.com'
 )

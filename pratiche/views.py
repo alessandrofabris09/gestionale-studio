@@ -26,11 +26,6 @@ from .models import Pratica
 from .forms import PraticaForm
 
 
-def get_studio_utente(request):
-
-    return request.user.profilo_studio.studio
-
-
 def attiva_workflow_automatico(pratica):
 
     workflow = TipoWorkflow.objects.filter(
@@ -184,28 +179,22 @@ def nuova_pratica(request):
     if not studio:
         return redirect('login')
 
-    if studio.piano == 'FREE':
+    if not studio_puo_creare_pratiche(studio):
 
-        pratiche_attuali = Pratica.objects.filter(
-            studio=studio
-        ).count()
-
-        if pratiche_attuali >= studio.limite_pratiche:
-
-            return render(
-                request,
-                'studi/upgrade_required.html',
-                {
-                    'studio': studio,
-                    'titolo': 'Limite pratiche raggiunto',
-                    'messaggio': (
-                        f'Il piano FREE consente di creare massimo '
-                        f'{studio.limite_pratiche} pratiche. '
-                        f'Per continuare a creare nuove pratiche passa al piano PRO.'
-                    ),
-                    'azione': 'Passa al piano PRO',
-                }
-            )
+        return render(
+            request,
+            'studi/upgrade_required.html',
+            {
+                'studio': studio,
+                'titolo': 'Limite pratiche raggiunto',
+                'messaggio': (
+                    f'Il piano FREE consente di creare massimo '
+                    f'{studio.limite_pratiche} pratiche. '
+                    f'Per continuare a creare nuove pratiche passa al piano PRO.'
+                ),
+                'azione': 'Passa al piano PRO',
+            }
+        )
 
     if request.method == 'POST':
 

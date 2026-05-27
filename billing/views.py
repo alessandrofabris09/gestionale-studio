@@ -117,6 +117,14 @@ def checkout_success(request):
 
     studio = get_studio_utente(request)
 
+    if studio:
+        studio.piano = 'PRO'
+        studio.stato_abbonamento = 'ATTIVO'
+        studio.limite_pratiche = 999999
+        studio.limite_utenti = 999999
+        studio.limite_storage_mb = 50000
+        studio.save()
+
     return render(
         request,
         'billing/success.html',

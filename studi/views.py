@@ -1,9 +1,11 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 from django.utils import timezone
 
 from .utils import get_studio_utente
+
+from studi.permessi import puo_gestire_abbonamento
 
 
 @login_required
@@ -11,9 +13,15 @@ def abbonamento(request):
 
     studio = get_studio_utente(request)
 
+    if not studio:
+        return redirect('logout')
+
+    if not puo_gestire_abbonamento(request):
+        return redirect('home')
+
     giorni_trial = None
 
-    if studio and studio.trial_fino_al:
+    if studio.trial_fino_al:
 
         giorni_trial = (
             studio.trial_fino_al - timezone.now().date()
