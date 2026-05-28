@@ -5,7 +5,7 @@ Upgrade richiesto
 {% endblock %}
 
 {% block page_title %}
-Upgrade piano
+Passa al piano PRO
 {% endblock %}
 
 {% block content %}
@@ -19,29 +19,33 @@ Upgrade piano
 
     .upgrade-card{
         width:100%;
-        max-width:760px;
+        max-width:980px;
         background:white;
-        border-radius:28px;
-        padding:45px;
-        box-shadow:0 12px 30px rgba(0,0,0,0.10);
+        border-radius:30px;
+        padding:46px;
+        box-shadow:0 16px 38px rgba(0,0,0,0.12);
+    }
+
+    .upgrade-header{
         text-align:center;
+        margin-bottom:35px;
     }
 
     .icon-box{
-        width:90px;
-        height:90px;
-        border-radius:24px;
-        background:#dbeafe;
-        color:#2563eb;
+        width:92px;
+        height:92px;
+        border-radius:26px;
+        background:#fef3c7;
+        color:#ca8a04;
         display:flex;
         align-items:center;
         justify-content:center;
-        font-size:38px;
-        margin:0 auto 25px auto;
+        font-size:40px;
+        margin:0 auto 24px auto;
     }
 
-    h2{
-        font-size:34px;
+    .upgrade-header h2{
+        font-size:36px;
         color:#111827;
         margin-bottom:14px;
     }
@@ -50,41 +54,91 @@ Upgrade piano
         color:#6b7280;
         font-size:17px;
         line-height:1.7;
-        margin-bottom:32px;
+        max-width:720px;
+        margin:0 auto;
     }
 
-    .plan-box{
-        background:#f9fafb;
+    .comparison{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:24px;
+        margin:36px 0;
+    }
+
+    .plan{
         border:1px solid #e5e7eb;
-        border-radius:20px;
-        padding:22px;
-        margin-bottom:32px;
-        text-align:left;
+        border-radius:24px;
+        padding:28px;
+        background:#f9fafb;
     }
 
-    .plan-row{
+    .plan.pro{
+        background:#111827;
+        color:white;
+        border-color:#111827;
+        transform:scale(1.02);
+    }
+
+    .plan h3{
+        font-size:24px;
+        margin-bottom:10px;
+    }
+
+    .price{
+        font-size:32px;
+        font-weight:900;
+        margin-bottom:22px;
+    }
+
+    .price small{
+        font-size:14px;
+        font-weight:600;
+        color:#9ca3af;
+    }
+
+    .feature{
         display:flex;
-        justify-content:space-between;
+        gap:10px;
+        align-items:flex-start;
         padding:10px 0;
-        border-bottom:1px solid #e5e7eb;
         font-weight:700;
     }
 
-    .plan-row:last-child{
-        border-bottom:none;
+    .feature i{
+        margin-top:3px;
+    }
+
+    .pro .feature i{
+        color:#22c55e;
+    }
+
+    .free .feature i{
+        color:#6b7280;
+    }
+
+    .actions{
+        display:flex;
+        justify-content:center;
+        gap:12px;
+        flex-wrap:wrap;
+        margin-top:30px;
     }
 
     .btn{
         display:inline-flex;
         align-items:center;
         gap:9px;
-        background:#111827;
+        background:#2563eb;
         color:white;
-        padding:14px 22px;
+        padding:15px 24px;
         border-radius:14px;
         text-decoration:none;
-        font-weight:800;
-        margin:5px;
+        font-weight:900;
+        font-size:15px;
+    }
+
+    .btn:hover{
+        background:#1d4ed8;
     }
 
     .btn-secondary{
@@ -92,57 +146,136 @@ Upgrade piano
         color:#111827;
         border:1px solid #d1d5db;
     }
+
+    .btn-secondary:hover{
+        background:#e5e7eb;
+    }
+
+    .note{
+        text-align:center;
+        color:#6b7280;
+        font-size:14px;
+        margin-top:22px;
+    }
+
+    @media(max-width:850px){
+        .comparison{
+            grid-template-columns:1fr;
+        }
+
+        .plan.pro{
+            transform:none;
+        }
+    }
 </style>
 
 <div class="upgrade-wrapper">
 
     <div class="upgrade-card">
 
-        <div class="icon-box">
-            <i class="fa-solid fa-crown"></i>
-        </div>
+        <div class="upgrade-header">
 
-        <h2>
-            {{ titolo }}
-        </h2>
-
-        <div class="message">
-            {{ messaggio }}
-        </div>
-
-        <div class="plan-box">
-
-            <div class="plan-row">
-                <span>Piano attuale</span>
-                <span>{{ studio.get_piano_display }}</span>
+            <div class="icon-box">
+                <i class="fa-solid fa-crown"></i>
             </div>
 
-            <div class="plan-row">
-                <span>Limite pratiche</span>
-                <span>{{ studio.limite_pratiche }}</span>
-            </div>
+            <h2>
+                {{ titolo }}
+            </h2>
 
-            <div class="plan-row">
-                <span>Limite utenti</span>
-                <span>{{ studio.limite_utenti }}</span>
-            </div>
-
-            <div class="plan-row">
-                <span>Storage incluso</span>
-                <span>{{ studio.limite_storage_mb }} MB</span>
+            <div class="message">
+                {{ messaggio }}
             </div>
 
         </div>
 
-        <a href="#" class="btn">
-            <i class="fa-solid fa-arrow-up"></i>
-            {{ azione }}
-        </a>
+        <div class="comparison">
 
-        <a href="/dashboard/" class="btn btn-secondary">
-            <i class="fa-solid fa-arrow-left"></i>
-            Torna alla dashboard
-        </a>
+            <div class="plan free">
+
+                <h3>Piano attuale</h3>
+
+                <div class="price">
+                    {{ studio.get_piano_display }}
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <span>Massimo {{ studio.limite_pratiche }} pratiche</span>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Massimo {{ studio.limite_utenti }} utente</span>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-database"></i>
+                    <span>{{ studio.limite_storage_mb }} MB di storage</span>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>Funzionalità limitate</span>
+                </div>
+
+            </div>
+
+            <div class="plan pro">
+
+                <h3>Piano PRO</h3>
+
+                <div class="price">
+                    Completo
+                    <small>/ mese</small>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Pratiche illimitate</span>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Utenti e collaboratori</span>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Storage aumentato</span>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Workflow, agenda, parcelle e documenti</span>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Accesso completo al gestionale</span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="actions">
+
+            <a href="/billing/checkout/pro/" class="btn">
+                <i class="fa-solid fa-arrow-up"></i>
+                {{ azione }}
+            </a>
+
+            <a href="/dashboard/" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i>
+                Torna alla dashboard
+            </a>
+
+        </div>
+
+        <div class="note">
+            Puoi passare al piano PRO in qualsiasi momento. Dopo il pagamento il gestionale viene aggiornato automaticamente.
+        </div>
 
     </div>
 
