@@ -45,7 +45,18 @@
         .user-info{
             font-size:13px;
             color:#d1d5db;
-            margin-bottom:30px;
+            margin-bottom:25px;
+            line-height:1.5;
+        }
+
+        .menu-section{
+            margin:18px 0 8px;
+            padding:0 6px;
+            font-size:11px;
+            text-transform:uppercase;
+            letter-spacing:0.08em;
+            color:#9ca3af;
+            font-weight:bold;
         }
 
         .menu a,
@@ -77,15 +88,11 @@
             background:#2563eb;
             color:white;
             font-weight:bold;
-            box-shadow:0 0 0 1px rgba(255,255,255,0.12) inset;
-        }
-
-        .menu a.active i{
-            color:white;
         }
 
         .logout-button{
             background:#991b1b;
+            margin-top:18px;
         }
 
         .logout-button:hover{
@@ -112,7 +119,7 @@
         }
 
         .content{
-            background:transparent;
+            width:100%;
         }
 
         .cards{
@@ -176,10 +183,22 @@
         </h2>
 
         <div class="user-info">
-            Utente: {{ request.user.username }}
+            Utente: {{ request.user.username }}<br>
+
+            {% if request.user.is_superuser %}
+                Ruolo: Amministratore sistema
+            {% elif request.user.profilo_studio %}
+                Ruolo: {{ request.user.profilo_studio.ruolo }}
+            {% else %}
+                Ruolo: non assegnato
+            {% endif %}
         </div>
 
         <nav class="menu">
+
+            <div class="menu-section">
+                Generale
+            </div>
 
             <a href="/" class="{% if request.path == '/' %}active{% endif %}">
                 <i class="fa-solid fa-gauge-high"></i>
@@ -189,18 +208,28 @@
             <a href="/dashboard/ricerca/" class="{% if '/dashboard/ricerca' in request.path %}active{% endif %}">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 Ricerca globale
-            </a>  
-            
-            {% if request.user.is_superuser or request.user|has_group:"Admin Studio" or request.user|has_group:"Tecnico" %}
+            </a>
 
-                <a href="/pratiche/" class="{% if '/pratiche' in request.path or '/workflow' in request.path %}active{% endif %}">
-                    <i class="fa-solid fa-folder-open"></i>
-                    Pratiche
+
+            {% if request.user|can_use_pratiche %}
+
+                <div class="menu-section">
+                    Studio
+                </div>
+
+                <a href="/clienti/" class="{% if '/clienti' in request.path %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    Clienti
                 </a>
 
                 <a href="/immobili/" class="{% if '/immobili' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-house"></i>
                     Immobili
+                </a>
+
+                <a href="/pratiche/" class="{% if '/pratiche' in request.path or '/workflow' in request.path %}active{% endif %}">
+                    <i class="fa-solid fa-folder-open"></i>
+                    Pratiche
                 </a>
 
                 <a href="/documenti/" class="{% if '/documenti' in request.path %}active{% endif %}">
@@ -210,22 +239,14 @@
 
             {% endif %}
 
-            {% if request.user|can_view_parcelle %}
-
-                <a href="/clienti/" class="{% if '/clienti' in request.path %}active{% endif %}">
-                    <i class="fa-solid fa-users"></i>
-                    Clienti
-                </a>
-
-                <a href="/parcelle/" class="{% if '/parcelle' in request.path %}active{% endif %}">
-                    <i class="fa-solid fa-euro-sign"></i>
-                    Parcelle
-                </a>
-
-            {% endif %}
 
             {% if request.user|can_use_agenda %}
-                <a href="/scadenze/" class="{% if '/scadenze' in request.path and not '/scadenze/alert' in request.path and not '/scadenze/invia-alert-email' in request.path and not '/scadenze/calendario' in request.path %}active{% endif %}">
+
+                <div class="menu-section">
+                    Agenda e scadenze
+                </div>
+
+                <a href="/scadenze/" class="{% if '/scadenze/' == request.path or request.path == '/scadenze/' %}active{% endif %}">
                     <i class="fa-solid fa-clock"></i>
                     Scadenze
                 </a>
@@ -235,43 +256,83 @@
                     Agenda operativa
                 </a>
 
-                <a href="/scadenze/alert/" class="{% if '/scadenze/alert' in request.path %}active{% endif %}">
-                    <i class="fa-solid fa-bell"></i>
-                    Alert scadenze
-                </a>
-
-                <a href="/scadenze/invia-alert-email/" class="{% if '/scadenze/invia-alert-email' in request.path %}active{% endif %}">
-                    <i class="fa-solid fa-envelope"></i>
-                    Invia alert email
-                </a>
-
                 <a href="/scadenze/calendario/" class="{% if '/scadenze/calendario' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-calendar"></i>
                     Calendario
                 </a>
 
+                {% if request.user|can_manage_alert %}
+
+                    <a href="/scadenze/alert/" class="{% if '/scadenze/alert' in request.path %}active{% endif %}">
+                        <i class="fa-solid fa-bell"></i>
+                        Alert scadenze
+                    </a>
+
+                    <a href="/scadenze/invia-alert-email/" class="{% if '/scadenze/invia-alert-email' in request.path %}active{% endif %}">
+                        <i class="fa-solid fa-envelope"></i>
+                        Invia alert email
+                    </a>
+
+                {% endif %}
+
             {% endif %}
 
-            {% if request.user|can_manage_subscription %}            
+
+            {% if request.user|can_view_parcelle %}
+
+                <div class="menu-section">
+                    Amministrazione studio
+                </div>
+
+                <a href="/parcelle/" class="{% if '/parcelle' in request.path %}active{% endif %}">
+                    <i class="fa-solid fa-euro-sign"></i>
+                    Parcelle
+                </a>
+
+            {% endif %}
+
+
+            {% if request.user|can_manage_subscription %}
+
+                <div class="menu-section">
+                    Gestione
+                </div>
+
+                <a href="/utenti/" class="{% if '/utenti' in request.path %}active{% endif %}">
+                    <i class="fa-solid fa-user-gear"></i>
+                    Gestione utenti
+                </a>
 
                 <a href="/studi/abbonamento/" class="{% if '/studi/abbonamento' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-crown"></i>
                     Abbonamento
                 </a>
 
-                <a href="/admin/" class="{% if '/admin' in request.path %}active{% endif %}">
-                    <i class="fa-solid fa-screwdriver-wrench"></i>
-                    Amministrazione
-                </a>
-
                 {% if request.user|can_manage_backup %}
+
                     <a href="/backups/" class="{% if '/backups' in request.path %}active{% endif %}">
                         <i class="fa-solid fa-database"></i>
                         Backup database
                     </a>
+
                 {% endif %}
 
             {% endif %}
+
+
+            {% if request.user.is_superuser %}
+
+                <div class="menu-section">
+                    Sistema
+                </div>
+
+                <a href="/admin/" class="{% if '/admin' in request.path %}active{% endif %}">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    Amministrazione Django
+                </a>
+
+            {% endif %}
+
 
             <form method="post" action="/logout/" style="margin:0;">
                 {% csrf_token %}
@@ -280,6 +341,7 @@
                     <i class="fa-solid fa-right-from-bracket"></i>
                     Logout
                 </button>
+
             </form>
 
         </nav>

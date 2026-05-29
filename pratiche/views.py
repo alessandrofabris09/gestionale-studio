@@ -1,16 +1,23 @@
 from datetime import timedelta
 from io import BytesIO
 
-from studi.utils import get_studio_utente, studio_puo_creare_pratiche
-
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponseForbidden
 from django.utils.timezone import now
 from django.contrib import messages
 
 from reportlab.pdfgen import canvas
+
+from studi.utils import get_studio_utente, studio_puo_creare_pratiche
+
+from studi.permessi import (
+    puo_creare_pratiche,
+    puo_modificare_pratiche,
+    puo_eliminare_pratiche,
+    puo_gestire_documenti,
+)
 
 from workflow.models import (
     TipoWorkflow,
@@ -24,6 +31,39 @@ from attivita.models import Attivita
 
 from .models import Pratica
 from .forms import PraticaForm
+
+
+def accesso_negato(request):
+    """
+    Pagina semplice di blocco accesso.
+    Per ora restituisce 403 senza creare template dedicati.
+    """
+
+    return HttpResponseForbidden(
+        """
+        <h1>Accesso negato</h1>
+        <p>Non hai i permessi per accedere a questa sezione.</p>
+        <p><a href="/dashboard/">Torna alla dashboard</a></p>
+        """
+    )
+
+
+def puo_vedere_area_pratiche(request):
+    """
+    Può vedere l'area pratiche chi può creare pratiche
+    oppure chi può gestire documenti.
+
+    In pratica:
+    - TITOLARE
+    - TECNICO
+    - SEGRETERIA, se abilitata ai documenti
+    - SUPERUSER
+    """
+
+    return (
+        puo_creare_pratiche(request) or
+        puo_gestire_documenti(request)
+    )
 
 
 def attiva_workflow_automatico(pratica):
@@ -89,11 +129,20 @@ def attiva_workflow_automatico(pratica):
 @login_required
 def lista_pratiche(request):
 
+    if not puo_vedere_area_pratiche(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    pratiche = Pratica.objects.filter(
-        studio=studio
-    ).order_by('-id')
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
+    if request.user.is_superuser:
+        pratiche = Pratica.objects.all().order_by('-id')
+    else:
+        pratiche = Pratica.objects.filter(
+            studio=studio
+        ).order_by('-id')
 
     ricerca = request.GET.get('ricerca')
     stato = request.GET.get('stato')
@@ -137,13 +186,22 @@ def lista_pratiche(request):
 @login_required
 def dettaglio_pratica(request, pratica_id):
 
+    if not puo_vedere_area_pratiche(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    pratica = get_object_or_404(
-        Pratica,
-        id=pratica_id,
-        studio=studio
-    )
+    if request.user.is_superuser:
+        pratica = get_object_or_404(
+            Pratica,
+            id=pratica_id
+        )
+    else:
+        pratica = get_object_or_404(
+            Pratica,
+            id=pratica_id,
+            studio=studio
+        )
 
     try:
         workflow_pratica = pratica.workflow_pratica
@@ -174,27 +232,32 @@ def dettaglio_pratica(request, pratica_id):
 @login_required
 def nuova_pratica(request):
 
+    if not puo_creare_pratiche(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    if not studio:
+    if not studio and not request.user.is_superuser:
         return redirect('login')
 
-    if not studio_puo_creare_pratiche(studio):
+    if not request.user.is_superuser:
 
-        return render(
-            request,
-            'studi/upgrade_required.html',
-            {
-                'studio': studio,
-                'titolo': 'Limite pratiche raggiunto',
-                'messaggio': (
-                    f'Il piano FREE consente di creare massimo '
-                    f'{studio.limite_pratiche} pratiche. '
-                    f'Per continuare a creare nuove pratiche passa al piano PRO.'
-                ),
-                'azione': 'Passa al piano PRO',
-            }
-        )
+        if not studio_puo_creare_pratiche(studio):
+
+            return render(
+                request,
+                'studi/upgrade_required.html',
+                {
+                    'studio': studio,
+                    'titolo': 'Limite pratiche raggiunto',
+                    'messaggio': (
+                        f'Il piano FREE consente di creare massimo '
+                        f'{studio.limite_pratiche} pratiche. '
+                        f'Per continuare a creare nuove pratiche passa al piano PRO.'
+                    ),
+                    'azione': 'Passa al piano PRO',
+                }
+            )
 
     if request.method == 'POST':
 
@@ -246,16 +309,26 @@ def nuova_pratica(request):
         }
     )
 
+
 @login_required
 def modifica_pratica(request, pratica_id):
 
+    if not puo_modificare_pratiche(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    pratica = get_object_or_404(
-        Pratica,
-        id=pratica_id,
-        studio=studio
-    )
+    if request.user.is_superuser:
+        pratica = get_object_or_404(
+            Pratica,
+            id=pratica_id
+        )
+    else:
+        pratica = get_object_or_404(
+            Pratica,
+            id=pratica_id,
+            studio=studio
+        )
 
     if request.method == 'POST':
 
@@ -303,15 +376,31 @@ def modifica_pratica(request, pratica_id):
 @login_required
 def elimina_pratica(request, pratica_id):
 
+    if not puo_eliminare_pratiche(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    pratica = get_object_or_404(
-        Pratica,
-        id=pratica_id,
-        studio=studio
-    )
+    if request.user.is_superuser:
+        pratica = get_object_or_404(
+            Pratica,
+            id=pratica_id
+        )
+    else:
+        pratica = get_object_or_404(
+            Pratica,
+            id=pratica_id,
+            studio=studio
+        )
 
     if request.method == 'POST':
+
+        Attivita.objects.create(
+            pratica=pratica,
+            utente=request.user,
+            tipo='ELIMINAZIONE',
+            descrizione=f'Eliminata pratica: {pratica.oggetto}'
+        )
 
         pratica.delete()
 
@@ -331,13 +420,22 @@ def elimina_pratica(request, pratica_id):
 @login_required
 def pdf_pratica(request, pratica_id):
 
+    if not puo_vedere_area_pratiche(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    pratica = get_object_or_404(
-        Pratica,
-        id=pratica_id,
-        studio=studio
-    )
+    if request.user.is_superuser:
+        pratica = get_object_or_404(
+            Pratica,
+            id=pratica_id
+        )
+    else:
+        pratica = get_object_or_404(
+            Pratica,
+            id=pratica_id,
+            studio=studio
+        )
 
     Attivita.objects.create(
         pratica=pratica,

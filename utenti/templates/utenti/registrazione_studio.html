@@ -72,13 +72,37 @@ Crea il tuo studio
         box-shadow:0 0 0 4px rgba(37,99,235,0.12);
     }
 
+    .field-error input{
+        border-color:#dc2626;
+        background:#fff7f7;
+    }
+
     .errors{
         background:#fee2e2;
         color:#991b1b;
-        padding:14px;
-        border-radius:14px;
-        margin-bottom:20px;
-        font-weight:bold;
+        padding:16px;
+        border-radius:16px;
+        margin-bottom:24px;
+        font-weight:800;
+        display:flex;
+        gap:10px;
+        align-items:flex-start;
+        line-height:1.5;
+    }
+
+    .error-text{
+        color:#991b1b;
+        font-size:13px;
+        font-weight:800;
+        margin-top:8px;
+        line-height:1.5;
+    }
+
+    .help-text{
+        color:#6b7280;
+        font-size:13px;
+        margin-top:8px;
+        line-height:1.5;
     }
 
     .btn{
@@ -98,6 +122,18 @@ Crea il tuo studio
 
     .btn:hover{
         background:#1f2937;
+    }
+
+    .login-link{
+        margin-top:24px;
+        color:#6b7280;
+        font-size:14px;
+    }
+
+    .login-link a{
+        color:#2563eb;
+        font-weight:800;
+        text-decoration:none;
     }
 
     @media(max-width:800px){
@@ -121,12 +157,15 @@ Crea il tuo studio
         </h2>
 
         <div class="subtitle">
-            Registra il tuo studio tecnico e accedi subito al gestionale.
+            Registra il tuo studio tecnico e accedi subito al gestionale. La prova gratuita viene attivata automaticamente.
         </div>
 
         {% if form.errors %}
             <div class="errors">
-                Controlla i dati inseriti: alcuni campi non sono corretti.
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <div>
+                    Alcuni dati non sono corretti. Controlla i messaggi sotto i campi evidenziati.
+                </div>
             </div>
         {% endif %}
 
@@ -136,47 +175,110 @@ Crea il tuo studio
 
             <div class="form-grid">
 
-                <div class="full">
+                <div class="full {% if form.nome_studio.errors %}field-error{% endif %}">
                     <label>Nome studio</label>
                     {{ form.nome_studio }}
+                    {% for error in form.nome_studio.errors %}
+                        <div class="error-text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            {{ error }}
+                        </div>
+                    {% endfor %}
                 </div>
 
-                <div>
+                <div class="{% if form.email.errors %}field-error{% endif %}">
                     <label>Email</label>
                     {{ form.email }}
+                    {% for error in form.email.errors %}
+                        <div class="error-text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                    {% if form.email.errors %}
+                        <div class="help-text">
+                            Se hai già un account, puoi accedere dalla pagina di login.
+                        </div>
+                    {% endif %}
                 </div>
 
-                <div>
+                <div class="{% if form.telefono.errors %}field-error{% endif %}">
                     <label>Telefono</label>
                     {{ form.telefono }}
+                    {% for error in form.telefono.errors %}
+                        <div class="error-text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            {{ error }}
+                        </div>
+                    {% endfor %}
                 </div>
 
-                <div>
+                <div class="{% if form.username.errors %}field-error{% endif %}">
                     <label>Username</label>
                     {{ form.username }}
+                    {% for error in form.username.errors %}
+                        <div class="error-text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            {{ error }}
+                        </div>
+                    {% endfor %}
                 </div>
 
-                <div>
+                <div class="{% if form.partita_iva.errors %}field-error{% endif %}">
                     <label>Partita IVA</label>
                     {{ form.partita_iva }}
+                    {% for error in form.partita_iva.errors %}
+                        <div class="error-text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            {{ error }}
+                        </div>
+                    {% endfor %}
                 </div>
 
-                <div>
+                <div class="{% if form.password.errors %}field-error{% endif %}">
                     <label>Password</label>
                     {{ form.password }}
+                    {% for error in form.password.errors %}
+                        <div class="error-text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            {{ error }}
+                        </div>
+                    {% endfor %}
                 </div>
 
-                <div>
+                <div class="{% if form.conferma_password.errors %}field-error{% endif %}">
                     <label>Conferma password</label>
                     {{ form.conferma_password }}
+                    {% for error in form.conferma_password.errors %}
+                        <div class="error-text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            {{ error }}
+                        </div>
+                    {% endfor %}
                 </div>
 
             </div>
+
+            {% if form.non_field_errors %}
+                <div class="errors" style="margin-top:22px;">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <div>
+                        {% for error in form.non_field_errors %}
+                            {{ error }}<br>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
 
             <button class="btn" type="submit">
                 <i class="fa-solid fa-circle-check"></i>
                 Crea studio e accedi
             </button>
+
+            <div class="login-link">
+                Hai già un account?
+                <a href="/login/">Accedi al gestionale</a>
+            </div>
 
         </form>
 

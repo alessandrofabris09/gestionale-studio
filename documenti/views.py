@@ -3,10 +3,16 @@ import requests
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
+from django.http import HttpResponseForbidden
 
 from studi.utils import (
     get_studio_utente,
     studio_puo_caricare_file,
+)
+
+from studi.permessi import (
+    puo_gestire_documenti,
+    puo_gestire_backup,
 )
 
 from attivita.models import Attivita
@@ -16,14 +22,68 @@ from .models import Documento
 from .forms import DocumentoForm, DocumentoMultiploForm
 
 
-@login_required
-def lista_documenti(request):
+def accesso_negato(request):
+    """
+    Pagina semplice di blocco accesso.
+    """
+
+    return HttpResponseForbidden(
+        """
+        <h1>Accesso negato</h1>
+        <p>Non hai i permessi per accedere a questa sezione.</p>
+        <p><a href="/dashboard/">Torna alla dashboard</a></p>
+        """
+    )
+
+
+def get_documenti_queryset(request):
+    """
+    Restituisce i documenti visibili dall'utente.
+
+    Superuser:
+    - vede tutti i documenti
+
+    Utente normale:
+    - vede solo i documenti dello studio collegato
+    """
 
     studio = get_studio_utente(request)
 
-    documenti = Documento.objects.filter(
+    if request.user.is_superuser:
+        return Documento.objects.all()
+
+    return Documento.objects.filter(
         pratica__studio=studio
-    ).order_by('-id')
+    )
+
+
+def get_pratica_queryset(request):
+    """
+    Restituisce le pratiche utilizzabili per caricare documenti.
+    """
+
+    studio = get_studio_utente(request)
+
+    if request.user.is_superuser:
+        return Pratica.objects.all()
+
+    return Pratica.objects.filter(
+        studio=studio
+    )
+
+
+@login_required
+def lista_documenti(request):
+
+    if not puo_gestire_documenti(request):
+        return accesso_negato(request)
+
+    studio = get_studio_utente(request)
+
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
+    documenti = get_documenti_queryset(request).order_by('-id')
 
     ricerca = request.GET.get('ricerca')
 
@@ -51,12 +111,17 @@ def lista_documenti(request):
 @login_required
 def carica_documento(request, pratica_id):
 
+    if not puo_gestire_documenti(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
     pratica = get_object_or_404(
-        Pratica,
-        id=pratica_id,
-        studio=studio
+        get_pratica_queryset(request),
+        id=pratica_id
     )
 
     if request.method == 'POST':
@@ -70,7 +135,7 @@ def carica_documento(request, pratica_id):
 
             file = request.FILES.get('file')
 
-            if file:
+            if file and not request.user.is_superuser:
 
                 if not studio_puo_caricare_file(
                     studio,
@@ -90,7 +155,7 @@ def carica_documento(request, pratica_id):
                             'azione': 'Passa al piano PRO',
                         }
                     )
-            
+
             documento = form.save(commit=False)
 
             documento.pratica = pratica
@@ -128,12 +193,17 @@ def carica_documento(request, pratica_id):
 @login_required
 def carica_documenti_multipli(request, pratica_id):
 
+    if not puo_gestire_documenti(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
     pratica = get_object_or_404(
-        Pratica,
-        id=pratica_id,
-        studio=studio
+        get_pratica_queryset(request),
+        id=pratica_id
     )
 
     if request.method == 'POST':
@@ -152,28 +222,28 @@ def carica_documenti_multipli(request, pratica_id):
             for file in files:
                 dimensione_totale += file.size
 
-            if not studio_puo_caricare_file(
-                studio,
-                dimensione_totale
-            ):
+            if not request.user.is_superuser:
 
-                return render(
-                    request,
-                    'studi/upgrade_required.html',
-                    {
-                        'studio': studio,
-                        'titolo': 'Limite storage raggiunto',
-                        'messaggio': (
-                            f'Il piano FREE consente massimo '
-                            f'{studio.limite_storage_mb} MB di spazio.'
-                        ),
-                        'azione': 'Passa al piano PRO',
-                    }
-                ) 
+                if not studio_puo_caricare_file(
+                    studio,
+                    dimensione_totale
+                ):
+
+                    return render(
+                        request,
+                        'studi/upgrade_required.html',
+                        {
+                            'studio': studio,
+                            'titolo': 'Limite storage raggiunto',
+                            'messaggio': (
+                                f'Il piano FREE consente massimo '
+                                f'{studio.limite_storage_mb} MB di spazio.'
+                            ),
+                            'azione': 'Passa al piano PRO',
+                        }
+                    )
 
             for file in files:
-
-                print("FILE:", file.name)
 
                 nome_file = file.name.lower()
 
@@ -240,15 +310,16 @@ def carica_documenti_multipli(request, pratica_id):
         }
     )
 
+
 @login_required
 def elimina_documento(request, documento_id):
 
-    studio = get_studio_utente(request)
+    if not puo_gestire_documenti(request):
+        return accesso_negato(request)
 
     documento = get_object_or_404(
-        Documento,
-        id=documento_id,
-        pratica__studio=studio
+        get_documenti_queryset(request),
+        id=documento_id
     )
 
     pratica = documento.pratica
@@ -287,13 +358,12 @@ def elimina_documento(request, documento_id):
 @login_required
 def verifica_documenti_cloud(request):
 
-    studio = get_studio_utente(request)
+    if not puo_gestire_backup(request):
+        return accesso_negato(request)
+
+    documenti = get_documenti_queryset(request).order_by('id')
 
     risultati = []
-
-    documenti = Documento.objects.filter(
-        pratica__studio=studio
-    ).order_by('id')
 
     for documento in documenti:
 

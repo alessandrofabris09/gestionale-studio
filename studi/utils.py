@@ -37,10 +37,13 @@ def studio_puo_creare_pratiche(studio):
     if studio.is_pro():
         return True
 
-    totale_pratiche = studio.pratica_set.count()
+    from pratiche.models import Pratica
+
+    totale_pratiche = Pratica.objects.filter(
+        studio=studio
+    ).count()
 
     return totale_pratiche < studio.limite_pratiche
-
 
 def studio_puo_aggiungere_utenti(studio):
 

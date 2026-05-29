@@ -1,4 +1,5 @@
 {% extends 'base/base.html' %}
+{% load permessi_tags %}
 
 {% block title %}
 Dashboard
@@ -234,296 +235,338 @@ Dashboard gestionale
         </h2>
 
         <div class="muted" style="font-size:16px;">
-            Panoramica operativa dello studio tecnico: pratiche, scadenze, agenda, documenti e situazione economica.
+            Panoramica operativa dello studio tecnico in base ai permessi del tuo ruolo.
         </div>
     </div>
 
-    {% if notifiche %}
 
-    <div class="section">
+    {% if notifiche and request.user|can_use_agenda %}
 
-        <h2>
-            <i class="fa-solid fa-bell"></i>
-            Centro notifiche operative
-        </h2>
+        <div class="section">
 
-        {% for n in notifiche %}
+            <h2>
+                <i class="fa-solid fa-bell"></i>
+                Centro notifiche operative
+            </h2>
 
-            <div class="item">
+            {% for n in notifiche %}
 
-                <div class="item-title">
+                <div class="item">
 
-                    <span class="badge
-                        {% if n.tipo == 'danger' %}
-                            badge-red
-                        {% elif n.tipo == 'warning' %}
-                            badge-yellow
-                        {% elif n.tipo == 'success' %}
-                            badge-green
-                        {% endif %}
-                    ">
+                    <div class="item-title">
 
-                        <i class="fa-solid {{ n.icona }}"></i>
+                        <span class="badge
+                            {% if n.tipo == 'danger' %}
+                                badge-red
+                            {% elif n.tipo == 'warning' %}
+                                badge-yellow
+                            {% elif n.tipo == 'success' %}
+                                badge-green
+                            {% endif %}
+                        ">
 
-                        {{ n.titolo }}
+                            <i class="fa-solid {{ n.icona }}"></i>
 
-                    </span>
+                            {{ n.titolo }}
+
+                        </span>
+
+                    </div>
+
+                    <div class="muted" style="margin-top:10px;">
+                        {{ n.testo }}
+                    </div>
+
+                    <a class="action-btn" href="{{ n.link }}">
+                        <i class="fa-solid fa-arrow-right"></i>
+                        Apri
+                    </a>
 
                 </div>
 
-                <div class="muted" style="margin-top:10px;">
-                    {{ n.testo }}
-                </div>
+            {% endfor %}
 
-                <a class="action-btn" href="{{ n.link }}">
-                    <i class="fa-solid fa-arrow-right"></i>
-                    Apri
-                </a>
-
-            </div>
-
-        {% endfor %}
-
-    </div>
+        </div>
 
     {% endif %}
 
+
     <div class="cards">
 
-        <div class="card">
-            <div class="card-title">Clienti</div>
-            <div class="number">{{ tot_clienti }}</div>
-        </div>
+        {% if request.user|can_use_pratiche %}
 
-        <div class="card green">
-            <div class="card-title">Immobili</div>
-            <div class="number">{{ tot_immobili }}</div>
-        </div>
+            <div class="card">
+                <div class="card-title">Clienti</div>
+                <div class="number">{{ tot_clienti }}</div>
+            </div>
 
-        <div class="card yellow">
-            <div class="card-title">Pratiche aperte</div>
-            <div class="number">{{ pratiche_aperte }}</div>
-        </div>
+            <div class="card green">
+                <div class="card-title">Immobili</div>
+                <div class="number">{{ tot_immobili }}</div>
+            </div>
 
-        <div class="card purple">
-            <div class="card-title">Pratiche concluse</div>
-            <div class="number">{{ pratiche_chiuse }}</div>
-        </div>
+            <div class="card yellow">
+                <div class="card-title">Pratiche aperte</div>
+                <div class="number">{{ pratiche_aperte }}</div>
+            </div>
 
-        <div class="card red">
-            <div class="card-title">Scadenze imminenti</div>
-            <div class="number">{{ scadenze_imminenti }}</div>
-        </div>
+            <div class="card purple">
+                <div class="card-title">Pratiche concluse</div>
+                <div class="number">{{ pratiche_chiuse }}</div>
+            </div>
 
-        <div class="card">
-            <div class="card-title">Totale fatturato</div>
-            <div class="number">€ {{ totale_parcelle }}</div>
-        </div>
+        {% endif %}
 
-        <div class="card green">
-            <div class="card-title">Totale incassato</div>
-            <div class="number">€ {{ totale_incassato }}</div>
-        </div>
 
-        <div class="card red">
-            <div class="card-title">Da incassare</div>
-            <div class="number">€ {{ totale_da_incassare }}</div>
-        </div>
+        {% if request.user|can_use_agenda %}
 
-        <div class="card yellow">
-            <div class="card-title">Parcelle scadute</div>
-            <div class="number">{{ parcelle_scadute }}</div>
-        </div>
+            <div class="card red">
+                <div class="card-title">Scadenze imminenti</div>
+                <div class="number">{{ scadenze_imminenti }}</div>
+            </div>
+
+        {% endif %}
+
+
+        {% if request.user|can_view_parcelle %}
+
+            <div class="card">
+                <div class="card-title">Totale fatturato</div>
+                <div class="number">€ {{ totale_parcelle }}</div>
+            </div>
+
+            <div class="card green">
+                <div class="card-title">Totale incassato</div>
+                <div class="number">€ {{ totale_incassato }}</div>
+            </div>
+
+            <div class="card red">
+                <div class="card-title">Da incassare</div>
+                <div class="number">€ {{ totale_da_incassare }}</div>
+            </div>
+
+            <div class="card yellow">
+                <div class="card-title">Parcelle scadute</div>
+                <div class="number">{{ parcelle_scadute }}</div>
+            </div>
+
+        {% endif %}
 
     </div>
 
-    <div class="grid-main">
 
-        <div class="section">
-            <h2>
-                <i class="fa-solid fa-calendar-day"></i>
-                Agenda di oggi
-            </h2>
+    {% if request.user|can_use_agenda %}
 
-            {% for evento in eventi_oggi %}
-                <div class="item">
-                    <strong>
-                        {% if evento.ora_inizio %}
-                            {{ evento.ora_inizio }} -
+        <div class="grid-main">
+
+            <div class="section">
+                <h2>
+                    <i class="fa-solid fa-calendar-day"></i>
+                    Agenda di oggi
+                </h2>
+
+                {% for evento in eventi_oggi %}
+                    <div class="item">
+                        <strong>
+                            {% if evento.ora_inizio %}
+                                {{ evento.ora_inizio }} -
+                            {% endif %}
+                            {{ evento.titolo }}
+                        </strong>
+
+                        <br>
+
+                        <span class="muted">
+                            {{ evento.get_tipo_display }}
+                            -
+                            Priorità {{ evento.get_priorita_display }}
+                        </span>
+
+                        {% if evento.cliente and request.user|can_use_pratiche %}
+                            <br>
+                            <span class="badge badge-green">
+                                <i class="fa-solid fa-user"></i>
+                                {{ evento.cliente }}
+                            </span>
                         {% endif %}
-                        {{ evento.titolo }}
-                    </strong>
 
-                    <br>
+                        {% if evento.pratica and request.user|can_use_pratiche %}
+                            <br>
+                            <span class="badge">
+                                <i class="fa-solid fa-folder-open"></i>
+                                {{ evento.pratica }}
+                            </span>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <p class="muted">
+                        Nessun evento previsto per oggi.
+                    </p>
+                {% endfor %}
 
-                    <span class="muted">
-                        {{ evento.get_tipo_display }}
-                        -
-                        Priorità {{ evento.get_priorita_display }}
-                    </span>
+                <a class="btn" href="/agenda/oggi/">
+                    <i class="fa-solid fa-arrow-right"></i>
+                    Apri agenda di oggi
+                </a>
+            </div>
 
-                    {% if evento.cliente %}
+
+            <div class="section">
+                <h2>
+                    <i class="fa-solid fa-clock"></i>
+                    Prossime scadenze
+                </h2>
+
+                {% for scadenza in ultime_scadenze %}
+                    <div class="item">
+                        <strong>{{ scadenza.titolo }}</strong>
                         <br>
-                        <span class="badge badge-green">
-                            <i class="fa-solid fa-user"></i>
-                            {{ evento.cliente }}
+                        <span class="badge badge-red">
+                            <i class="fa-solid fa-calendar"></i>
+                            {{ scadenza.data_scadenza }}
                         </span>
-                    {% endif %}
+                    </div>
+                {% empty %}
+                    <p class="muted">
+                        Nessuna scadenza presente.
+                    </p>
+                {% endfor %}
 
-                    {% if evento.pratica %}
-                        <br>
-                        <span class="badge">
-                            <i class="fa-solid fa-folder-open"></i>
-                            {{ evento.pratica }}
-                        </span>
-                    {% endif %}
-                </div>
-            {% empty %}
-                <p class="muted">
-                    Nessun evento previsto per oggi.
-                </p>
-            {% endfor %}
+                <a class="btn" href="/scadenze/">
+                    <i class="fa-solid fa-arrow-right"></i>
+                    Apri scadenze
+                </a>
+            </div>
 
-            <a class="btn" href="/agenda/oggi/">
-                <i class="fa-solid fa-arrow-right"></i>
-                Apri agenda di oggi
-            </a>
         </div>
 
-        <div class="section">
-            <h2>
-                <i class="fa-solid fa-clock"></i>
-                Prossime scadenze
-            </h2>
+    {% endif %}
 
-            {% for scadenza in ultime_scadenze %}
-                <div class="item">
-                    <strong>{{ scadenza.titolo }}</strong>
-                    <br>
-                    <span class="badge badge-red">
-                        <i class="fa-solid fa-calendar"></i>
-                        {{ scadenza.data_scadenza }}
-                    </span>
-                </div>
-            {% empty %}
-                <p class="muted">
-                    Nessuna scadenza presente.
-                </p>
-            {% endfor %}
 
-            <a class="btn" href="/scadenze/">
-                <i class="fa-solid fa-arrow-right"></i>
-                Apri scadenze
-            </a>
-        </div>
+    {% if request.user|can_use_pratiche or request.user|can_view_parcelle %}
 
-    </div>
+        <div class="grid-2">
 
-    <div class="grid-2">
+            {% if request.user|can_use_pratiche %}
 
-        <div class="section">
-            <h2>
-                <i class="fa-solid fa-folder-open"></i>
-                Ultime pratiche
-            </h2>
+                <div class="section">
+                    <h2>
+                        <i class="fa-solid fa-folder-open"></i>
+                        Ultime pratiche
+                    </h2>
 
-            {% for pratica in ultime_pratiche %}
-                <div class="item">
-                    <a href="/pratiche/{{ pratica.id }}/">
-                        {{ pratica.oggetto }}
+                    {% for pratica in ultime_pratiche %}
+                        <div class="item">
+                            <a href="/pratiche/{{ pratica.id }}/">
+                                {{ pratica.oggetto }}
+                            </a>
+                            <br>
+                            <span class="badge">
+                                <i class="fa-solid fa-user"></i>
+                                {{ pratica.cliente }}
+                            </span>
+                        </div>
+                    {% empty %}
+                        <p class="muted">
+                            Nessuna pratica presente.
+                        </p>
+                    {% endfor %}
+
+                    <a class="btn" href="/pratiche/">
+                        <i class="fa-solid fa-arrow-right"></i>
+                        Apri pratiche
                     </a>
-                    <br>
-                    <span class="badge">
-                        <i class="fa-solid fa-user"></i>
-                        {{ pratica.cliente }}
-                    </span>
                 </div>
-            {% empty %}
-                <p class="muted">
-                    Nessuna pratica presente.
-                </p>
-            {% endfor %}
 
-            <a class="btn" href="/pratiche/">
-                <i class="fa-solid fa-arrow-right"></i>
-                Apri pratiche
-            </a>
+            {% endif %}
+
+
+            {% if request.user|can_view_parcelle %}
+
+                <div class="section">
+                    <h2>
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        Ultime parcelle / fatture
+                    </h2>
+
+                    {% for parcella in ultime_parcelle %}
+                        <div class="item">
+                            <strong>
+                                {% if parcella.numero_documento %}
+                                    {{ parcella.numero_documento }}
+                                {% else %}
+                                    Documento non numerato
+                                {% endif %}
+                            </strong>
+
+                            <br>
+
+                            <span class="muted">
+                                {{ parcella.descrizione }}
+                            </span>
+
+                            <br>
+
+                            <span class="badge badge-green">
+                                € {{ parcella.importo }}
+                            </span>
+
+                            <span class="badge badge-yellow">
+                                {{ parcella.get_stato_display }}
+                            </span>
+                        </div>
+                    {% empty %}
+                        <p class="muted">
+                            Nessuna parcella presente.
+                        </p>
+                    {% endfor %}
+
+                    <a class="btn" href="/parcelle/">
+                        <i class="fa-solid fa-arrow-right"></i>
+                        Apri parcelle
+                    </a>
+                </div>
+
+            {% endif %}
+
         </div>
 
-        <div class="section">
-            <h2>
-                <i class="fa-solid fa-file-invoice-dollar"></i>
-                Ultime parcelle / fatture
-            </h2>
+    {% endif %}
 
-            {% for parcella in ultime_parcelle %}
-                <div class="item">
-                    <strong>
-                        {% if parcella.numero_documento %}
-                            {{ parcella.numero_documento }}
-                        {% else %}
-                            Documento non numerato
-                        {% endif %}
-                    </strong>
-
-                    <br>
-
-                    <span class="muted">
-                        {{ parcella.descrizione }}
-                    </span>
-
-                    <br>
-
-                    <span class="badge badge-green">
-                        € {{ parcella.importo }}
-                    </span>
-
-                    <span class="badge badge-yellow">
-                        {{ parcella.get_stato_display }}
-                    </span>
-                </div>
-            {% empty %}
-                <p class="muted">
-                    Nessuna parcella presente.
-                </p>
-            {% endfor %}
-
-            <a class="btn" href="/parcelle/">
-                <i class="fa-solid fa-arrow-right"></i>
-                Apri parcelle
-            </a>
-        </div>
-
-    </div>
 
     <div class="grid-2">
 
-        <div class="section">
-            <h2>
-                <i class="fa-solid fa-chart-line"></i>
-                Riepilogo economico
-            </h2>
+        {% if request.user|can_view_parcelle %}
 
-            <div class="item">
-                <strong>Totale fatturato:</strong>
-                € {{ totale_parcelle }}
+            <div class="section">
+                <h2>
+                    <i class="fa-solid fa-chart-line"></i>
+                    Riepilogo economico
+                </h2>
+
+                <div class="item">
+                    <strong>Totale fatturato:</strong>
+                    € {{ totale_parcelle }}
+                </div>
+
+                <div class="item">
+                    <strong>Totale incassato:</strong>
+                    € {{ totale_incassato }}
+                </div>
+
+                <div class="item">
+                    <strong>Totale da incassare:</strong>
+                    € {{ totale_da_incassare }}
+                </div>
+
+                <div class="item">
+                    <strong>Parcelle scadute:</strong>
+                    {{ parcelle_scadute }}
+                </div>
             </div>
 
-            <div class="item">
-                <strong>Totale incassato:</strong>
-                € {{ totale_incassato }}
-            </div>
+        {% endif %}
 
-            <div class="item">
-                <strong>Totale da incassare:</strong>
-                € {{ totale_da_incassare }}
-            </div>
-
-            <div class="item">
-                <strong>Parcelle scadute:</strong>
-                {{ parcelle_scadute }}
-            </div>
-        </div>
 
         <div class="section">
             <h2>
@@ -532,200 +575,312 @@ Dashboard gestionale
             </h2>
 
             <div class="quick-links">
-                <a href="/agenda/">Agenda operativa <i class="fa-solid fa-arrow-right"></i></a>
-                <a href="/pratiche/">Pratiche <i class="fa-solid fa-arrow-right"></i></a>
-                <a href="/scadenze/">Scadenze <i class="fa-solid fa-arrow-right"></i></a>
-                <a href="/parcelle/">Parcelle / Fatture <i class="fa-solid fa-arrow-right"></i></a>
-                <a href="/documenti/">Documenti <i class="fa-solid fa-arrow-right"></i></a>
-                <a href="/backups/">Backup database <i class="fa-solid fa-arrow-right"></i></a>
+
+                {% if request.user|can_use_agenda %}
+                    <a href="/agenda/">
+                        Agenda operativa
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                    <a href="/scadenze/">
+                        Scadenze
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                    <a href="/scadenze/calendario/">
+                        Calendario
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                {% endif %}
+
+
+                {% if request.user|can_use_pratiche %}
+                    <a href="/clienti/">
+                        Clienti
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                    <a href="/immobili/">
+                        Immobili
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                    <a href="/pratiche/">
+                        Pratiche
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                    <a href="/documenti/">
+                        Documenti
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                {% endif %}
+
+
+                {% if request.user|can_view_parcelle %}
+                    <a href="/parcelle/">
+                        Parcelle / Fatture
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                {% endif %}
+
+
+                {% if request.user|can_manage_users %}
+                    <a href="/utenti/">
+                        Gestione utenti
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                {% endif %}
+
+
+                {% if request.user|can_manage_subscription %}
+                    <a href="/studi/abbonamento/">
+                        Abbonamento
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                {% endif %}
+
+
+                {% if request.user|can_manage_backup %}
+                    <a href="/backups/">
+                        Backup database
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                {% endif %}
+
             </div>
         </div>
 
     </div>
 
-    <div class="section">
 
-        <h2>
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            Attività recenti
-        </h2>
+    {% if request.user|can_use_pratiche or request.user|can_view_parcelle %}
 
-        {% for attivita in attivita_recenti %}
+        <div class="section">
 
-            <div class="item">
+            <h2>
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                Attività recenti
+            </h2>
 
-                <strong>
-                    {{ attivita.descrizione }}
-                </strong>
+            {% for attivita in attivita_recenti %}
 
-                <br>
+                <div class="item">
 
-                <span class="muted">
-
-                    {% if attivita.utente %}
-                        {{ attivita.utente.username }}
-                    {% else %}
-                        Sistema
-                    {% endif %}
-
-                    ·
-
-                    {{ attivita.data|date:"d/m/Y H:i" }}
-
-                </span>
-
-                {% if attivita.pratica %}
+                    <strong>
+                        {{ attivita.descrizione }}
+                    </strong>
 
                     <br>
 
-                    <span class="badge">
-                        <i class="fa-solid fa-folder-open"></i>
-                        {{ attivita.pratica }}
+                    <span class="muted">
+
+                        {% if attivita.utente %}
+                            {{ attivita.utente.username }}
+                        {% else %}
+                            Sistema
+                        {% endif %}
+
+                        ·
+
+                        {{ attivita.data|date:"d/m/Y H:i" }}
+
                     </span>
 
-                {% endif %}
+                    {% if attivita.pratica and request.user|can_use_pratiche %}
 
-                {% if attivita.tipo == 'UPLOAD' %}
-                    <span class="badge badge-green">
-                        <i class="fa-solid fa-upload"></i>
-                        Upload
-                    </span>
-                {% endif %}
+                        <br>
 
-                {% if attivita.tipo == 'MODIFICA' %}
-                    <span class="badge badge-yellow">
-                        <i class="fa-solid fa-pen"></i>
-                        Modifica
-                    </span>
-                {% endif %}
+                        <span class="badge">
+                            <i class="fa-solid fa-folder-open"></i>
+                            {{ attivita.pratica }}
+                        </span>
 
-                {% if attivita.tipo == 'CREAZIONE' %}
-                    <span class="badge">
-                        <i class="fa-solid fa-plus"></i>
-                        Creazione
-                    </span>
-                {% endif %}
+                    {% endif %}
 
-                {% if attivita.tipo == 'ELIMINAZIONE' %}
-                    <span class="badge badge-red">
-                        <i class="fa-solid fa-trash"></i>
-                        Eliminazione
-                    </span>
-                {% endif %}
+                    {% if attivita.tipo == 'UPLOAD' %}
+                        <span class="badge badge-green">
+                            <i class="fa-solid fa-upload"></i>
+                            Upload
+                        </span>
+                    {% endif %}
 
-            </div>           
+                    {% if attivita.tipo == 'MODIFICA' %}
+                        <span class="badge badge-yellow">
+                            <i class="fa-solid fa-pen"></i>
+                            Modifica
+                        </span>
+                    {% endif %}
 
-        {% empty %}
+                    {% if attivita.tipo == 'CREAZIONE' %}
+                        <span class="badge">
+                            <i class="fa-solid fa-plus"></i>
+                            Creazione
+                        </span>
+                    {% endif %}
 
-            <p class="muted">
-                Nessuna attività recente presente.
-            </p>
+                    {% if attivita.tipo == 'ELIMINAZIONE' %}
+                        <span class="badge badge-red">
+                            <i class="fa-solid fa-trash"></i>
+                            Eliminazione
+                        </span>
+                    {% endif %}
 
-        {% endfor %}
+                </div>
 
-    </div>
-    
-    <div class="grid-2">
+            {% empty %}
 
-        <div class="section">
-            <h2>
-                <i class="fa-solid fa-chart-pie"></i>
-                Stato pratiche
-            </h2>
-            <div class="chart-box">
-                <canvas id="graficoPratiche"></canvas>
-            </div>
+                <p class="muted">
+                    Nessuna attività recente presente.
+                </p>
+
+            {% endfor %}
+
         </div>
 
-        <div class="section">
-            <h2>
-                <i class="fa-solid fa-chart-column"></i>
-                Stato parcelle
-            </h2>
-            <div class="chart-box">
-                <canvas id="graficoParcelle"></canvas>
-            </div>
+    {% endif %}
+
+
+    {% if request.user|can_use_pratiche or request.user|can_view_parcelle %}
+
+        <div class="grid-2">
+
+            {% if request.user|can_use_pratiche %}
+
+                <div class="section">
+                    <h2>
+                        <i class="fa-solid fa-chart-pie"></i>
+                        Stato pratiche
+                    </h2>
+                    <div class="chart-box">
+                        <canvas id="graficoPratiche"></canvas>
+                    </div>
+                </div>
+
+            {% endif %}
+
+
+            {% if request.user|can_view_parcelle %}
+
+                <div class="section">
+                    <h2>
+                        <i class="fa-solid fa-chart-column"></i>
+                        Stato parcelle
+                    </h2>
+                    <div class="chart-box">
+                        <canvas id="graficoParcelle"></canvas>
+                    </div>
+                </div>
+
+            {% endif %}
+
         </div>
 
-    </div>
+    {% endif %}
 
 </div>
 
-{{ labels_pratiche|json_script:"labels-pratiche" }}
-{{ dati_pratiche|json_script:"dati-pratiche" }}
-{{ labels_parcelle|json_script:"labels-parcelle" }}
-{{ dati_parcelle|json_script:"dati-parcelle" }}
+
+{% if request.user|can_use_pratiche %}
+    {{ labels_pratiche|json_script:"labels-pratiche" }}
+    {{ dati_pratiche|json_script:"dati-pratiche" }}
+{% endif %}
+
+{% if request.user|can_view_parcelle %}
+    {{ labels_parcelle|json_script:"labels-parcelle" }}
+    {{ dati_parcelle|json_script:"dati-parcelle" }}
+{% endif %}
+
 
 <script>
-    const labelsPratiche = JSON.parse(document.getElementById('labels-pratiche').textContent);
-    const datiPratiche = JSON.parse(document.getElementById('dati-pratiche').textContent);
 
-    const labelsParcelle = JSON.parse(document.getElementById('labels-parcelle').textContent);
-    const datiParcelle = JSON.parse(document.getElementById('dati-parcelle').textContent);
+    {% if request.user|can_use_pratiche %}
 
-    new Chart(document.getElementById('graficoPratiche'), {
-        type: 'doughnut',
-        data: {
-            labels: labelsPratiche,
-            datasets: [{
-                data: datiPratiche,
-                backgroundColor: [
-                    '#2563eb',
-                    '#16a34a',
-                    '#ca8a04',
-                    '#dc2626',
-                    '#7c3aed',
-                    '#0891b2'
-                ],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
-    });
+        const labelsPratiche = JSON.parse(document.getElementById('labels-pratiche').textContent);
+        const datiPratiche = JSON.parse(document.getElementById('dati-pratiche').textContent);
 
-    new Chart(document.getElementById('graficoParcelle'), {
-        type: 'bar',
-        data: {
-            labels: labelsParcelle,
-            datasets: [{
-                label: 'Parcelle',
-                data: datiParcelle,
-                backgroundColor: [
-                    '#16a34a',
-                    '#ca8a04',
-                    '#dc2626',
-                    '#2563eb',
-                    '#7c3aed'
-                ],
-                borderRadius: 10
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display:false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero:true,
-                    ticks: {
-                        precision:0
+        const canvasPratiche = document.getElementById('graficoPratiche');
+
+        if (canvasPratiche) {
+            new Chart(canvasPratiche, {
+                type: 'doughnut',
+                data: {
+                    labels: labelsPratiche,
+                    datasets: [{
+                        data: datiPratiche,
+                        backgroundColor: [
+                            '#2563eb',
+                            '#16a34a',
+                            '#ca8a04',
+                            '#dc2626',
+                            '#7c3aed',
+                            '#0891b2'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
                     }
                 }
-            }
+            });
         }
-    });
+
+    {% endif %}
+
+
+    {% if request.user|can_view_parcelle %}
+
+        const labelsParcelle = JSON.parse(document.getElementById('labels-parcelle').textContent);
+        const datiParcelle = JSON.parse(document.getElementById('dati-parcelle').textContent);
+
+        const canvasParcelle = document.getElementById('graficoParcelle');
+
+        if (canvasParcelle) {
+            new Chart(canvasParcelle, {
+                type: 'bar',
+                data: {
+                    labels: labelsParcelle,
+                    datasets: [{
+                        label: 'Parcelle',
+                        data: datiParcelle,
+                        backgroundColor: [
+                            '#16a34a',
+                            '#ca8a04',
+                            '#dc2626',
+                            '#2563eb',
+                            '#7c3aed'
+                        ],
+                        borderRadius: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display:false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero:true,
+                            ticks: {
+                                precision:0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+    {% endif %}
+
 </script>
 
 {% endblock %}

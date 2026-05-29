@@ -1,19 +1,36 @@
 import os
+import json
 import resend
 
-from documenti.models import Documento
 from datetime import datetime, timedelta
 from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.management import call_command
-from django.http import FileResponse, Http404, HttpResponse
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect
+
+from documenti.models import Documento
+from studi.permessi import puo_gestire_backup
 
 
 MAX_BACKUP_DAYS = 30
 CODICE_CRON_BACKUP = 'ABCD1234'
+
+
+def accesso_negato(request):
+    """
+    Pagina semplice di blocco accesso.
+    """
+
+    return HttpResponseForbidden(
+        """
+        <h1>Accesso negato</h1>
+        <p>Non hai i permessi per accedere a questa sezione.</p>
+        <p><a href="/dashboard/">Torna alla dashboard</a></p>
+        """
+    )
 
 
 def esegui_backup_database():
@@ -58,8 +75,6 @@ def esegui_backup_database():
             'note': documento.note,
         })
 
-    import json
-
     with open(filepath_documenti, 'w', encoding='utf-8') as file:
         json.dump(
             documenti_backup,
@@ -76,11 +91,12 @@ def esegui_backup_database():
 
     return filename_db
 
+
 @login_required
 def lista_backup(request):
 
-    if not request.user.is_superuser:
-        return redirect('/')
+    if not puo_gestire_backup(request):
+        return accesso_negato(request)
 
     backup_dir = Path(settings.BASE_DIR) / 'backups_files'
     backup_dir.mkdir(exist_ok=True)
@@ -112,8 +128,8 @@ def lista_backup(request):
 @login_required
 def crea_backup(request):
 
-    if not request.user.is_superuser:
-        return redirect('/')
+    if not puo_gestire_backup(request):
+        return accesso_negato(request)
 
     esegui_backup_database()
 
@@ -183,8 +199,8 @@ def invia_email_backup(filename):
 @login_required
 def scarica_backup(request, filename):
 
-    if not request.user.is_superuser:
-        return redirect('/')
+    if not puo_gestire_backup(request):
+        return accesso_negato(request)
 
     backup_dir = Path(settings.BASE_DIR) / 'backups_files'
     filepath = backup_dir / filename

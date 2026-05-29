@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
 from django.shortcuts import render, redirect
 
 from django.utils import timezone
@@ -14,7 +15,8 @@ def abbonamento(request):
     studio = get_studio_utente(request)
 
     if not studio:
-        return redirect('logout')
+        logout(request)
+        return redirect('login')
 
     if not puo_gestire_abbonamento(request):
         return redirect('home')

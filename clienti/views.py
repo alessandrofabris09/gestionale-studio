@@ -1,21 +1,98 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
+from django.http import HttpResponseForbidden
 
 from .models import Cliente
 from .forms import ClienteForm
 
 from studi.utils import get_studio_utente
+from studi.permessi import (
+    is_titolare,
+    is_tecnico,
+    is_segreteria,
+)
+
+
+def accesso_negato(request):
+    """
+    Pagina semplice di blocco accesso.
+    """
+
+    return HttpResponseForbidden(
+        """
+        <h1>Accesso negato</h1>
+        <p>Non hai i permessi per accedere a questa sezione.</p>
+        <p><a href="/dashboard/">Torna alla dashboard</a></p>
+        """
+    )
+
+
+def puo_accedere_clienti(request):
+    """
+    Accesso all'area clienti consentito a:
+    - superuser
+    - TITOLARE
+    - TECNICO
+    - SEGRETERIA
+
+    Non consentito a:
+    - COLLABORATORE
+    """
+
+    if not request.user.is_authenticated:
+        return False
+
+    return (
+        request.user.is_superuser or
+        is_titolare(request) or
+        is_tecnico(request) or
+        is_segreteria(request)
+    )
+
+
+def puo_modificare_clienti(request):
+    """
+    Creazione/modifica clienti consentita a:
+    - superuser
+    - TITOLARE
+    - TECNICO
+    - SEGRETERIA
+    """
+
+    return puo_accedere_clienti(request)
+
+
+def puo_eliminare_clienti(request):
+    """
+    Eliminazione clienti consentita solo a:
+    - superuser
+    - TITOLARE
+    """
+
+    if not request.user.is_authenticated:
+        return False
+
+    return (
+        request.user.is_superuser or
+        is_titolare(request)
+    )
 
 
 @login_required
 def lista_clienti(request):
 
+    if not puo_accedere_clienti(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    clienti = Cliente.objects.filter(
-        studio=studio
-    ).order_by('nome')
+    if request.user.is_superuser:
+        clienti = Cliente.objects.all().order_by('nome')
+    else:
+        clienti = Cliente.objects.filter(
+            studio=studio
+        ).order_by('nome')
 
     ricerca = request.GET.get('ricerca')
 
@@ -44,9 +121,12 @@ def lista_clienti(request):
 @login_required
 def nuovo_cliente(request):
 
+    if not puo_modificare_clienti(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    if not studio:
+    if not studio and not request.user.is_superuser:
         return redirect('login')
 
     if request.method == 'POST':
@@ -77,17 +157,29 @@ def nuovo_cliente(request):
 @login_required
 def dettaglio_cliente(request, cliente_id):
 
+    if not puo_accedere_clienti(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    cliente = get_object_or_404(
-        Cliente,
-        id=cliente_id,
-        studio=studio
-    )
+    if request.user.is_superuser:
+        cliente = get_object_or_404(
+            Cliente,
+            id=cliente_id
+        )
 
-    pratiche = cliente.pratica_set.filter(
-        studio=studio
-    )
+        pratiche = cliente.pratica_set.all()
+
+    else:
+        cliente = get_object_or_404(
+            Cliente,
+            id=cliente_id,
+            studio=studio
+        )
+
+        pratiche = cliente.pratica_set.filter(
+            studio=studio
+        )
 
     context = {
         'cliente': cliente,
@@ -104,13 +196,22 @@ def dettaglio_cliente(request, cliente_id):
 @login_required
 def modifica_cliente(request, cliente_id):
 
+    if not puo_modificare_clienti(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    cliente = get_object_or_404(
-        Cliente,
-        id=cliente_id,
-        studio=studio
-    )
+    if request.user.is_superuser:
+        cliente = get_object_or_404(
+            Cliente,
+            id=cliente_id
+        )
+    else:
+        cliente = get_object_or_404(
+            Cliente,
+            id=cliente_id,
+            studio=studio
+        )
 
     if request.method == 'POST':
 
@@ -147,13 +248,22 @@ def modifica_cliente(request, cliente_id):
 @login_required
 def elimina_cliente(request, cliente_id):
 
+    if not puo_eliminare_clienti(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    cliente = get_object_or_404(
-        Cliente,
-        id=cliente_id,
-        studio=studio
-    )
+    if request.user.is_superuser:
+        cliente = get_object_or_404(
+            Cliente,
+            id=cliente_id
+        )
+    else:
+        cliente = get_object_or_404(
+            Cliente,
+            id=cliente_id,
+            studio=studio
+        )
 
     if request.method == 'POST':
 
@@ -164,5 +274,7 @@ def elimina_cliente(request, cliente_id):
     return render(
         request,
         'clienti/elimina_cliente.html',
-        {'cliente': cliente}
+        {
+            'cliente': cliente
+        }
     )

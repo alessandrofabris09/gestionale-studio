@@ -1,9 +1,10 @@
 from io import BytesIO
+from datetime import date
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponseForbidden
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
@@ -21,26 +22,63 @@ from .forms import ParcellaForm
 from attivita.models import Attivita
 
 
-@login_required
-def lista_parcelle(request):
+def accesso_negato(request):
+    """
+    Pagina semplice di blocco accesso.
+    """
+
+    return HttpResponseForbidden(
+        """
+        <h1>Accesso negato</h1>
+        <p>Non hai i permessi per accedere a questa sezione.</p>
+        <p><a href="/dashboard/">Torna alla dashboard</a></p>
+        """
+    )
+
+
+def get_parcelle_queryset(request):
+    """
+    Restituisce le parcelle visibili dall'utente.
+
+    Superuser:
+    - vede tutte le parcelle
+
+    Utente normale:
+    - vede solo le parcelle dello studio collegato
+    """
 
     studio = get_studio_utente(request)
 
-    parcelle = Parcella.objects.filter(
-        pratica__studio=studio
-    ).order_by('-id')
+    if request.user.is_superuser:
+        return Parcella.objects.all()
 
-    ricerca = request.GET.get('ricerca')
+    return Parcella.objects.filter(
+        pratica__studio=studio
+    )
+
+
+@login_required
+def lista_parcelle(request):
 
     if not puo_vedere_parcelle(request):
-        return redirect('home')
+        return accesso_negato(request)
+
+    studio = get_studio_utente(request)
+
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
+    parcelle = get_parcelle_queryset(request).order_by('-id')
+
+    ricerca = request.GET.get('ricerca')
 
     if ricerca:
 
         parcelle = parcelle.filter(
             Q(descrizione__icontains=ricerca) |
             Q(pratica__oggetto__icontains=ricerca) |
-            Q(pratica__cliente__nome__icontains=ricerca)
+            Q(pratica__cliente__nome__icontains=ricerca) |
+            Q(numero_documento__icontains=ricerca)
         )
 
     return render(
@@ -56,13 +94,13 @@ def lista_parcelle(request):
 @login_required
 def nuova_parcella(request):
 
+    if not puo_modificare_parcelle(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    if not studio:
+    if not studio and not request.user.is_superuser:
         return redirect('login')
-
-    if not puo_modificare_parcelle(request):
-        return redirect('home')    
 
     if request.method == 'POST':
 
@@ -75,13 +113,13 @@ def nuova_parcella(request):
 
             parcella = form.save(commit=False)
 
-            if parcella.pratica.studio != studio:
-
-                return redirect('lista_parcelle')
+            if not request.user.is_superuser:
+                if parcella.pratica.studio != studio:
+                    return accesso_negato(request)
 
             if not parcella.numero_documento:
 
-                anno = 2026
+                anno = date.today().year
                 prefisso = 'PAR'
 
                 if parcella.tipo_documento == 'PREVENTIVO':
@@ -90,15 +128,21 @@ def nuova_parcella(request):
                 elif parcella.tipo_documento == 'FATTURA':
                     prefisso = 'FAT'
 
-                ultimo = Parcella.objects.filter(
-                    pratica__studio=studio,
-                    tipo_documento=parcella.tipo_documento
-                ).count() + 1
+                if request.user.is_superuser:
+                    ultimo = Parcella.objects.filter(
+                        tipo_documento=parcella.tipo_documento
+                    ).count() + 1
+                else:
+                    ultimo = Parcella.objects.filter(
+                        pratica__studio=studio,
+                        tipo_documento=parcella.tipo_documento
+                    ).count() + 1
 
                 parcella.numero_documento = f'{prefisso}-{anno}-{ultimo}'
 
             if parcella.iva is None:
                 parcella.iva = 0
+
             parcella.save()
 
             Attivita.objects.create(
@@ -131,24 +175,37 @@ def nuova_parcella(request):
         }
     )
 
+
 @login_required
 def modifica_parcella(request, parcella_id):
-    studio = get_studio_utente(request)
-
-    parcella = get_object_or_404(
-        Parcella,
-        id=parcella_id,
-        pratica__studio=studio
-    )
 
     if not puo_modificare_parcelle(request):
-        return redirect('home')
+        return accesso_negato(request)
+
+    parcella = get_object_or_404(
+        get_parcelle_queryset(request),
+        id=parcella_id
+    )
+
+    studio = get_studio_utente(request)
 
     if request.method == 'POST':
-        form = ParcellaForm(request.POST, instance=parcella)
+
+        form = ParcellaForm(
+            request.POST,
+            instance=parcella,
+            studio=studio
+        )
 
         if form.is_valid():
-            parcella = form.save()
+
+            parcella = form.save(commit=False)
+
+            if not request.user.is_superuser:
+                if parcella.pratica.studio != studio:
+                    return accesso_negato(request)
+
+            parcella.save()
 
             Attivita.objects.create(
                 pratica=parcella.pratica,
@@ -159,9 +216,15 @@ def modifica_parcella(request, parcella_id):
                     f'{parcella.numero_documento}'
                 )
             )
-            return redirect('lista_parcelle')      
+
+            return redirect('lista_parcelle')
+
     else:
-        form = ParcellaForm(instance=parcella)
+
+        form = ParcellaForm(
+            instance=parcella,
+            studio=studio
+        )
 
     return render(
         request,
@@ -175,18 +238,17 @@ def modifica_parcella(request, parcella_id):
 
 @login_required
 def elimina_parcella(request, parcella_id):
-    studio = get_studio_utente(request)
-
-    parcella = get_object_or_404(
-        Parcella,
-        id=parcella_id,
-        pratica__studio=studio
-    )
 
     if not puo_eliminare_parcelle(request):
-        return redirect('home')
+        return accesso_negato(request)
+
+    parcella = get_object_or_404(
+        get_parcelle_queryset(request),
+        id=parcella_id
+    )
 
     if request.method == 'POST':
+
         Attivita.objects.create(
             pratica=parcella.pratica,
             utente=request.user,
@@ -196,25 +258,29 @@ def elimina_parcella(request, parcella_id):
                 f'{parcella.numero_documento}'
             )
         )
+
         parcella.delete()
+
         return redirect('lista_parcelle')
 
     return render(
         request,
         'parcelle/elimina_parcella.html',
-        {'parcella': parcella}
+        {
+            'parcella': parcella
+        }
     )
 
 
 @login_required
 def pdf_parcella(request, parcella_id):
 
-    studio = get_studio_utente(request)
+    if not puo_vedere_parcelle(request):
+        return accesso_negato(request)
 
-    parcella = get_object_or_404(      
-        Parcella,
-        id=parcella_id,
-        pratica__studio=studio
+    parcella = get_object_or_404(
+        get_parcelle_queryset(request),
+        id=parcella_id
     )
 
     Attivita.objects.create(
@@ -262,26 +328,43 @@ def pdf_parcella(request, parcella_id):
     y -= 35
 
     def section_title(title, y_pos):
+
         p.setFillColorRGB(0.07, 0.09, 0.15)
-        p.rect(50, y_pos - 6, width - 100, 24, fill=True, stroke=False)
+
+        p.rect(
+            50,
+            y_pos - 6,
+            width - 100,
+            24,
+            fill=True,
+            stroke=False
+        )
+
         p.setFillColorRGB(1, 1, 1)
         p.setFont("Helvetica-Bold", 11)
         p.drawString(60, y_pos, title)
         p.setFillColorRGB(0, 0, 0)
+
         return y_pos - 35
 
     def row(label, value, y_pos):
+
         p.setFont("Helvetica-Bold", 10)
         p.drawString(60, y_pos, f"{label}:")
+
         p.setFont("Helvetica", 10)
-        p.drawString(190, y_pos, str(value) if value else "-")
+        p.drawString(
+            190,
+            y_pos,
+            str(value) if value else "-"
+        )
+
         return y_pos - 22
 
     y = section_title("DATI PARCELLA", y)
 
     y = row("Numero documento", parcella.numero_documento, y)
     y = row("ID interno", parcella.id, y)
-    y = row("Numero documento", parcella.numero_documento, y)
     y = row("Tipo documento", parcella.get_tipo_documento_display(), y)
     y = row("Descrizione", parcella.descrizione, y)
     y = row("Stato pagamento", parcella.get_stato_display(), y)
@@ -304,10 +387,16 @@ def pdf_parcella(request, parcella_id):
 
     y = row("Importo totale", f"Euro {parcella.importo}", y)
     y = row("IVA", f"{parcella.iva}%", y)
-    totale_con_iva = parcella.importo + (parcella.importo * parcella.iva / 100)
+
+    totale_con_iva = parcella.importo + (
+        parcella.importo * parcella.iva / 100
+    )
+
     y = row("Totale con IVA", f"Euro {totale_con_iva}", y)
     y = row("Importo pagato", f"Euro {parcella.importo_pagato}", y)
+
     saldo_residuo = parcella.importo - parcella.importo_pagato
+
     y = row("Saldo residuo", f"Euro {saldo_residuo}", y)
 
     y -= 10
@@ -324,6 +413,7 @@ def pdf_parcella(request, parcella_id):
     ]
 
     for line in note_lines:
+
         if y < 80:
             p.showPage()
             y = height - 70
@@ -334,6 +424,7 @@ def pdf_parcella(request, parcella_id):
     p.line(50, 55, width - 50, 55)
 
     p.setFont("Helvetica", 8)
+
     p.drawString(
         50,
         40,
