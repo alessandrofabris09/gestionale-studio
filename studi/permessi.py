@@ -199,15 +199,13 @@ def puo_gestire_documenti(request):
 
 def puo_gestire_backup(request):
     """
-    Backup database consentito solo a:
-    - superuser
-    - TITOLARE
+    Backup tecnico globale consentito solo al superuser.
+
+    Il backup attuale contiene dati globali della piattaforma,
+    quindi non deve essere accessibile ai singoli studi.
     """
 
-    return (
-        is_superuser(request) or
-        is_titolare(request)
-    )
+    return is_superuser(request)
 
 
 def puo_usare_agenda(request):
