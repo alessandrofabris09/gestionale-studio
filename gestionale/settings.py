@@ -146,13 +146,15 @@ STATICFILES_DIRS = [
 ]
 
 ALLOWED_HOSTS = [
-    '127.0.0.1',
     'localhost',
-    '.onrender.com',
+    '127.0.0.1',
+    'gestionale-studio-ti32.onrender.com',
+    'app.studiotecnicocloud.it',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://*.onrender.com',
+    'https://gestionale-studio-ti32.onrender.com',
+    'https://app.studiotecnicocloud.it',
 ]
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
