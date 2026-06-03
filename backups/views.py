@@ -183,7 +183,7 @@ def invia_email_backup(filename):
         """
 
         resend.Emails.send({
-            "from": "Gestionale Studio <onboarding@resend.dev>",
+            "from": settings.EMAIL_FROM_NOTIFICHE,
             "to": [settings.ALERT_EMAIL],
             "subject": "Backup database completato",
             "html": messaggio_html,

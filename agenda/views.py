@@ -490,7 +490,7 @@ def invia_email_agenda_giornaliera(studio):
         return 'Errore: nessuna email configurata per lo studio.'
 
     resend.Emails.send({
-        "from": "Gestionale Studio <onboarding@resend.dev>",
+        "from": settings.EMAIL_FROM_NOTIFICHE,
         "to": [email_destinatario],
         "subject": "Agenda operativa di oggi",
         "html": messaggio_html,

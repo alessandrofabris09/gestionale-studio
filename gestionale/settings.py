@@ -214,3 +214,8 @@ SITE_URL = os.environ.get(
     'SITE_URL',
     'https://gestionale-studio-ti32.onrender.com'
 )
+
+EMAIL_FROM_NOTIFICHE = os.environ.get(
+    'EMAIL_FROM_NOTIFICHE',
+    'Gestionale Studio <onboarding@resend.dev>'
+)

@@ -570,7 +570,7 @@ def invia_email_scadenze_leggera(studio):
         return 'Errore: nessuna email configurata per lo studio.'
 
     resend.Emails.send({
-        "from": "Gestionale Studio <onboarding@resend.dev>",
+        "from": settings.EMAIL_FROM_NOTIFICHE,
         "to": [email_destinatario],
         "subject": "Alert scadenze - Gestionale Studio Tecnico",
         "html": messaggio_html,
