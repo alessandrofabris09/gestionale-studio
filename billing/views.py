@@ -37,15 +37,22 @@ def stripe_webhook(request):
 
         return HttpResponse(status=400)
 
-    if event['type'] == 'checkout.session.completed':
+    session = event['data']['object']
 
-        session = event['data']['object']
+    metadata = session.get('metadata', {})
 
-        metadata = session['metadata']
+    studio_id = metadata.get('studio_id')
 
-        studio_id = metadata['studio_id']
+    mode = session.get('mode')
+    payment_status = session.get('payment_status')
+    subscription_id = session.get('subscription')
 
-        if studio_id:
+    if (
+        studio_id and
+        mode == 'subscription' and
+        payment_status == 'paid' and
+        subscription_id
+    ):
 
             try:
 
@@ -57,9 +64,9 @@ def stripe_webhook(request):
 
                 studio.stato_abbonamento = 'ATTIVO'
 
-                studio.stripe_customer_id = session['customer']
+                studio.stripe_customer_id = session.get('customer')
 
-                studio.stripe_subscription_id = session['subscription']
+                studio.stripe_subscription_id = subscription_id
 
                 studio.limite_pratiche = 999999
 
@@ -114,16 +121,14 @@ def checkout_pro(request):
 
 @login_required
 def checkout_success(request):
+    """
+    Pagina di ritorno dopo Stripe Checkout.
+
+    Non attiva il piano PRO.
+    L'attivazione avviene solo tramite webhook Stripe verificato.
+    """
 
     studio = get_studio_utente(request)
-
-    if studio:
-        studio.piano = 'PRO'
-        studio.stato_abbonamento = 'ATTIVO'
-        studio.limite_pratiche = 999999
-        studio.limite_utenti = 999999
-        studio.limite_storage_mb = 50000
-        studio.save()
 
     return render(
         request,
