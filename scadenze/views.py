@@ -1,33 +1,99 @@
-from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
-from django.utils.timezone import now
+from datetime import date, timedelta
 
 import os
 import resend
 
-from datetime import date, timedelta
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
+from django.utils.timezone import now
 
 from attivita.models import Attivita
+from agenda.models import EventoAgenda
 
+from studi.models import Studio
 from studi.utils import get_studio_utente
+from studi.notifiche import get_email_notifiche_studio
+from studi.permessi import (
+    puo_usare_agenda,
+    puo_gestire_alert,
+)
 
 from .models import Scadenza
 from .forms import ScadenzaForm
 
-from agenda.models import EventoAgenda
+
+CODICE_CRON_ALERT = os.environ.get(
+    'CODICE_CRON_ALERT',
+    'ABCD1234'
+)
+
+
+def accesso_negato(request):
+    """
+    Pagina grafica di blocco accesso.
+    """
+
+    return render(
+        request,
+        'errors/accesso_negato.html',
+        status=403
+    )
+
+
+def get_scadenze_queryset(request):
+    """
+    Restituisce le scadenze visibili dall'utente.
+
+    Superuser:
+    - vede tutte le scadenze
+
+    Utente normale:
+    - vede solo le scadenze dello studio collegato
+    """
+
+    studio = get_studio_utente(request)
+
+    if request.user.is_superuser:
+        return Scadenza.objects.all()
+
+    return Scadenza.objects.filter(
+        pratica__studio=studio
+    )
+
+
+def get_eventi_agenda_queryset(request):
+    """
+    Restituisce gli eventi agenda visibili dall'utente.
+    """
+
+    studio = get_studio_utente(request)
+
+    if request.user.is_superuser:
+        return EventoAgenda.objects.all()
+
+    return EventoAgenda.objects.filter(
+        studio=studio
+    )
+
 
 @login_required
 def lista_scadenze(request):
 
+    if not puo_usare_agenda(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    scadenze = Scadenza.objects.filter(
-        pratica__studio=studio,
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
+    scadenze = get_scadenze_queryset(request).filter(
         completata=False
-    ).order_by('data_scadenza')
+    ).order_by(
+        'data_scadenza'
+    )
 
     context = {
         'scadenze': scadenze,
@@ -44,7 +110,13 @@ def lista_scadenze(request):
 @login_required
 def nuova_scadenza(request):
 
+    if not puo_usare_agenda(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
+
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
 
     if request.method == 'POST':
 
@@ -66,30 +138,25 @@ def nuova_scadenza(request):
                     descrizione=(
                         f'Creata scadenza: '
                         f'{scadenza.titolo}'
+                    )
                 )
-            )
-
-            if scadenza.pratica:
 
                 EventoAgenda.objects.create(
-
                     studio=studio,
-
                     titolo=f'Scadenza: {scadenza.titolo}',
-
                     tipo='SCADENZA',
-
                     priorita='MEDIA',
-
-                    cliente=scadenza.pratica.cliente
-                    if scadenza.pratica.cliente
-                    else None,
-
+                    cliente=(
+                        scadenza.pratica.cliente
+                        if scadenza.pratica.cliente
+                        else None
+                    ),
                     pratica=scadenza.pratica,
-
                     data=scadenza.data_scadenza,
-
-                    descrizione=f'Scadenza collegata alla pratica: {scadenza.pratica}'
+                    descrizione=(
+                        f'Scadenza collegata alla pratica: '
+                        f'{scadenza.pratica}'
+                    )
                 )
 
             return redirect(
@@ -114,12 +181,17 @@ def nuova_scadenza(request):
 @login_required
 def modifica_scadenza(request, scadenza_id):
 
+    if not puo_usare_agenda(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
     scadenza = get_object_or_404(
-        Scadenza,
-        id=scadenza_id,
-        pratica__studio=studio
+        get_scadenze_queryset(request),
+        id=scadenza_id
     )
 
     if request.method == 'POST':
@@ -143,8 +215,8 @@ def modifica_scadenza(request, scadenza_id):
                     descrizione=(
                         f'Modificata scadenza: '
                         f'{scadenza.titolo}'
+                    )
                 )
-            )
 
             return redirect(
                 'lista_scadenze'
@@ -170,12 +242,17 @@ def modifica_scadenza(request, scadenza_id):
 @login_required
 def elimina_scadenza(request, scadenza_id):
 
+    if not puo_usare_agenda(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
     scadenza = get_object_or_404(
-        Scadenza,
-        id=scadenza_id,
-        pratica__studio=studio
+        get_scadenze_queryset(request),
+        id=scadenza_id
     )
 
     if request.method == 'POST':
@@ -189,9 +266,9 @@ def elimina_scadenza(request, scadenza_id):
                 descrizione=(
                     f'Eliminata scadenza: '
                     f'{scadenza.titolo}'
+                )
             )
-        )
-        
+
         scadenza.delete()
 
         return redirect(
@@ -210,12 +287,17 @@ def elimina_scadenza(request, scadenza_id):
 @login_required
 def completa_scadenza(request, scadenza_id):
 
+    if not puo_usare_agenda(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
     scadenza = get_object_or_404(
-        Scadenza,
-        id=scadenza_id,
-        pratica__studio=studio
+        get_scadenze_queryset(request),
+        id=scadenza_id
     )
 
     if scadenza.pratica:
@@ -229,8 +311,8 @@ def completa_scadenza(request, scadenza_id):
                 f'{scadenza.titolo}'
             )
         )
-    scadenza.completata = True
 
+    scadenza.completata = True
     scadenza.save()
 
     return redirect(
@@ -241,6 +323,14 @@ def completa_scadenza(request, scadenza_id):
 @login_required
 def calendario_scadenze(request):
 
+    if not puo_usare_agenda(request):
+        return accesso_negato(request)
+
+    studio = get_studio_utente(request)
+
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
     return render(
         request,
         'scadenze/calendario.html'
@@ -250,24 +340,34 @@ def calendario_scadenze(request):
 @login_required
 def alert_scadenze(request):
 
+    if not puo_gestire_alert(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
+
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
 
     oggi = date.today()
 
     limite = oggi + timedelta(days=7)
 
-    scadute = Scadenza.objects.filter(
-        pratica__studio=studio,
+    scadenze = get_scadenze_queryset(request)
+
+    scadute = scadenze.filter(
         completata=False,
         data_scadenza__lt=oggi
-    ).order_by('data_scadenza')
+    ).order_by(
+        'data_scadenza'
+    )
 
-    imminenti = Scadenza.objects.filter(
-        pratica__studio=studio,
+    imminenti = scadenze.filter(
         completata=False,
         data_scadenza__gte=oggi,
         data_scadenza__lte=limite
-    ).order_by('data_scadenza')
+    ).order_by(
+        'data_scadenza'
+    )
 
     context = {
         'oggi': oggi,
@@ -285,13 +385,23 @@ def alert_scadenze(request):
 @login_required
 def eventi_calendario(request):
 
+    if not puo_usare_agenda(request):
+        return JsonResponse(
+            [],
+            safe=False
+        )
+
     studio = get_studio_utente(request)
+
+    if not studio and not request.user.is_superuser:
+        return JsonResponse(
+            [],
+            safe=False
+        )
 
     eventi = []
 
-    scadenze = Scadenza.objects.filter(
-        pratica__studio=studio
-    )
+    scadenze = get_scadenze_queryset(request)
 
     for scadenza in scadenze:
 
@@ -300,11 +410,8 @@ def eventi_calendario(request):
         if not scadenza.completata:
 
             if scadenza.data_scadenza < date.today():
-
                 colore = '#dc2626'
-
             else:
-
                 colore = '#ca8a04'
 
         else:
@@ -327,24 +434,19 @@ def eventi_calendario(request):
             'url': url,
         })
 
-    eventi_agenda = EventoAgenda.objects.filter(
-        studio=studio
-    )
+    eventi_agenda = get_eventi_agenda_queryset(request)
 
     for evento in eventi_agenda:
 
         colore = '#2563eb'
 
         if evento.priorita == 'ALTA':
-
             colore = '#dc2626'
 
         elif evento.priorita == 'MEDIA':
-
             colore = '#ca8a04'
 
         elif evento.priorita == 'BASSA':
-
             colore = '#16a34a'
 
         eventi.append({
@@ -358,6 +460,7 @@ def eventi_calendario(request):
         safe=False
     )
 
+
 def invia_email_scadenze_leggera(studio):
 
     oggi = now().date()
@@ -369,7 +472,9 @@ def invia_email_scadenze_leggera(studio):
         completata=False,
         data_scadenza__gte=oggi,
         data_scadenza__lte=limite
-    ).order_by('data_scadenza')
+    ).order_by(
+        'data_scadenza'
+    )
 
     if not scadenze.exists():
 
@@ -459,9 +564,14 @@ def invia_email_scadenze_leggera(studio):
 
         return 'Errore: RESEND_API_KEY non configurata.'
 
+    email_destinatario = get_email_notifiche_studio(studio)
+
+    if not email_destinatario:
+        return 'Errore: nessuna email configurata per lo studio.'
+
     resend.Emails.send({
         "from": "Gestionale Studio <onboarding@resend.dev>",
-        "to": [settings.ALERT_EMAIL],
+        "to": [email_destinatario],
         "subject": "Alert scadenze - Gestionale Studio Tecnico",
         "html": messaggio_html,
     })
@@ -472,21 +582,49 @@ def invia_email_scadenze_leggera(studio):
 @login_required
 def invia_alert_email_manuale(request):
 
+    if not puo_gestire_alert(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    if not request.user.is_superuser:
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
 
-        return redirect('/')
+    messaggi = []
 
     try:
 
-        messaggio = invia_email_scadenze_leggera(
-            studio
-        )
+        if request.user.is_superuser and not studio:
+
+            studi = Studio.objects.filter(
+                attivo=True
+            ).order_by(
+                'nome'
+            )
+
+            for studio_item in studi:
+
+                messaggio = invia_email_scadenze_leggera(
+                    studio_item
+                )
+
+                messaggi.append(
+                    f'{studio_item.nome}: {messaggio}'
+                )
+
+        else:
+
+            messaggio = invia_email_scadenze_leggera(
+                studio
+            )
+
+            messaggi.append(
+                messaggio
+            )
 
     except Exception as e:
 
-        messaggio = (
+        messaggi.append(
             f'Errore durante invio email: {e}'
         )
 
@@ -494,28 +632,40 @@ def invia_alert_email_manuale(request):
         request,
         'scadenze/alert_email_inviato.html',
         {
-            'messaggio': messaggio
+            'messaggio': '<br>'.join(messaggi)
         }
     )
 
 
 def invia_alert_email_cron(request, codice):
 
-    if codice != 'ABCD1234':
+    if codice != CODICE_CRON_ALERT:
 
         return redirect('/')
 
-    studio = get_studio_utente(request)
+    messaggi = []
 
     try:
 
-        messaggio = invia_email_scadenze_leggera(
-            studio
+        studi = Studio.objects.filter(
+            attivo=True
+        ).order_by(
+            'nome'
         )
+
+        for studio in studi:
+
+            messaggio = invia_email_scadenze_leggera(
+                studio
+            )
+
+            messaggi.append(
+                f'{studio.nome}: {messaggio}'
+            )
 
     except Exception as e:
 
-        messaggio = (
+        messaggi.append(
             f'Errore durante invio email: {e}'
         )
 
@@ -523,6 +673,6 @@ def invia_alert_email_cron(request, codice):
         request,
         'scadenze/alert_email_inviato.html',
         {
-            'messaggio': messaggio
+            'messaggio': '<br>'.join(messaggi)
         }
     )

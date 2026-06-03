@@ -8,7 +8,6 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.management import call_command
-from django.http import FileResponse, Http404, HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect
 
 from documenti.models import Documento
@@ -21,15 +20,13 @@ CODICE_CRON_BACKUP = 'ABCD1234'
 
 def accesso_negato(request):
     """
-    Pagina semplice di blocco accesso.
+    Pagina grafica di blocco accesso.
     """
 
-    return HttpResponseForbidden(
-        """
-        <h1>Accesso negato</h1>
-        <p>Non hai i permessi per accedere a questa sezione.</p>
-        <p><a href="/dashboard/">Torna alla dashboard</a></p>
-        """
+    return render(
+        request,
+        'errors/accesso_negato.html',
+        status=403
     )
 
 

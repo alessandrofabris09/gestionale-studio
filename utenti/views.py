@@ -5,7 +5,6 @@ from django.contrib.auth.models import Group, User
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.utils import timezone
-from django.http import HttpResponseForbidden
 
 from studi.models import Studio, ProfiloUtente
 from studi.utils import (
@@ -22,15 +21,13 @@ from .forms import (
 
 def accesso_negato(request):
     """
-    Pagina semplice di blocco accesso.
+    Pagina grafica di blocco accesso.
     """
 
-    return HttpResponseForbidden(
-        """
-        <h1>Accesso negato</h1>
-        <p>Non hai i permessi per accedere a questa sezione.</p>
-        <p><a href="/dashboard/">Torna alla dashboard</a></p>
-        """
+    return render(
+        request,
+        'errors/accesso_negato.html',
+        status=403
     )
 
 

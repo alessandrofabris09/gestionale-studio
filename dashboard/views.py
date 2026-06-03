@@ -7,7 +7,6 @@ from django.conf import settings
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Sum, Count
-from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.utils.timezone import now
 
@@ -38,15 +37,13 @@ from attivita.models import Attivita
 
 def accesso_negato(request):
     """
-    Pagina semplice di blocco accesso.
+    Pagina grafica di blocco accesso.
     """
 
-    return HttpResponseForbidden(
-        """
-        <h1>Accesso negato</h1>
-        <p>Non hai i permessi per accedere a questa sezione.</p>
-        <p><a href="/dashboard/">Torna alla dashboard</a></p>
-        """
+    return render(
+        request,
+        'errors/accesso_negato.html',
+        status=403
     )
 
 

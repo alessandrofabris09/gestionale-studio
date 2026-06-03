@@ -1,0 +1,91 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Accesso negato
+{% endblock %}
+
+{% block page_title %}
+Accesso negato
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .access-denied-box{
+        background:white;
+        padding:45px;
+        border-radius:24px;
+        box-shadow:0 10px 30px rgba(0,0,0,0.08);
+        max-width:760px;
+        margin:40px auto;
+        text-align:center;
+    }
+
+    .access-denied-icon{
+        width:90px;
+        height:90px;
+        border-radius:50%;
+        background:#fee2e2;
+        color:#991b1b;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        margin:0 auto 25px;
+        font-size:40px;
+    }
+
+    .access-denied-box h2{
+        font-size:32px;
+        color:#111827;
+        margin-bottom:14px;
+    }
+
+    .access-denied-box p{
+        color:#6b7280;
+        font-size:17px;
+        line-height:1.6;
+        margin-bottom:28px;
+    }
+
+    .btn-home{
+        display:inline-flex;
+        align-items:center;
+        gap:10px;
+        background:#111827;
+        color:white;
+        padding:14px 22px;
+        border-radius:14px;
+        text-decoration:none;
+        font-weight:bold;
+        transition:.2s;
+    }
+
+    .btn-home:hover{
+        background:#1f2937;
+        transform:translateY(-1px);
+    }
+</style>
+
+<div class="access-denied-box">
+
+    <div class="access-denied-icon">
+        <i class="fa-solid fa-lock"></i>
+    </div>
+
+    <h2>
+        Accesso negato
+    </h2>
+
+    <p>
+        Non hai i permessi necessari per accedere a questa sezione del gestionale.
+        Se ritieni che si tratti di un errore, contatta il titolare dello studio.
+    </p>
+
+    <a href="/" class="btn-home">
+        <i class="fa-solid fa-arrow-left"></i>
+        Torna alla dashboard
+    </a>
+
+</div>
+
+{% endblock %}

@@ -10,6 +10,7 @@ from studi.permessi import (
     puo_gestire_utenti,
     puo_gestire_alert,
 )
+
 register = template.Library()
 
 
@@ -34,14 +35,21 @@ def get_ruolo_utente(user):
         return None
 
 
+def utente_valido(user):
+    """
+    Controllo comune per tutti i filtri template.
+    """
+
+    return user and user.is_authenticated
+
+
 @register.filter(name='can_view_parcelle')
 def can_view_parcelle(user):
     """
     Permesso per visualizzare le parcelle.
-    Usa la funzione già presente in studi.permessi.
     """
 
-    if not user or not user.is_authenticated:
+    if not utente_valido(user):
         return False
 
     if user.is_superuser:
@@ -56,10 +64,9 @@ def can_view_parcelle(user):
 def can_manage_subscription(user):
     """
     Permesso per gestire abbonamento / piano FREE-PRO.
-    Usa la funzione già presente in studi.permessi.
     """
 
-    if not user or not user.is_authenticated:
+    if not utente_valido(user):
         return False
 
     if user.is_superuser:
@@ -74,10 +81,9 @@ def can_manage_subscription(user):
 def can_manage_backup(user):
     """
     Permesso per gestire i backup.
-    Usa la funzione già presente in studi.permessi.
     """
 
-    if not user or not user.is_authenticated:
+    if not utente_valido(user):
         return False
 
     if user.is_superuser:
@@ -92,10 +98,9 @@ def can_manage_backup(user):
 def can_use_agenda(user):
     """
     Permesso per usare agenda e scadenze.
-    Usa la funzione già presente in studi.permessi.
     """
 
-    if not user or not user.is_authenticated:
+    if not utente_valido(user):
         return False
 
     if user.is_superuser:
@@ -110,19 +115,22 @@ def can_use_agenda(user):
 def can_use_pratiche(user):
     """
     Permesso per vedere l'area pratiche/documenti.
+
     L'utente può accedere se può creare pratiche
     oppure se può gestire documenti.
     """
 
-    if not user or not user.is_authenticated:
+    if not utente_valido(user):
         return False
 
     if user.is_superuser:
         return True
 
+    fake_request = FakeRequest(user)
+
     return (
-        puo_creare_pratiche(FakeRequest(user)) or
-        puo_gestire_documenti(FakeRequest(user))
+        puo_creare_pratiche(fake_request) or
+        puo_gestire_documenti(fake_request)
     )
 
 
@@ -130,10 +138,9 @@ def can_use_pratiche(user):
 def can_manage_users(user):
     """
     Permesso per gestire gli utenti dello studio.
-    Usa la funzione già presente in studi.permessi.
     """
 
-    if not user or not user.is_authenticated:
+    if not utente_valido(user):
         return False
 
     if user.is_superuser:
@@ -146,6 +153,15 @@ def can_manage_users(user):
 
 @register.filter(name='can_manage_alert')
 def can_manage_alert(user):
+    """
+    Permesso per gestire gli alert delle scadenze.
+    """
+
+    if not utente_valido(user):
+        return False
+
+    if user.is_superuser:
+        return True
 
     return puo_gestire_alert(
         FakeRequest(user)

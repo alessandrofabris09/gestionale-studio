@@ -277,10 +277,30 @@ Dashboard gestionale
                         {{ n.testo }}
                     </div>
 
-                    <a class="action-btn" href="{{ n.link }}">
-                        <i class="fa-solid fa-arrow-right"></i>
-                        Apri
-                    </a>
+                    {% if n.link == '/scadenze/alert/' %}
+
+                        {% if request.user|can_manage_alert %}
+                            <a class="action-btn" href="{{ n.link }}">
+                                <i class="fa-solid fa-arrow-right"></i>
+                                Apri
+                            </a>
+
+                        {% else %}
+
+                            <a class="action-btn" href="/scadenze/">
+                                <i class="fa-solid fa-arrow-right"></i>
+                                Apri scadenze
+                            </a>
+                        {% endif %}
+
+                    {% else %}
+
+                        <a class="action-btn" href="{{ n.link }}">
+                            <i class="fa-solid fa-arrow-right"></i>
+                            Apri
+                        </a>
+
+                    {% endif %}
 
                 </div>
 

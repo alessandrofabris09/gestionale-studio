@@ -4,7 +4,6 @@ from io import BytesIO
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import FileResponse, HttpResponseForbidden
 from django.utils.timezone import now
 from django.contrib import messages
 
@@ -35,16 +34,13 @@ from .forms import PraticaForm
 
 def accesso_negato(request):
     """
-    Pagina semplice di blocco accesso.
-    Per ora restituisce 403 senza creare template dedicati.
+    Pagina grafica di blocco accesso.
     """
 
-    return HttpResponseForbidden(
-        """
-        <h1>Accesso negato</h1>
-        <p>Non hai i permessi per accedere a questa sezione.</p>
-        <p><a href="/dashboard/">Torna alla dashboard</a></p>
-        """
+    return render(
+        request,
+        'errors/accesso_negato.html',
+        status=403
     )
 
 

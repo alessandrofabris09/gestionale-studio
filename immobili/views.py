@@ -1,7 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
-from django.http import HttpResponseForbidden
 
 from studi.utils import get_studio_utente
 from studi.permessi import (
@@ -16,17 +15,14 @@ from .forms import ImmobileForm
 
 def accesso_negato(request):
     """
-    Pagina semplice di blocco accesso.
+    Pagina grafica di blocco accesso.
     """
 
-    return HttpResponseForbidden(
-        """
-        <h1>Accesso negato</h1>
-        <p>Non hai i permessi per accedere a questa sezione.</p>
-        <p><a href="/dashboard/">Torna alla dashboard</a></p>
-        """
+    return render(
+        request,
+        'errors/accesso_negato.html',
+        status=403
     )
-
 
 def puo_accedere_immobili(request):
     """

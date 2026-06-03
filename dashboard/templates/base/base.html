@@ -292,21 +292,29 @@
             {% endif %}
 
 
-            {% if request.user|can_manage_subscription %}
+            {% if request.user|can_manage_users or request.user|can_manage_subscription or request.user|can_manage_backup %}
 
                 <div class="menu-section">
                     Gestione
                 </div>
 
-                <a href="/utenti/" class="{% if '/utenti' in request.path %}active{% endif %}">
-                    <i class="fa-solid fa-user-gear"></i>
-                    Gestione utenti
-                </a>
+                {% if request.user|can_manage_users %}
 
-                <a href="/studi/abbonamento/" class="{% if '/studi/abbonamento' in request.path %}active{% endif %}">
-                    <i class="fa-solid fa-crown"></i>
-                    Abbonamento
-                </a>
+                    <a href="/utenti/" class="{% if '/utenti' in request.path %}active{% endif %}">
+                        <i class="fa-solid fa-user-gear"></i>
+                        Gestione utenti
+                    </a>
+
+                {% endif %}
+
+                {% if request.user|can_manage_subscription %}
+
+                    <a href="/studi/abbonamento/" class="{% if '/studi/abbonamento' in request.path %}active{% endif %}">
+                        <i class="fa-solid fa-crown"></i>
+                        Abbonamento
+                    </a>
+
+                {% endif %}
 
                 {% if request.user|can_manage_backup %}
 

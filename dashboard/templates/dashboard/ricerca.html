@@ -1,4 +1,5 @@
 {% extends 'base/base.html' %}
+{% load permessi_tags %}
 
 {% block title %}
 Ricerca globale
@@ -188,7 +189,7 @@ Ricerca globale
         </h2>
 
         <div class="subtitle">
-            Cerca rapidamente pratiche, clienti, immobili, scadenze e documenti.
+            Cerca rapidamente nelle sezioni consentite dal tuo ruolo.
         </div>
     </div>
 
@@ -198,7 +199,7 @@ Ricerca globale
             type="text"
             name="q"
             value="{{ query|default:'' }}"
-            placeholder="Cerca cliente, pratica, comune, protocollo, documento..."
+            placeholder="Cerca nel gestionale..."
         >
 
         <button class="btn" type="submit">
@@ -214,325 +215,347 @@ Ricerca globale
 
     <div class="results-grid">
 
-        <div class="section">
+        {% if request.user|can_use_pratiche %}
 
-            <div class="section-title">
-                <i class="fa-solid fa-folder-open"></i>
-                Pratiche
-            </div>
+            <div class="section">
 
-            {% for pratica in pratiche %}
-
-                <div class="item">
-
-                    <a class="item-link" href="/pratiche/{{ pratica.id }}/">
-                        {{ pratica.oggetto }}
-                    </a>
-
-                    <div class="meta">
-
-                        {% if pratica.cliente %}
-                            <span class="badge green">
-                                <i class="fa-solid fa-user"></i>
-                                {{ pratica.cliente }}
-                            </span>
-                        {% endif %}
-
-                        {% if pratica.comune %}
-                            <span class="badge blue">
-                                <i class="fa-solid fa-location-dot"></i>
-                                {{ pratica.comune }}
-                            </span>
-                        {% endif %}
-
-                        {% if pratica.stato %}
-                            <span class="badge yellow">
-                                <i class="fa-solid fa-circle-info"></i>
-                                {{ pratica.get_stato_display }}
-                            </span>
-                        {% endif %}
-
-                    </div>
-
+                <div class="section-title">
+                    <i class="fa-solid fa-folder-open"></i>
+                    Pratiche
                 </div>
 
-            {% empty %}
+                {% for pratica in pratiche %}
 
-                <div class="empty">
-                    Nessuna pratica trovata.
-                </div>
+                    <div class="item">
 
-            {% endfor %}
-
-        </div>
-
-        <div class="section">
-
-            <div class="section-title">
-                <i class="fa-solid fa-users"></i>
-                Clienti
-            </div>
-
-            {% for cliente in clienti %}
-
-                <div class="item">
-
-                    <a class="item-link" href="/clienti/{{ cliente.id }}/">
-                        {{ cliente.nome }}
-                    </a>
-
-                    <div class="meta">
-
-                        {% if cliente.telefono %}
-                            <span class="badge green">
-                                <i class="fa-solid fa-phone"></i>
-                                {{ cliente.telefono }}
-                            </span>
-                        {% endif %}
-
-                        {% if cliente.email %}
-                            <span class="badge blue">
-                                <i class="fa-solid fa-envelope"></i>
-                                {{ cliente.email }}
-                            </span>
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-            {% empty %}
-
-                <div class="empty">
-                    Nessun cliente trovato.
-                </div>
-
-            {% endfor %}
-
-        </div>
-
-        <div class="section">
-
-            <div class="section-title">
-                <i class="fa-solid fa-house"></i>
-                Immobili
-            </div>
-
-            {% for immobile in immobili %}
-
-                <div class="item">
-
-                    <a class="item-link" href="/immobili/{{ immobile.id }}/">
-                        {{ immobile.comune }} - {{ immobile.indirizzo }}
-                    </a>
-
-                    <div class="meta">
-
-                        {% if immobile.foglio %}
-                            <span class="badge">
-                                <i class="fa-solid fa-map"></i>
-                                Fg. {{ immobile.foglio }}
-                            </span>
-                        {% endif %}
-
-                        {% if immobile.mappale %}
-                            <span class="badge">
-                                <i class="fa-solid fa-vector-square"></i>
-                                Map. {{ immobile.mappale }}
-                            </span>
-                        {% endif %}
-
-                        {% if immobile.subalterno %}
-                            <span class="badge">
-                                <i class="fa-solid fa-layer-group"></i>
-                                Sub. {{ immobile.subalterno }}
-                            </span>
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-            {% empty %}
-
-                <div class="empty">
-                    Nessun immobile trovato.
-                </div>
-
-            {% endfor %}
-
-        </div>
-
-        <div class="section">
-
-            <div class="section-title">
-                <i class="fa-solid fa-clock"></i>
-                Scadenze
-            </div>
-
-            {% for scadenza in scadenze %}
-
-                <div class="item">
-
-                    {% if scadenza.pratica %}
-                        <a class="item-link" href="/pratiche/{{ scadenza.pratica.id }}/">
-                            {{ scadenza.titolo }}
+                        <a class="item-link" href="/pratiche/{{ pratica.id }}/">
+                            {{ pratica.oggetto }}
                         </a>
-                    {% else %}
-                        <span class="item-link">
-                            {{ scadenza.titolo }}
-                        </span>
-                    {% endif %}
 
-                    <div class="meta">
+                        <div class="meta">
 
-                        <span class="badge red">
-                            <i class="fa-solid fa-calendar"></i>
-                            {{ scadenza.data_scadenza }}
-                        </span>
+                            {% if pratica.cliente %}
+                                <span class="badge green">
+                                    <i class="fa-solid fa-user"></i>
+                                    {{ pratica.cliente }}
+                                </span>
+                            {% endif %}
 
-                        {% if scadenza.priorita %}
+                            {% if pratica.comune %}
+                                <span class="badge blue">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                    {{ pratica.comune }}
+                                </span>
+                            {% endif %}
+
+                            {% if pratica.stato %}
+                                <span class="badge yellow">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    {{ pratica.get_stato_display }}
+                                </span>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                {% empty %}
+
+                    <div class="empty">
+                        Nessuna pratica trovata.
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+
+            <div class="section">
+
+                <div class="section-title">
+                    <i class="fa-solid fa-users"></i>
+                    Clienti
+                </div>
+
+                {% for cliente in clienti %}
+
+                    <div class="item">
+
+                        <a class="item-link" href="/clienti/{{ cliente.id }}/">
+                            {{ cliente.nome }}
+                        </a>
+
+                        <div class="meta">
+
+                            {% if cliente.telefono %}
+                                <span class="badge green">
+                                    <i class="fa-solid fa-phone"></i>
+                                    {{ cliente.telefono }}
+                                </span>
+                            {% endif %}
+
+                            {% if cliente.email %}
+                                <span class="badge blue">
+                                    <i class="fa-solid fa-envelope"></i>
+                                    {{ cliente.email }}
+                                </span>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                {% empty %}
+
+                    <div class="empty">
+                        Nessun cliente trovato.
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+
+            <div class="section">
+
+                <div class="section-title">
+                    <i class="fa-solid fa-house"></i>
+                    Immobili
+                </div>
+
+                {% for immobile in immobili %}
+
+                    <div class="item">
+
+                        <a class="item-link" href="/immobili/{{ immobile.id }}/">
+                            {{ immobile.comune }} - {{ immobile.indirizzo }}
+                        </a>
+
+                        <div class="meta">
+
+                            {% if immobile.foglio %}
+                                <span class="badge">
+                                    <i class="fa-solid fa-map"></i>
+                                    Fg. {{ immobile.foglio }}
+                                </span>
+                            {% endif %}
+
+                            {% if immobile.mappale %}
+                                <span class="badge">
+                                    <i class="fa-solid fa-vector-square"></i>
+                                    Map. {{ immobile.mappale }}
+                                </span>
+                            {% endif %}
+
+                            {% if immobile.subalterno %}
+                                <span class="badge">
+                                    <i class="fa-solid fa-layer-group"></i>
+                                    Sub. {{ immobile.subalterno }}
+                                </span>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                {% empty %}
+
+                    <div class="empty">
+                        Nessun immobile trovato.
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+
+        {% if request.user|can_use_agenda %}
+
+            <div class="section">
+
+                <div class="section-title">
+                    <i class="fa-solid fa-clock"></i>
+                    Scadenze
+                </div>
+
+                {% for scadenza in scadenze %}
+
+                    <div class="item">
+
+                        {% if scadenza.pratica and request.user|can_use_pratiche %}
+                            <a class="item-link" href="/pratiche/{{ scadenza.pratica.id }}/">
+                                {{ scadenza.titolo }}
+                            </a>
+                        {% else %}
+                            <span class="item-link">
+                                {{ scadenza.titolo }}
+                            </span>
+                        {% endif %}
+
+                        <div class="meta">
+
+                            <span class="badge red">
+                                <i class="fa-solid fa-calendar"></i>
+                                {{ scadenza.data_scadenza }}
+                            </span>
+
+                            {% if scadenza.priorita %}
+                                <span class="badge yellow">
+                                    <i class="fa-solid fa-flag"></i>
+                                    {{ scadenza.get_priorita_display }}
+                                </span>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                {% empty %}
+
+                    <div class="empty">
+                        Nessuna scadenza trovata.
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+
+            <div class="section">
+
+                <div class="section-title">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    Agenda
+                </div>
+
+                {% for evento in eventi %}
+
+                    <div class="item">
+
+                        <a class="item-link" href="/agenda/">
+                            {{ evento.titolo }}
+                        </a>
+
+                        <div class="meta">
+                            <span class="badge red">
+                                {{ evento.data }}
+                            </span>
+
                             <span class="badge yellow">
-                                <i class="fa-solid fa-flag"></i>
-                                {{ scadenza.get_priorita_display }}
+                                {{ evento.get_priorita_display }}
                             </span>
-                        {% endif %}
 
-                    </div>
-
-                </div>
-
-            {% empty %}
-
-                <div class="empty">
-                    Nessuna scadenza trovata.
-                </div>
-
-            {% endfor %}
-
-        </div>
-
-        <div class="section">
-
-            <div class="section-title">
-                <i class="fa-solid fa-file-lines"></i>
-                Documenti
-            </div>
-
-            {% for documento in documenti %}
-
-                <div class="item">
-
-                    <a class="item-link" href="{{ documento.file.url }}" target="_blank">
-                        {{ documento.titolo }}
-                    </a>
-
-                    <div class="meta">
-
-                        {% if documento.pratica %}
                             <span class="badge blue">
-                                <i class="fa-solid fa-folder"></i>
-                                {{ documento.pratica }}
+                                {{ evento.get_tipo_display }}
                             </span>
-                        {% endif %}
+                        </div>
 
                     </div>
 
-                </div>
+                {% empty %}
 
-            {% empty %}
+                    <div class="empty">
+                        Nessun evento agenda trovato.
+                    </div>
 
-                <div class="empty">
-                    Nessun documento trovato.
-                </div>
+                {% endfor %}
 
-            {% endfor %}
-
-        </div>
-
-        <div class="section">
-
-            <div class="section-title">
-                <i class="fa-solid fa-euro-sign"></i>
-                Parcelle
             </div>
 
-            {% for parcella in parcelle %}
+        {% endif %}
 
-                <div class="item">
 
-                    <a class="item-link" href="/parcelle/">
-                        {{ parcella.descrizione }}
-                    </a>
+        {% if request.user|can_use_pratiche %}
 
-                    <div class="meta">
-                        <span class="badge green">
-                            € {{ parcella.importo }}
-                        </span>
+            <div class="section">
 
-                        <span class="badge yellow">
-                            {{ parcella.get_stato_display }}
-                        </span>
+                <div class="section-title">
+                    <i class="fa-solid fa-file-lines"></i>
+                    Documenti
+                </div>
 
-                        {% if parcella.pratica %}
-                            <span class="badge blue">
-                                {{ parcella.pratica }}
-                            </span>
-                        {% endif %}
+                {% for documento in documenti %}
+
+                    <div class="item">
+
+                        <a class="item-link" href="{{ documento.file.url }}" target="_blank">
+                            {{ documento.titolo }}
+                        </a>
+
+                        <div class="meta">
+
+                            {% if documento.pratica %}
+                                <span class="badge blue">
+                                    <i class="fa-solid fa-folder"></i>
+                                    {{ documento.pratica }}
+                                </span>
+                            {% endif %}
+
+                        </div>
+
                     </div>
 
-                </div>
+                {% empty %}
 
-            {% empty %}
+                    <div class="empty">
+                        Nessun documento trovato.
+                    </div>
 
-                <div class="empty">
-                    Nessuna parcella trovata.
-                </div>
+                {% endfor %}
 
-            {% endfor %}
-
-        </div>
-
-        <div class="section">
-
-            <div class="section-title">
-                <i class="fa-solid fa-calendar-days"></i>
-                Agenda
             </div>
 
-            {% for evento in eventi %}
+        {% endif %}
 
-                <div class="item">
 
-                    <a class="item-link" href="/agenda/">
-                        {{ evento.titolo }}
-                    </a>
+        {% if request.user|can_view_parcelle %}
 
-                    <div class="meta">
-                        <span class="badge red">
-                        {{ evento.data }}
-                        </span>
+            <div class="section">
 
-                        <span class="badge yellow">
-                            {{ evento.get_priorita_display }}
-                        </span>
+                <div class="section-title">
+                    <i class="fa-solid fa-euro-sign"></i>
+                    Parcelle
+                </div>
 
-                        <span class="badge blue">
-                            {{ evento.get_tipo_display }}
-                        </span>
+                {% for parcella in parcelle %}
+
+                    <div class="item">
+
+                        <a class="item-link" href="/parcelle/">
+                            {{ parcella.descrizione }}
+                        </a>
+
+                        <div class="meta">
+                            <span class="badge green">
+                                € {{ parcella.importo }}
+                            </span>
+
+                            <span class="badge yellow">
+                                {{ parcella.get_stato_display }}
+                            </span>
+
+                            {% if parcella.pratica %}
+                                <span class="badge blue">
+                                    {{ parcella.pratica }}
+                                </span>
+                            {% endif %}
+                        </div>
+
                     </div>
 
-                </div>
+                {% empty %}
 
-            {% empty %}
+                    <div class="empty">
+                        Nessuna parcella trovata.
+                    </div>
 
-                <div class="empty">
-                    Nessun evento agenda trovato.
-                </div>
+                {% endfor %}
 
-            {% endfor %}
+            </div>
 
-        </div> 
+        {% endif %}
 
     </div>
 
@@ -540,7 +563,7 @@ Ricerca globale
 
     <div class="intro-empty">
         <i class="fa-solid fa-circle-info"></i>
-        Inserisci una parola nella barra di ricerca per cercare dentro tutto il gestionale.
+        Inserisci una parola nella barra di ricerca per cercare nelle sezioni consentite dal tuo ruolo.
     </div>
 
 {% endif %}

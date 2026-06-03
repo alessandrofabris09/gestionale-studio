@@ -2,15 +2,21 @@ import os
 import resend
 
 from datetime import date, datetime, time
+
 from icalendar import Calendar, Event
 
-from django.http import HttpResponse
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now
 
+from studi.models import Studio
+from studi.notifiche import get_email_notifiche_studio
 from studi.utils import get_studio_utente
+from studi.permessi import (
+    puo_usare_agenda,
+    puo_gestire_alert,
+)
 
 from attivita.models import Attivita
 
@@ -18,13 +24,62 @@ from .models import EventoAgenda
 from .forms import EventoAgendaForm
 
 
-@login_required
-def lista_agenda(request):
+CODICE_CRON_AGENDA = os.environ.get(
+    'CODICE_CRON_AGENDA',
+    'AGENDA1234'
+)
+
+CODICE_ICS_AGENDA = os.environ.get(
+    'CODICE_ICS_AGENDA',
+    'AGENDAICS1234'
+)
+
+
+def accesso_negato(request):
+    """
+    Pagina grafica di blocco accesso.
+    """
+
+    return render(
+        request,
+        'errors/accesso_negato.html',
+        status=403
+    )
+
+
+def get_eventi_queryset(request):
+    """
+    Restituisce gli eventi agenda visibili dall'utente.
+
+    Superuser:
+    - vede tutti gli eventi
+
+    Utente normale:
+    - vede solo gli eventi dello studio collegato
+    """
 
     studio = get_studio_utente(request)
 
-    eventi = EventoAgenda.objects.filter(
-        studio=studio,
+    if request.user.is_superuser:
+        return EventoAgenda.objects.all()
+
+    return EventoAgenda.objects.filter(
+        studio=studio
+    )
+
+
+@login_required
+def lista_agenda(request):
+
+    if not puo_usare_agenda(request):
+        return accesso_negato(request)
+
+    studio = get_studio_utente(request)
+
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
+    eventi = get_eventi_queryset(request).filter(
         completato=False
     ).order_by(
         'data',
@@ -43,12 +98,17 @@ def lista_agenda(request):
 @login_required
 def agenda_oggi(request):
 
+    if not puo_usare_agenda(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
+
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
 
     oggi = date.today()
 
-    eventi = EventoAgenda.objects.filter(
-        studio=studio,
+    eventi = get_eventi_queryset(request).filter(
         data=oggi,
         completato=False
     ).order_by(
@@ -68,7 +128,13 @@ def agenda_oggi(request):
 @login_required
 def nuovo_evento(request):
 
+    if not puo_usare_agenda(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
+
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
 
     if request.method == 'POST':
 
@@ -81,7 +147,11 @@ def nuovo_evento(request):
 
             evento = form.save(commit=False)
 
-            evento.studio = studio
+            if not request.user.is_superuser:
+                evento.studio = studio
+
+            elif not evento.studio:
+                evento.studio = studio
 
             evento.save()
 
@@ -96,6 +166,7 @@ def nuovo_evento(request):
                         f'{evento.titolo}'
                     )
                 )
+
             return redirect(
                 'lista_agenda'
             )
@@ -118,12 +189,17 @@ def nuovo_evento(request):
 @login_required
 def modifica_evento(request, evento_id):
 
+    if not puo_usare_agenda(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
     evento = get_object_or_404(
-        EventoAgenda,
-        id=evento_id,
-        studio=studio
+        get_eventi_queryset(request),
+        id=evento_id
     )
 
     if request.method == 'POST':
@@ -138,7 +214,8 @@ def modifica_evento(request, evento_id):
 
             evento = form.save(commit=False)
 
-            evento.studio = studio
+            if not request.user.is_superuser:
+                evento.studio = studio
 
             evento.save()
 
@@ -153,6 +230,7 @@ def modifica_evento(request, evento_id):
                         f'{evento.titolo}'
                     )
                 )
+
             return redirect(
                 'lista_agenda'
             )
@@ -177,29 +255,38 @@ def modifica_evento(request, evento_id):
 @login_required
 def elimina_evento(request, evento_id):
 
+    if not puo_usare_agenda(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
     evento = get_object_or_404(
-        EventoAgenda,
-        id=evento_id,
-        studio=studio
+        get_eventi_queryset(request),
+        id=evento_id
     )
+
+    pratica = evento.pratica
+    titolo_evento = evento.titolo
 
     if request.method == 'POST':
 
         evento.delete()
 
-        if evento.pratica:
+        if pratica:
 
             Attivita.objects.create(
-                pratica=evento.pratica,
+                pratica=pratica,
                 utente=request.user,
                 tipo='ELIMINAZIONE',
                 descrizione=(
                     f'Eliminato evento agenda: '
-                    f'{evento.titolo}'
+                    f'{titolo_evento}'
                 )
             )
+
         return redirect(
             'lista_agenda'
         )
@@ -216,12 +303,17 @@ def elimina_evento(request, evento_id):
 @login_required
 def completa_evento(request, evento_id):
 
+    if not puo_usare_agenda(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
     evento = get_object_or_404(
-        EventoAgenda,
-        id=evento_id,
-        studio=studio
+        get_eventi_queryset(request),
+        id=evento_id
     )
 
     if evento.pratica:
@@ -235,8 +327,8 @@ def completa_evento(request, evento_id):
                 f'{evento.titolo}'
             )
         )
-    evento.completato = True
 
+    evento.completato = True
     evento.save()
 
     return redirect(
@@ -392,12 +484,17 @@ def invia_email_agenda_giornaliera(studio):
 
         return 'Errore: RESEND_API_KEY non configurata.'
 
+    email_destinatario = get_email_notifiche_studio(studio)
+
+    if not email_destinatario:
+        return 'Errore: nessuna email configurata per lo studio.'
+
     resend.Emails.send({
         "from": "Gestionale Studio <onboarding@resend.dev>",
-        "to": [settings.ALERT_EMAIL],
+        "to": [email_destinatario],
         "subject": "Agenda operativa di oggi",
         "html": messaggio_html,
-    })
+    }) 
 
     return 'Email agenda inviata correttamente.'
 
@@ -405,21 +502,49 @@ def invia_email_agenda_giornaliera(studio):
 @login_required
 def invia_agenda_email(request):
 
+    if not puo_gestire_alert(request):
+        return accesso_negato(request)
+
     studio = get_studio_utente(request)
 
-    if not request.user.is_superuser:
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
 
-        return redirect('/')
+    messaggi = []
 
     try:
 
-        messaggio = invia_email_agenda_giornaliera(
-            studio
-        )
+        if request.user.is_superuser and not studio:
+
+            studi = Studio.objects.filter(
+                attivo=True
+            ).order_by(
+                'nome'
+            )
+
+            for studio_item in studi:
+
+                messaggio = invia_email_agenda_giornaliera(
+                    studio_item
+                )
+
+                messaggi.append(
+                    f'{studio_item.nome}: {messaggio}'
+                )
+
+        else:
+
+            messaggio = invia_email_agenda_giornaliera(
+                studio
+            )
+
+            messaggi.append(
+                messaggio
+            )
 
     except Exception as e:
 
-        messaggio = (
+        messaggi.append(
             f'Errore durante invio email: {e}'
         )
 
@@ -427,28 +552,40 @@ def invia_agenda_email(request):
         request,
         'agenda/agenda_email_inviata.html',
         {
-            'messaggio': messaggio
+            'messaggio': '<br>'.join(messaggi)
         }
     )
 
 
 def invia_agenda_email_cron(request, codice):
 
-    if codice != 'AGENDA1234':
+    if codice != CODICE_CRON_AGENDA:
 
         return redirect('/')
 
-    studio = get_studio_utente(request)
+    messaggi = []
 
     try:
 
-        messaggio = invia_email_agenda_giornaliera(
-            studio
+        studi = Studio.objects.filter(
+            attivo=True
+        ).order_by(
+            'nome'
         )
+
+        for studio in studi:
+
+            messaggio = invia_email_agenda_giornaliera(
+                studio
+            )
+
+            messaggi.append(
+                f'{studio.nome}: {messaggio}'
+            )
 
     except Exception as e:
 
-        messaggio = (
+        messaggi.append(
             f'Errore durante invio email: {e}'
         )
 
@@ -456,18 +593,16 @@ def invia_agenda_email_cron(request, codice):
         request,
         'agenda/agenda_email_inviata.html',
         {
-            'messaggio': messaggio
+            'messaggio': '<br>'.join(messaggi)
         }
     )
 
 
 def calendario_ics(request, codice):
 
-    if codice != 'AGENDAICS1234':
+    if codice != CODICE_ICS_AGENDA:
 
         return redirect('/')
-
-    studio = get_studio_utente(request)
 
     calendario = Calendar()
 
@@ -477,15 +612,13 @@ def calendario_ics(request, codice):
     )
 
     calendario.add('version', '2.0')
-
     calendario.add('calscale', 'GREGORIAN')
-
     calendario.add('method', 'PUBLISH')
 
     eventi = EventoAgenda.objects.filter(
-        studio=studio,
         completato=False
     ).order_by(
+        'studio__nome',
         'data',
         'ora_inizio'
     )
@@ -494,9 +627,14 @@ def calendario_ics(request, codice):
 
         evento = Event()
 
+        titolo = evento_agenda.titolo
+
+        if evento_agenda.studio:
+            titolo = f'{evento_agenda.studio.nome} - {titolo}'
+
         evento.add(
             'summary',
-            evento_agenda.titolo
+            titolo
         )
 
         descrizione = ''
@@ -560,7 +698,6 @@ def calendario_ics(request, codice):
         )
 
         evento.add('dtstart', inizio)
-
         evento.add('dtend', fine)
 
         evento.add(
