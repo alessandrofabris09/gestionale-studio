@@ -5,20 +5,8 @@
 <div class="page-header">
     <div>
         <h1>Dati studio</h1>
-        <p>Visualizza e gestisci le informazioni principali dello studio.</p>
+        <p>Riepilogo delle informazioni principali dello studio.</p>
     </div>
-
-    {% if puo_modificare %}
-        <div>
-            <a href="{% url 'modifica_studio' %}" class="btn btn-primary">
-                Modifica dati studio
-            </a>
-
-            <a href="{% url 'utenti_studio' %}" class="btn btn-secondary">
-                Gestisci utenti
-            </a>
-        </div>
-    {% endif %}
 </div>
 
 <div class="card">
@@ -26,7 +14,7 @@
 
     <div class="detail-grid">
         <div>
-            <strong>Email</strong>
+            <strong>Email notifiche studio</strong>
             <p>{{ studio.email|default:"-" }}</p>
         </div>
 
@@ -54,11 +42,37 @@
             <strong>Stato abbonamento</strong>
             <p>{{ studio.get_stato_abbonamento_display }}</p>
         </div>
+
+        <div>
+            <strong>Limite pratiche</strong>
+            <p>{{ studio.limite_pratiche }}</p>
+        </div>
+
+        <div>
+            <strong>Limite utenti</strong>
+            <p>{{ studio.limite_utenti }}</p>
+        </div>
+
+        <div>
+            <strong>Limite storage</strong>
+            <p>{{ studio.limite_storage_mb }} MB</p>
+        </div>
+
+        <div>
+            <strong>Studio attivo</strong>
+            <p>
+                {% if studio.attivo %}
+                    Sì
+                {% else %}
+                    No
+                {% endif %}
+            </p>
+        </div>
     </div>
 </div>
 
-<div class="card">
-    <h2>Utenti dello studio</h2>
+<div class="card" style="margin-top: 24px;">
+    <h2>Utenti collegati</h2>
 
     <table class="table">
         <thead>
@@ -78,7 +92,9 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="3">Nessun utente collegato allo studio.</td>
+                    <td colspan="3">
+                        Nessun utente collegato allo studio.
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>

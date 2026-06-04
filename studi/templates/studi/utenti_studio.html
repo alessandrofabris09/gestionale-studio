@@ -4,25 +4,56 @@
 
 <div class="page-header">
     <div>
-        <h1>Utenti studio</h1>
-        <p>Gestisci i ruoli degli utenti collegati allo studio.</p>
+        <h1>Gestione utenti</h1>
+        <p>Gestisci i dati dello studio e i ruoli degli utenti collegati.</p>
     </div>
 
     <div>
+        <a href="{% url 'modifica_studio' %}" class="btn btn-primary">
+            Modifica dati studio
+        </a>
+
         <a href="{% url 'profilo_studio' %}" class="btn btn-secondary">
-            Torna ai dati studio
+            Vedi dati studio
         </a>
     </div>
 </div>
 
 <div class="card">
+    <h2>{{ studio.nome }}</h2>
+
+    <div class="detail-grid">
+        <div>
+            <strong>Email notifiche studio</strong>
+            <p>{{ studio.email|default:"-" }}</p>
+        </div>
+
+        <div>
+            <strong>Telefono</strong>
+            <p>{{ studio.telefono|default:"-" }}</p>
+        </div>
+
+        <div>
+            <strong>Indirizzo</strong>
+            <p>{{ studio.indirizzo|default:"-" }}</p>
+        </div>
+
+        <div>
+            <strong>Partita IVA / Codice fiscale</strong>
+            <p>{{ studio.partita_iva|default:"-" }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 24px;">
+    <h2>Ruoli utenti</h2>
 
     <table class="table">
         <thead>
             <tr>
                 <th>Utente</th>
                 <th>Email</th>
-                <th>Ruolo</th>
+                <th>Ruolo attuale</th>
                 <th>Azioni</th>
             </tr>
         </thead>
@@ -41,12 +72,13 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="4">Nessun utente collegato allo studio.</td>
+                    <td colspan="4">
+                        Nessun utente collegato allo studio.
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-
 </div>
 
 {% endblock %}
