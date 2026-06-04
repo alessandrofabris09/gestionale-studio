@@ -1,0 +1,42 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Modifica ruolo utente</h1>
+        <p>Assegna il ruolo corretto all’utente dello studio.</p>
+    </div>
+</div>
+
+<div class="card">
+
+    <p>
+        <strong>Utente:</strong>
+        {{ profilo.user.username }}
+    </p>
+
+    <p>
+        <strong>Email:</strong>
+        {{ profilo.user.email|default:"-" }}
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <div style="margin-top: 20px;">
+            <button type="submit" class="btn btn-primary">
+                Salva ruolo
+            </button>
+
+            <a href="{% url 'utenti_studio' %}" class="btn btn-secondary">
+                Annulla
+            </a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

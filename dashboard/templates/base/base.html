@@ -147,9 +147,142 @@
             color:#111827;
         }
 
+        .page-header{
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-start;
+            gap:20px;
+            margin-bottom:25px;
+        }
+
+        .page-header h1{
+            font-size:28px;
+            margin-bottom:6px;
+        }
+
+        .page-header p{
+            color:#6b7280;
+            font-size:15px;
+        }
+
+        .btn{
+            display:inline-block;
+            text-decoration:none;
+            padding:10px 14px;
+            border-radius:8px;
+            border:0;
+            cursor:pointer;
+            font-size:14px;
+            font-family:Arial, sans-serif;
+            margin-right:6px;
+        }
+
+        .btn-primary{
+            background:#2563eb;
+            color:white;
+        }
+
+        .btn-primary:hover{
+            background:#1d4ed8;
+        }
+
+        .btn-secondary{
+            background:#e5e7eb;
+            color:#111827;
+        }
+
+        .btn-secondary:hover{
+            background:#d1d5db;
+        }
+
+        .btn-sm{
+            padding:7px 10px;
+            font-size:13px;
+        }
+
+        .table{
+            width:100%;
+            border-collapse:collapse;
+            margin-top:15px;
+        }
+
+        .table th{
+            text-align:left;
+            background:#111827;
+            color:white;
+            padding:12px;
+            font-size:13px;
+        }
+
+        .table td{
+            padding:12px;
+            border-bottom:1px solid #e5e7eb;
+            font-size:14px;
+            vertical-align:top;
+        }
+
+        .detail-grid{
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+            gap:18px;
+            margin-top:18px;
+        }
+
+        .detail-grid strong{
+            display:block;
+            color:#6b7280;
+            font-size:13px;
+            margin-bottom:4px;
+        }
+
+        .detail-grid p{
+            font-size:15px;
+            color:#111827;
+        }
+
+        form p{
+            margin-bottom:16px;
+        }
+
+        form label{
+            display:block;
+            font-weight:bold;
+            margin-bottom:6px;
+            color:#374151;
+        }
+
+        .form-control,
+        form input,
+        form select,
+        form textarea{
+            width:100%;
+            padding:10px 12px;
+            border:1px solid #d1d5db;
+            border-radius:8px;
+            font-size:15px;
+            font-family:Arial, sans-serif;
+        }
+
+        .form-control:focus,
+        form input:focus,
+        form select:focus,
+        form textarea:focus{
+            outline:none;
+            border-color:#2563eb;
+            box-shadow:0 0 0 3px rgba(37,99,235,0.15);
+        }
+
         @media(max-width:1100px){
             .cards{
                 grid-template-columns:repeat(2,1fr);
+            }
+
+            .detail-grid{
+                grid-template-columns:1fr;
+            }
+
+            .page-header{
+                flex-direction:column;
             }
         }
 
@@ -188,7 +321,7 @@
             {% if request.user.is_superuser %}
                 Ruolo: Amministratore sistema
             {% elif request.user.profilo_studio %}
-                Ruolo: {{ request.user.profilo_studio.ruolo }}
+                Ruolo: {{ request.user.profilo_studio.get_ruolo_display }}
             {% else %}
                 Ruolo: non assegnato
             {% endif %}
@@ -246,7 +379,7 @@
                     Agenda e scadenze
                 </div>
 
-                <a href="/scadenze/" class="{% if '/scadenze/' == request.path or request.path == '/scadenze/' %}active{% endif %}">
+                <a href="/scadenze/" class="{% if request.path == '/scadenze/' %}active{% endif %}">
                     <i class="fa-solid fa-clock"></i>
                     Scadenze
                 </a>
@@ -268,10 +401,10 @@
                         Alert scadenze
                     </a>
 
-                <a href="/scadenze/invia-alert-giornalieri/" class="{% if '/scadenze/invia-alert-giornalieri' in request.path %}active{% endif %}">
-                    <i class="fa-solid fa-envelope-circle-check"></i>
-                    Invia alert giornalieri
-                </a>
+                    <a href="/scadenze/invia-alert-giornalieri/" class="{% if '/scadenze/invia-alert-giornalieri' in request.path %}active{% endif %}">
+                        <i class="fa-solid fa-envelope-circle-check"></i>
+                        Invia alert giornalieri
+                    </a>
 
                 {% endif %}
 
@@ -300,7 +433,12 @@
 
                 {% if request.user|can_manage_users %}
 
-                    <a href="/utenti/" class="{% if '/utenti' in request.path %}active{% endif %}">
+                    <a href="/studi/profilo/" class="{% if '/studi/profilo' in request.path %}active{% endif %}">
+                        <i class="fa-solid fa-building-user"></i>
+                        Dati studio
+                    </a>
+
+                    <a href="/utenti/" class="{% if request.path == '/utenti/' %}active{% endif %}">
                         <i class="fa-solid fa-user-gear"></i>
                         Gestione utenti
                     </a>

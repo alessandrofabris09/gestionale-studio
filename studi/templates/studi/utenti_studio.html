@@ -1,0 +1,52 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Utenti studio</h1>
+        <p>Gestisci i ruoli degli utenti collegati allo studio.</p>
+    </div>
+
+    <div>
+        <a href="{% url 'profilo_studio' %}" class="btn btn-secondary">
+            Torna ai dati studio
+        </a>
+    </div>
+</div>
+
+<div class="card">
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Utente</th>
+                <th>Email</th>
+                <th>Ruolo</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for profilo in profili %}
+                <tr>
+                    <td>{{ profilo.user.username }}</td>
+                    <td>{{ profilo.user.email|default:"-" }}</td>
+                    <td>{{ profilo.get_ruolo_display }}</td>
+                    <td>
+                        <a href="{% url 'modifica_ruolo_utente' profilo.id %}" class="btn btn-sm btn-primary">
+                            Modifica ruolo
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4">Nessun utente collegato allo studio.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+
+{% endblock %}
