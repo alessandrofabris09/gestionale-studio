@@ -8,14 +8,25 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.management import call_command
+from django.http import HttpResponse, Http404, FileResponse
 from django.shortcuts import render, redirect
 
 from documenti.models import Documento
 from studi.permessi import puo_gestire_backup
+from studi.email_templates import layout_email_base, tabella_email
 
 
-MAX_BACKUP_DAYS = 30
-CODICE_CRON_BACKUP = 'ABCD1234'
+MAX_BACKUP_DAYS = int(
+    os.environ.get(
+        'MAX_BACKUP_DAYS',
+        30
+    )
+)
+
+CODICE_CRON_BACKUP = os.environ.get(
+    'CODICE_CRON_BACKUP',
+    ''
+)
 
 
 def accesso_negato(request):
@@ -30,25 +41,55 @@ def accesso_negato(request):
     )
 
 
-def esegui_backup_database():
+def get_backup_dir():
+    """
+    Cartella locale dei backup.
+
+    Attenzione:
+    su Render questa cartella non va considerata archivio definitivo,
+    perché il filesystem può essere temporaneo se non hai un persistent disk.
+    """
 
     backup_dir = Path(settings.BASE_DIR) / 'backups_files'
     backup_dir.mkdir(exist_ok=True)
 
+    return backup_dir
+
+
+def esegui_backup_database():
+    """
+    Esegue un backup tecnico globale del database e dei riferimenti documenti.
+
+    Il backup documenti NON scarica fisicamente i file da Backblaze B2.
+    Salva solo i metadati e i riferimenti storage dei documenti caricati.
+    """
+
+    backup_dir = get_backup_dir()
+
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+    # =========================
+    # BACKUP DATABASE
+    # =========================
 
     filename_db = f'backup_database_{timestamp}.json'
     filepath_db = backup_dir / filename_db
 
     with open(filepath_db, 'w', encoding='utf-8') as file:
+
         call_command(
             'dumpdata',
             exclude=[
                 'auth.permission',
                 'contenttypes',
+                'sessions.session',
             ],
             stdout=file
         )
+
+    # =========================
+    # BACKUP RIFERIMENTI DOCUMENTI
+    # =========================
 
     filename_documenti = f'backup_documenti_storage_{timestamp}.json'
     filepath_documenti = backup_dir / filename_documenti
@@ -62,17 +103,44 @@ def esegui_backup_database():
         except Exception:
             file_url = ''
 
+        try:
+            file_name = documento.file.name
+        except Exception:
+            file_name = ''
+
         documenti_backup.append({
             'id': documento.id,
             'titolo': documento.titolo,
             'tipo_documento': documento.tipo_documento,
+            'pratica_id': documento.pratica.id if documento.pratica else None,
             'pratica': str(documento.pratica) if documento.pratica else '',
-            'file_name': documento.file.name if documento.file else '',
+            'studio_id': (
+                documento.pratica.studio.id
+                if documento.pratica and documento.pratica.studio
+                else None
+            ),
+            'studio': (
+                documento.pratica.studio.nome
+                if documento.pratica and documento.pratica.studio
+                else ''
+            ),
+            'file_name': file_name,
             'file_url': file_url,
             'note': documento.note,
+            'caricato_il': (
+                documento.caricato_il.strftime('%d/%m/%Y %H:%M:%S')
+                if documento.caricato_il
+                else ''
+            ),
+            'storage_provider': (
+                'Backblaze B2'
+                if getattr(settings, 'USE_BACKBLAZE_B2', False)
+                else 'FileSystem locale'
+            ),
         })
 
     with open(filepath_documenti, 'w', encoding='utf-8') as file:
+
         json.dump(
             documenti_backup,
             file,
@@ -80,23 +148,42 @@ def esegui_backup_database():
             indent=4
         )
 
+    # =========================
+    # PULIZIA BACKUP VECCHI
+    # =========================
+
     pulisci_backup_vecchi(backup_dir)
 
+    # =========================
+    # EMAIL TECNICA
+    # =========================
+
     invia_email_backup(
-        f'{filename_db} + {filename_documenti}'
+        filename_db=filename_db,
+        filename_documenti=filename_documenti,
+        totale_documenti=len(documenti_backup)
     )
 
-    return filename_db
+    return {
+        'database': filename_db,
+        'documenti': filename_documenti,
+        'totale_documenti': len(documenti_backup),
+    }
 
 
 @login_required
 def lista_backup(request):
+    """
+    Lista backup tecnici.
+
+    Deve essere accessibile solo a chi può gestire il backup.
+    Nel tuo caso deve essere solo il superuser.
+    """
 
     if not puo_gestire_backup(request):
         return accesso_negato(request)
 
-    backup_dir = Path(settings.BASE_DIR) / 'backups_files'
-    backup_dir.mkdir(exist_ok=True)
+    backup_dir = get_backup_dir()
 
     files = sorted(
         backup_dir.glob('*.json'),
@@ -107,6 +194,7 @@ def lista_backup(request):
     backups = []
 
     for file in files:
+
         backups.append({
             'name': file.name,
             'size': round(file.stat().st_size / 1024, 2),
@@ -124,6 +212,11 @@ def lista_backup(request):
 
 @login_required
 def crea_backup(request):
+    """
+    Crea backup manuale.
+
+    Deve essere utilizzabile solo dal superuser.
+    """
 
     if not puo_gestire_backup(request):
         return accesso_negato(request)
@@ -134,6 +227,9 @@ def crea_backup(request):
 
 
 def pulisci_backup_vecchi(backup_dir):
+    """
+    Elimina i backup locali più vecchi di MAX_BACKUP_DAYS.
+    """
 
     limite = datetime.now() - timedelta(days=MAX_BACKUP_DAYS)
 
@@ -144,62 +240,136 @@ def pulisci_backup_vecchi(backup_dir):
         )
 
         if data_file < limite:
-            file.unlink()
+
+            try:
+                file.unlink()
+            except Exception:
+                pass
 
 
-def invia_email_backup(filename):
+def invia_email_backup(filename_db, filename_documenti, totale_documenti):
+    """
+    Invia una email tecnica sull'esito del backup.
+    """
 
     try:
-        resend.api_key = os.environ.get('RESEND_API_KEY')
+
+        resend.api_key = os.environ.get(
+            'RESEND_API_KEY'
+        )
 
         if not resend.api_key:
-            print("ERRORE: RESEND_API_KEY non configurata")
+            print('ERRORE: RESEND_API_KEY non configurata')
             return
 
-        messaggio_html = f"""
-        <div style="font-family:Arial, sans-serif; color:#111827;">
-            <h2>Backup database completato</h2>
+        if not settings.ALERT_EMAIL:
+            print('ERRORE: ALERT_EMAIL non configurata')
+            return
 
-            <p>
-                Il backup del database del Gestionale Studio Tecnico
-                è stato creato correttamente.
-            </p>
+        righe = [
+            [
+                'Backup database',
+                filename_db,
+            ],
+            [
+                'Backup riferimenti documenti',
+                filename_documenti,
+            ],
+            [
+                'Documenti censiti',
+                totale_documenti,
+            ],
+            [
+                'Data esecuzione',
+                datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
+            ],
+            [
+                'Storage documenti',
+                (
+                    'Backblaze B2'
+                    if getattr(settings, 'USE_BACKBLAZE_B2', False)
+                    else 'FileSystem locale'
+                ),
+            ],
+        ]
 
-            <table style="border-collapse:collapse;margin-top:20px;">
-                <tr>
-                    <td style="padding:8px;font-weight:bold;">File backup</td>
-                    <td style="padding:8px;">{filename}</td>
-                </tr>
-                <tr>
-                    <td style="padding:8px;font-weight:bold;">Data</td>
-                    <td style="padding:8px;">{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}</td>
-                </tr>
-            </table>
+        tabella = tabella_email(
+            headers=[
+                'Voce',
+                'Dettaglio',
+            ],
+            rows=righe
+        )
 
-            <p style="margin-top:25px;color:#6b7280;font-size:13px;">
-                Email generata automaticamente dal Gestionale Studio Tecnico.
-            </p>
+        contenuto_html = f"""
+        <p style="font-size:16px;line-height:1.6;margin:0;color:#374151;">
+            Il backup tecnico globale del gestionale è stato eseguito correttamente.
+        </p>
+
+        <div style="
+            margin-top:24px;
+            background:#f9fafb;
+            border:1px solid #e5e7eb;
+            border-radius:14px;
+            padding:18px 20px;
+        ">
+            <div style="font-size:14px;color:#6b7280;font-weight:bold;text-transform:uppercase;letter-spacing:0.06em;">
+                Backup tecnico
+            </div>
+
+            <div style="font-size:28px;font-weight:bold;color:#111827;margin-top:6px;">
+                Completato
+            </div>
+
+            <div style="font-size:15px;color:#6b7280;margin-top:4px;">
+                Database + riferimenti documenti storage
+            </div>
         </div>
+
+        {tabella}
+
+        <p style="font-size:13px;line-height:1.5;margin-top:22px;color:#6b7280;">
+            Nota: il backup documenti salva i riferimenti e i metadati dei file,
+            non una copia fisica dei documenti presenti nello storage.
+        </p>
         """
+
+        messaggio_html = layout_email_base(
+            titolo='Backup tecnico completato',
+            sottotitolo='Riepilogo automatico del backup globale della piattaforma.',
+            contenuto_html=contenuto_html,
+        )
 
         resend.Emails.send({
             "from": settings.EMAIL_FROM_NOTIFICHE,
             "to": [settings.ALERT_EMAIL],
-            "subject": "Backup database completato",
+            "subject": "Backup tecnico completato - Studio Tecnico Cloud",
             "html": messaggio_html,
+            "text": (
+                "Backup tecnico completato. "
+                f"Database: {filename_db}. "
+                f"Documenti: {filename_documenti}. "
+                f"Totale documenti censiti: {totale_documenti}."
+            ),
         })
 
     except Exception as e:
-        print(f"ERRORE INVIO EMAIL BACKUP: {e}")
+
+        print(f'ERRORE INVIO EMAIL BACKUP: {e}')
 
 
 @login_required
 def scarica_backup(request, filename):
+    """
+    Scarica un file di backup locale.
+
+    Solo superuser.
+    """
 
     if not puo_gestire_backup(request):
         return accesso_negato(request)
 
-    backup_dir = Path(settings.BASE_DIR) / 'backups_files'
+    backup_dir = get_backup_dir()
     filepath = backup_dir / filename
 
     if not filepath.exists():
@@ -213,8 +383,23 @@ def scarica_backup(request, filename):
 
 
 def crea_backup_cron(request, codice):
+    """
+    Endpoint cron per backup tecnico.
+
+    Da usare solo se strettamente necessario.
+    Meglio, in futuro, sostituirlo con management command o cron dedicato.
+    """
+
+    if not CODICE_CRON_BACKUP:
+
+        return HttpResponse(
+            'CODICE_CRON_BACKUP non configurato',
+            status=403,
+            content_type='text/plain'
+        )
 
     if codice != CODICE_CRON_BACKUP:
+
         return HttpResponse(
             'Codice non valido',
             status=403,
@@ -222,11 +407,20 @@ def crea_backup_cron(request, codice):
         )
 
     try:
-        filename = esegui_backup_database()
-        messaggio = f'Backup creato correttamente: {filename}'
+
+        risultato = esegui_backup_database()
+
+        messaggio = (
+            'Backup creato correttamente. '
+            f"Database: {risultato['database']} - "
+            f"Documenti: {risultato['documenti']} - "
+            f"Totale documenti: {risultato['totale_documenti']}"
+        )
 
     except Exception as e:
+
         messaggio = f'Errore backup: {e}'
+
         return HttpResponse(
             messaggio,
             status=500,
