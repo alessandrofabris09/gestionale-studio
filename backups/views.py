@@ -50,7 +50,7 @@ def esegui_backup_database():
             stdout=file
         )
 
-    filename_documenti = f'backup_documenti_cloudinary_{timestamp}.json'
+    filename_documenti = f'backup_documenti_storage_{timestamp}.json'
     filepath_documenti = backup_dir / filename_documenti
 
     documenti_backup = []
