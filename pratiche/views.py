@@ -7,7 +7,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now
 from django.contrib import messages
 
+from django.http import FileResponse
+
 from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.units import mm
 
 from studi.utils import get_studio_utente, studio_puo_creare_pratiche
 
@@ -413,6 +418,87 @@ def elimina_pratica(request, pratica_id):
     )
 
 
+def data_it(value):
+    """
+    Formatta una data in formato italiano.
+    """
+
+    if not value:
+        return "-"
+
+    return value.strftime('%d/%m/%Y')
+
+
+def euro(value):
+    """
+    Formatta un importo in euro.
+    """
+
+    if value is None:
+        return "-"
+
+    return f"€ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def testo(value):
+    """
+    Restituisce testo sicuro per il PDF.
+    """
+
+    if value is None or value == '':
+        return "-"
+
+    return str(value)
+
+
+def draw_wrapped_text(
+    p,
+    text,
+    x,
+    y,
+    max_width,
+    font_name="Helvetica",
+    font_size=9,
+    line_height=12,
+    min_y=70
+):
+    """
+    Scrive testo multilinea entro una larghezza massima.
+    Se finisce lo spazio, interrompe con puntini.
+    """
+
+    p.setFont(font_name, font_size)
+
+    if not text:
+        text = "-"
+
+    words = str(text).split()
+    line = ""
+
+    for word in words:
+
+        test_line = f"{line} {word}".strip()
+
+        if p.stringWidth(test_line, font_name, font_size) <= max_width:
+            line = test_line
+
+        else:
+
+            if y <= min_y:
+                p.drawString(x, y, "...")
+                return y - line_height
+
+            p.drawString(x, y, line)
+            y -= line_height
+            line = word
+
+    if line and y > min_y:
+        p.drawString(x, y, line)
+        y -= line_height
+
+    return y
+
+
 @login_required
 def pdf_pratica(request, pratica_id):
 
@@ -441,163 +527,652 @@ def pdf_pratica(request, pratica_id):
     )
 
     buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
 
-    p = canvas.Canvas(buffer)
+    width, height = A4
+    margin_x = 20 * mm
+    footer_y = 42
 
-    p.setTitle(f"Scheda pratica {pratica.id}")
+    studio_pratica = pratica.studio if pratica.studio else studio
 
-    logo_path = "static/img/logo.png"
+    # =========================
+    # HEADER
+    # =========================
 
-    try:
-        p.drawImage(
-            logo_path,
-            50,
-            765,
-            width=90,
-            height=45,
-            preserveAspectRatio=True,
-            mask='auto'
-        )
-    except Exception:
-        pass
+    p.setFillColor(colors.HexColor("#111827"))
+    p.rect(
+        0,
+        height - 105,
+        width,
+        105,
+        fill=True,
+        stroke=False
+    )
 
-    p.setFont("Helvetica-Bold", 18)
-    p.drawString(160, 790, "Gestionale Studio Tecnico")
+    nome_studio = (
+        studio_pratica.nome
+        if studio_pratica and studio_pratica.nome
+        else "Studio tecnico"
+    )
+
+    p.setFillColor(colors.white)
+    p.setFont("Helvetica-Bold", 20)
+    p.drawString(
+        margin_x,
+        height - 42,
+        nome_studio
+    )
 
     p.setFont("Helvetica", 10)
-    p.drawString(160, 772, "Scheda riepilogativa pratica")
+    p.setFillColor(colors.HexColor("#d1d5db"))
+    p.drawString(
+        margin_x,
+        height - 60,
+        "Scheda riepilogativa generata con Studio Tecnico Cloud"
+    )
 
-    p.line(50, 750, 545, 750)
+    if studio_pratica:
 
-    y = 720
+        p.setFont("Helvetica", 9)
+        p.setFillColor(colors.HexColor("#d1d5db"))
 
-    p.setFont("Helvetica-Bold", 16)
-    p.drawString(50, y, "Scheda pratica")
+        studio_info_y = height - 38
 
-    y -= 35
+        info_studio = []
 
-    def section_title(title, y_pos):
+        if studio_pratica.indirizzo:
+            info_studio.append(studio_pratica.indirizzo)
 
-        p.setFillColorRGB(0.07, 0.09, 0.15)
+        if studio_pratica.partita_iva:
+            info_studio.append(f"P.IVA {studio_pratica.partita_iva}")
 
+        if studio_pratica.email:
+            info_studio.append(studio_pratica.email)
+
+        if studio_pratica.telefono:
+            info_studio.append(studio_pratica.telefono)
+
+        for info in info_studio[:4]:
+            p.drawRightString(
+                width - margin_x,
+                studio_info_y,
+                info
+            )
+            studio_info_y -= 13
+
+    # =========================
+    # TITOLO DOCUMENTO
+    # =========================
+
+    y = height - 140
+
+    p.setFillColor(colors.HexColor("#111827"))
+    p.setFont("Helvetica-Bold", 24)
+    p.drawString(
+        margin_x,
+        y,
+        "SCHEDA PRATICA"
+    )
+
+    p.setFont("Helvetica", 10)
+    p.setFillColor(colors.HexColor("#6b7280"))
+    p.drawString(
+        margin_x,
+        y - 16,
+        f"Pratica ID {pratica.id}"
+    )
+
+    p.setFillColor(colors.HexColor("#f3f4f6"))
+    p.roundRect(
+        width - margin_x - 170,
+        y - 18,
+        170,
+        48,
+        8,
+        fill=True,
+        stroke=False
+    )
+
+    p.setFillColor(colors.HexColor("#6b7280"))
+    p.setFont("Helvetica-Bold", 8)
+    p.drawString(
+        width - margin_x - 155,
+        y + 11,
+        "STATO PRATICA"
+    )
+
+    p.setFillColor(colors.HexColor("#111827"))
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(
+        width - margin_x - 155,
+        y - 6,
+        pratica.get_stato_display()
+    )
+
+    # =========================
+    # OGGETTO PRATICA
+    # =========================
+
+    y -= 62
+
+    p.setFont("Helvetica-Bold", 12)
+    p.setFillColor(colors.HexColor("#111827"))
+    p.drawString(
+        margin_x,
+        y,
+        "Oggetto della pratica"
+    )
+
+    y -= 20
+
+    oggetto_box_h = 58
+
+    p.setStrokeColor(colors.HexColor("#e5e7eb"))
+    p.setFillColor(colors.HexColor("#f9fafb"))
+    p.roundRect(
+        margin_x,
+        y - oggetto_box_h,
+        width - 2 * margin_x,
+        oggetto_box_h,
+        8,
+        fill=True,
+        stroke=True
+    )
+
+    p.setFillColor(colors.HexColor("#111827"))
+    draw_wrapped_text(
+        p,
+        pratica.oggetto,
+        margin_x + 14,
+        y - 15,
+        width - 2 * margin_x - 28,
+        font_name="Helvetica",
+        font_size=10,
+        line_height=13,
+        min_y=y - oggetto_box_h + 12
+    )
+
+    y -= oggetto_box_h + 30
+
+    # =========================
+    # CLIENTE / IMMOBILE
+    # =========================
+
+    box_h = 110
+    box_w = (width - 2 * margin_x - 18) / 2
+
+    p.setStrokeColor(colors.HexColor("#e5e7eb"))
+    p.setFillColor(colors.white)
+
+    p.roundRect(
+        margin_x,
+        y - box_h,
+        box_w,
+        box_h,
+        10,
+        fill=False,
+        stroke=True
+    )
+
+    p.roundRect(
+        margin_x + box_w + 18,
+        y - box_h,
+        box_w,
+        box_h,
+        10,
+        fill=False,
+        stroke=True
+    )
+
+    # Cliente
+    p.setFillColor(colors.HexColor("#111827"))
+    p.setFont("Helvetica-Bold", 11)
+    p.drawString(
+        margin_x + 14,
+        y - 20,
+        "CLIENTE"
+    )
+
+    yy = y - 40
+
+    if pratica.cliente:
+
+        p.setFont("Helvetica-Bold", 10)
+        p.setFillColor(colors.HexColor("#111827"))
+
+        yy = draw_wrapped_text(
+            p,
+            pratica.cliente,
+            margin_x + 14,
+            yy,
+            box_w - 28,
+            font_name="Helvetica-Bold",
+            font_size=10,
+            line_height=12,
+            min_y=y - box_h + 12
+        )
+
+        p.setFont("Helvetica", 9)
+        p.setFillColor(colors.HexColor("#374151"))
+
+        if hasattr(pratica.cliente, 'email') and pratica.cliente.email and yy > y - box_h + 16:
+            p.drawString(
+                margin_x + 14,
+                yy,
+                pratica.cliente.email
+            )
+            yy -= 13
+
+        if hasattr(pratica.cliente, 'telefono') and pratica.cliente.telefono and yy > y - box_h + 16:
+            p.drawString(
+                margin_x + 14,
+                yy,
+                pratica.cliente.telefono
+            )
+
+    else:
+
+        p.setFont("Helvetica", 9)
+        p.setFillColor(colors.HexColor("#374151"))
+        p.drawString(
+            margin_x + 14,
+            yy,
+            "-"
+        )
+
+    # Immobile
+    p.setFillColor(colors.HexColor("#111827"))
+    p.setFont("Helvetica-Bold", 11)
+    p.drawString(
+        margin_x + box_w + 32,
+        y - 20,
+        "IMMOBILE"
+    )
+
+    yy = y - 40
+
+    if pratica.immobile:
+
+        p.setFont("Helvetica-Bold", 10)
+        p.setFillColor(colors.HexColor("#111827"))
+
+        yy = draw_wrapped_text(
+            p,
+            pratica.immobile,
+            margin_x + box_w + 32,
+            yy,
+            box_w - 28,
+            font_name="Helvetica-Bold",
+            font_size=10,
+            line_height=12,
+            min_y=y - box_h + 12
+        )
+
+        p.setFont("Helvetica", 9)
+        p.setFillColor(colors.HexColor("#374151"))
+
+        if hasattr(pratica.immobile, 'comune') and pratica.immobile.comune and yy > y - box_h + 16:
+            p.drawString(
+                margin_x + box_w + 32,
+                yy,
+                f"Comune: {pratica.immobile.comune}"
+            )
+            yy -= 13
+
+        if hasattr(pratica.immobile, 'indirizzo') and pratica.immobile.indirizzo and yy > y - box_h + 16:
+            draw_wrapped_text(
+                p,
+                pratica.immobile.indirizzo,
+                margin_x + box_w + 32,
+                yy,
+                box_w - 28,
+                font_size=9,
+                line_height=12,
+                min_y=y - box_h + 12
+            )
+
+    else:
+
+        p.setFont("Helvetica", 9)
+        p.setFillColor(colors.HexColor("#374151"))
+        p.drawString(
+            margin_x + box_w + 32,
+            yy,
+            "-"
+        )
+
+    y = y - box_h - 32
+
+    # =========================
+    # DATI PRATICA
+    # =========================
+
+    p.setFont("Helvetica-Bold", 12)
+    p.setFillColor(colors.HexColor("#111827"))
+    p.drawString(
+        margin_x,
+        y,
+        "Dati pratica"
+    )
+
+    y -= 20
+
+    def small_row(label, value, x, y_pos):
+        p.setFont("Helvetica-Bold", 8)
+        p.setFillColor(colors.HexColor("#6b7280"))
+        p.drawString(
+            x,
+            y_pos,
+            label.upper()
+        )
+
+        p.setFont("Helvetica", 10)
+        p.setFillColor(colors.HexColor("#111827"))
+        p.drawString(
+            x,
+            y_pos - 14,
+            testo(value)
+        )
+
+    col_w = (width - 2 * margin_x) / 4
+
+    small_row("Tipo pratica", pratica.tipo_pratica, margin_x, y)
+    small_row("Comune", pratica.comune, margin_x + col_w, y)
+    small_row("Protocollo", pratica.protocollo, margin_x + col_w * 2, y)
+    small_row("Compenso", euro(pratica.compenso), margin_x + col_w * 3, y)
+
+    y -= 50
+
+    small_row("Data incarico", data_it(pratica.data_incarico), margin_x, y)
+    small_row("Data deposito", data_it(pratica.data_deposito), margin_x + col_w, y)
+    small_row("Scadenza", data_it(pratica.scadenza), margin_x + col_w * 2, y)
+    small_row("Aggiornamento", data_it(now().date()), margin_x + col_w * 3, y)
+
+    y -= 58
+
+    # =========================
+    # RIEPILOGO OPERATIVO
+    # =========================
+
+    documenti_count = pratica.documenti.count()
+    parcelle_count = pratica.parcelle.count()
+    attivita_count = pratica.attivita.count()
+    scadenze_aperte = pratica.scadenze.filter(
+        completata=False
+    ).count()
+
+    p.setFont("Helvetica-Bold", 12)
+    p.setFillColor(colors.HexColor("#111827"))
+    p.drawString(
+        margin_x,
+        y,
+        "Riepilogo operativo"
+    )
+
+    y -= 22
+
+    table_x = margin_x
+    table_w = width - 2 * margin_x
+    row_h = 25
+
+    p.setFillColor(colors.HexColor("#111827"))
+    p.rect(
+        table_x,
+        y - row_h,
+        table_w,
+        row_h,
+        fill=True,
+        stroke=False
+    )
+
+    p.setFillColor(colors.white)
+    p.setFont("Helvetica-Bold", 9)
+    p.drawString(table_x + 12, y - 17, "Voce")
+    p.drawRightString(table_x + table_w - 12, y - 17, "Totale")
+
+    y -= row_h
+
+    def summary_row(label, value, y_pos, fill_color=None):
+
+        if fill_color:
+            p.setFillColor(fill_color)
+            p.rect(
+                table_x,
+                y_pos - row_h,
+                table_w,
+                row_h,
+                fill=True,
+                stroke=False
+            )
+
+        p.setStrokeColor(colors.HexColor("#e5e7eb"))
+        p.line(
+            table_x,
+            y_pos - row_h,
+            table_x + table_w,
+            y_pos - row_h
+        )
+
+        p.setFillColor(colors.HexColor("#111827"))
+        p.setFont("Helvetica", 10)
+
+        p.drawString(
+            table_x + 12,
+            y_pos - 17,
+            label
+        )
+
+        p.drawRightString(
+            table_x + table_w - 12,
+            y_pos - 17,
+            str(value)
+        )
+
+        return y_pos - row_h
+
+    y = summary_row("Documenti caricati", documenti_count, y)
+    y = summary_row("Parcelle collegate", parcelle_count, y)
+    y = summary_row("Attività registrate", attivita_count, y)
+    y = summary_row(
+        "Scadenze aperte",
+        scadenze_aperte,
+        y,
+        fill_color=colors.HexColor("#f3f4f6")
+    )
+
+    y -= 28
+
+    # =========================
+    # WORKFLOW
+    # =========================
+
+    workflow_pratica = None
+
+    try:
+        workflow_pratica = pratica.workflow_pratica
+    except Exception:
+        workflow_pratica = None
+
+    p.setFont("Helvetica-Bold", 12)
+    p.setFillColor(colors.HexColor("#111827"))
+    p.drawString(
+        margin_x,
+        y,
+        "Workflow"
+    )
+
+    y -= 20
+
+    p.setFillColor(colors.HexColor("#f9fafb"))
+    p.setStrokeColor(colors.HexColor("#e5e7eb"))
+    p.roundRect(
+        margin_x,
+        y - 44,
+        width - 2 * margin_x,
+        52,
+        8,
+        fill=True,
+        stroke=True
+    )
+
+    p.setFillColor(colors.HexColor("#374151"))
+
+    if workflow_pratica:
+        testo_workflow = f"Workflow attivo: {workflow_pratica.workflow.nome}"
+    else:
+        testo_workflow = "Nessun workflow automatico associato alla pratica."
+
+    draw_wrapped_text(
+        p,
+        testo_workflow,
+        margin_x + 14,
+        y - 14,
+        width - 2 * margin_x - 28,
+        font_name="Helvetica",
+        font_size=9,
+        line_height=12,
+        min_y=y - 44 + 12
+    )
+
+    y -= 72
+
+    # =========================
+    # NOTE
+    # =========================
+
+    note = pratica.note if pratica.note else "Nessuna nota inserita."
+
+    spazio_note_minimo = 95
+
+    if y < spazio_note_minimo + 70:
+
+        p.setStrokeColor(colors.HexColor("#e5e7eb"))
+        p.line(
+            margin_x,
+            footer_y + 8,
+            width - margin_x,
+            footer_y + 8
+        )
+
+        p.setFillColor(colors.HexColor("#6b7280"))
+        p.setFont("Helvetica", 8)
+
+        p.drawString(
+            margin_x,
+            footer_y - 5,
+            "Documento generato con Studio Tecnico Cloud"
+        )
+
+        p.drawRightString(
+            width - margin_x,
+            footer_y - 5,
+            f"Pratica ID {pratica.id}"
+        )
+
+        p.showPage()
+
+        # Header pagina note
+        p.setFillColor(colors.HexColor("#111827"))
         p.rect(
-            50,
-            y_pos - 6,
-            495,
-            24,
+            0,
+            height - 80,
+            width,
+            80,
             fill=True,
             stroke=False
         )
 
-        p.setFillColorRGB(1, 1, 1)
-
-        p.setFont("Helvetica-Bold", 11)
-
-        p.drawString(60, y_pos, title)
-
-        p.setFillColorRGB(0, 0, 0)
-
-        return y_pos - 35
-
-    def row(label, value, y_pos):
-
-        p.setFont("Helvetica-Bold", 10)
-
-        p.drawString(60, y_pos, f"{label}:")
-
-        p.setFont("Helvetica", 10)
-
+        p.setFillColor(colors.white)
+        p.setFont("Helvetica-Bold", 18)
         p.drawString(
-            180,
-            y_pos,
-            str(value) if value else "-"
+            margin_x,
+            height - 38,
+            "Note pratica"
         )
 
-        return y_pos - 22
+        p.setFont("Helvetica", 10)
+        p.setFillColor(colors.HexColor("#d1d5db"))
+        p.drawString(
+            margin_x,
+            height - 56,
+            f"Scheda pratica ID {pratica.id}"
+        )
 
-    y = section_title("DATI PRATICA", y)
+        y = height - 120
 
-    y = row("ID pratica", pratica.id, y)
-    y = row("Tipo pratica", pratica.tipo_pratica, y)
-    y = row("Oggetto", pratica.oggetto, y)
-    y = row("Stato", pratica.get_stato_display(), y)
-    y = row("Comune", pratica.comune, y)
-    y = row("Protocollo", pratica.protocollo, y)
+    note_box_h = 85
 
-    y -= 10
-
-    y = section_title("CLIENTE E IMMOBILE", y)
-
-    y = row("Cliente", pratica.cliente, y)
-    y = row("Immobile", pratica.immobile, y)
-
-    y -= 10
-
-    y = section_title("DATE E SCADENZE", y)
-
-    y = row("Data incarico", pratica.data_incarico, y)
-    y = row("Data deposito", pratica.data_deposito, y)
-    y = row("Scadenza", pratica.scadenza, y)
-
-    y -= 10
-
-    y = section_title("ASPETTI ECONOMICI", y)
-
-    y = row(
-        "Compenso",
-        f"Euro {pratica.compenso}" if pratica.compenso else "-",
-        y
+    p.setFont("Helvetica-Bold", 12)
+    p.setFillColor(colors.HexColor("#111827"))
+    p.drawString(
+        margin_x,
+        y,
+        "Note"
     )
 
-    y -= 10
+    y -= 18
 
-    y = section_title("NOTE", y)
+    p.setFillColor(colors.HexColor("#f9fafb"))
+    p.setStrokeColor(colors.HexColor("#e5e7eb"))
+    p.roundRect(
+        margin_x,
+        y - note_box_h,
+        width - 2 * margin_x,
+        note_box_h,
+        8,
+        fill=True,
+        stroke=True
+    )
 
-    note = str(pratica.note) if pratica.note else "-"
+    p.setFillColor(colors.HexColor("#374151"))
+    draw_wrapped_text(
+        p,
+        note,
+        margin_x + 14,
+        y - 14,
+        width - 2 * margin_x - 28,
+        font_name="Helvetica",
+        font_size=9,
+        line_height=12,
+        min_y=y - note_box_h + 12
+    )
 
-    p.setFont("Helvetica", 10)
+    # =========================
+    # FOOTER
+    # =========================
 
-    max_chars = 90
+    p.setStrokeColor(colors.HexColor("#e5e7eb"))
+    p.line(
+        margin_x,
+        footer_y + 8,
+        width - margin_x,
+        footer_y + 8
+    )
 
-    note_lines = [
-        note[i:i + max_chars]
-        for i in range(0, len(note), max_chars)
-    ]
-
-    for line in note_lines:
-
-        if y < 80:
-            p.showPage()
-            y = 790
-
-        p.drawString(60, y, line)
-
-        y -= 18
-
-    p.line(50, 55, 545, 55)
-
+    p.setFillColor(colors.HexColor("#6b7280"))
     p.setFont("Helvetica", 8)
 
     p.drawString(
-        50,
-        40,
-        "Documento generato automaticamente dal Gestionale Studio Tecnico"
+        margin_x,
+        footer_y - 5,
+        "Documento generato con Studio Tecnico Cloud"
     )
 
     p.drawRightString(
-        545,
-        40,
+        width - margin_x,
+        footer_y - 5,
         f"Pratica ID {pratica.id}"
     )
 
     p.showPage()
-
     p.save()
 
     buffer.seek(0)
 
+    filename = f"scheda_pratica_{pratica.id}.pdf"
+
     return FileResponse(
         buffer,
         as_attachment=True,
-        filename=f"scheda_pratica_{pratica.id}.pdf"
+        filename=filename
     )
