@@ -12,6 +12,7 @@ from django.utils.timezone import now
 
 from attivita.models import Attivita
 from agenda.models import EventoAgenda
+from agenda.views import invia_email_agenda_giornaliera
 
 from studi.models import Studio
 from studi.utils import get_studio_utente
@@ -596,6 +597,10 @@ def invia_email_scadenze_leggera(studio):
         "to": [email_destinatario],
         "subject": "Alert scadenze - Studio Tecnico Cloud",
         "html": messaggio_html,
+        "text": (
+            "Alert scadenze - Sono presenti scadenze operative "
+            "da verificare nel gestionale Studio Tecnico Cloud."
+        ),
     })
 
     return 'Email alert scadenze inviata correttamente.'
@@ -603,6 +608,10 @@ def invia_email_scadenze_leggera(studio):
 
 @login_required
 def invia_alert_email_manuale(request):
+    """
+    Invia solo la mail delle scadenze.
+    La funzione resta disponibile per compatibilità.
+    """
 
     if not puo_gestire_alert(request):
         return accesso_negato(request)
@@ -659,7 +668,91 @@ def invia_alert_email_manuale(request):
     )
 
 
+@login_required
+def invia_alert_giornalieri_manuale(request):
+    """
+    Invia con un solo comando:
+    - alert scadenze
+    - agenda giornaliera
+    """
+
+    if not puo_gestire_alert(request):
+        return accesso_negato(request)
+
+    studio = get_studio_utente(request)
+
+    if not studio and not request.user.is_superuser:
+        return redirect('login')
+
+    messaggi = []
+
+    try:
+
+        if request.user.is_superuser and not studio:
+
+            studi = Studio.objects.filter(
+                attivo=True
+            ).order_by(
+                'nome'
+            )
+
+            for studio_item in studi:
+
+                messaggio_scadenze = invia_email_scadenze_leggera(
+                    studio_item
+                )
+
+                messaggio_agenda = invia_email_agenda_giornaliera(
+                    studio_item
+                )
+
+                messaggi.append(
+                    f'{studio_item.nome}: {messaggio_scadenze}'
+                )
+
+                messaggi.append(
+                    f'{studio_item.nome}: {messaggio_agenda}'
+                )
+
+        else:
+
+            messaggio_scadenze = invia_email_scadenze_leggera(
+                studio
+            )
+
+            messaggio_agenda = invia_email_agenda_giornaliera(
+                studio
+            )
+
+            messaggi.append(
+                messaggio_scadenze
+            )
+
+            messaggi.append(
+                messaggio_agenda
+            )
+
+    except Exception as e:
+
+        messaggi.append(
+            f'Errore durante invio alert giornalieri: {e}'
+        )
+
+    return render(
+        request,
+        'scadenze/alert_email_inviato.html',
+        {
+            'messaggio': '<br>'.join(messaggi)
+        }
+    )
+
+
 def invia_alert_email_cron(request, codice):
+    """
+    Cron automatico scadenze.
+    Lasciato separato perché cron-job.org ora gestisce scadenze e agenda
+    con due job distinti.
+    """
 
     if codice != CODICE_CRON_ALERT:
 
