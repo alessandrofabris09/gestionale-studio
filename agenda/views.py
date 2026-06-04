@@ -7,11 +7,13 @@ from icalendar import Calendar, Event
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now
 
 from studi.models import Studio
 from studi.notifiche import get_email_notifiche_studio
+from studi.email_templates import layout_email_base, tabella_email
 from studi.utils import get_studio_utente
 from studi.permessi import (
     puo_usare_agenda,
@@ -337,6 +339,9 @@ def completa_evento(request, evento_id):
 
 
 def invia_email_agenda_giornaliera(studio):
+    """
+    Invia allo studio una email riepilogativa degli eventi agenda di oggi.
+    """
 
     oggi = now().date()
 
@@ -352,12 +357,18 @@ def invia_email_agenda_giornaliera(studio):
 
         return 'Nessun evento agenda per oggi.'
 
-    righe = []
+    email_destinatario = get_email_notifiche_studio(studio)
+
+    if not email_destinatario:
+
+        return 'Errore: nessuna email configurata per lo studio.'
+
+    righe_tabella = []
 
     for evento in eventi:
 
         ora = (
-            evento.ora_inizio
+            evento.ora_inizio.strftime('%H:%M')
             if evento.ora_inizio
             else '-'
         )
@@ -380,101 +391,66 @@ def invia_email_agenda_giornaliera(studio):
             else '-'
         )
 
-        righe.append(
-            f"""
-            <tr>
+        righe_tabella.append([
+            ora,
+            evento.titolo,
+            evento.get_tipo_display(),
+            evento.get_priorita_display(),
+            cliente,
+            pratica,
+            descrizione,
+        ])
 
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
-                    {ora}
-                </td>
+    tabella = tabella_email(
+        headers=[
+            'Ora',
+            'Evento',
+            'Tipo',
+            'Priorità',
+            'Cliente',
+            'Pratica',
+            'Note',
+        ],
+        rows=righe_tabella
+    )
 
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
-                    <strong>{evento.titolo}</strong><br>
+    contenuto_html = f"""
+    <p style="font-size:16px;line-height:1.6;margin:0;color:#374151;">
+        Gentile studio,
+        <br>
+        di seguito trovi il riepilogo degli eventi operativi previsti per oggi.
+    </p>
 
-                    <span style="color:#6b7280;">
-                        {descrizione}
-                    </span>
-                </td>
+    <div style="
+        margin-top:24px;
+        background:#f9fafb;
+        border:1px solid #e5e7eb;
+        border-radius:14px;
+        padding:18px 20px;
+    ">
+        <div style="font-size:14px;color:#6b7280;font-weight:bold;text-transform:uppercase;letter-spacing:0.06em;">
+            Agenda di oggi
+        </div>
 
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
-                    {evento.get_tipo_display()}
-                </td>
+        <div style="font-size:34px;font-weight:bold;color:#111827;margin-top:6px;">
+            {eventi.count()}
+        </div>
 
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
-                    {evento.get_priorita_display()}
-                </td>
-
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
-                    {cliente}
-                </td>
-
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
-                    {pratica}
-                </td>
-
-            </tr>
-            """
-        )
-
-    messaggio_html = f"""
-    <div style="font-family:Arial, sans-serif; color:#111827;">
-
-        <h2>
-            Agenda operativa di oggi
-        </h2>
-
-        <p>
-            Di seguito gli eventi programmati per oggi.
-        </p>
-
-        <table style="border-collapse:collapse;width:100%;margin-top:20px;">
-
-            <thead>
-
-                <tr style="background:#111827;color:white;">
-
-                    <th style="padding:10px;text-align:left;">
-                        Ora
-                    </th>
-
-                    <th style="padding:10px;text-align:left;">
-                        Evento
-                    </th>
-
-                    <th style="padding:10px;text-align:left;">
-                        Tipo
-                    </th>
-
-                    <th style="padding:10px;text-align:left;">
-                        Priorità
-                    </th>
-
-                    <th style="padding:10px;text-align:left;">
-                        Cliente
-                    </th>
-
-                    <th style="padding:10px;text-align:left;">
-                        Pratica
-                    </th>
-
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                {''.join(righe)}
-
-            </tbody>
-
-        </table>
-
-        <p style="margin-top:25px;color:#6b7280;font-size:13px;">
-            Email generata automaticamente dal Gestionale Studio Tecnico.
-        </p>
-
+        <div style="font-size:15px;color:#6b7280;margin-top:4px;">
+            eventi programmati per il {oggi.strftime('%d/%m/%Y')}
+        </div>
     </div>
+
+    {tabella}
     """
+
+    messaggio_html = layout_email_base(
+        titolo='Agenda operativa di oggi',
+        sottotitolo='Riepilogo automatico degli appuntamenti e delle attività dello studio.',
+        contenuto_html=contenuto_html,
+        testo_pulsante='Apri agenda',
+        url_pulsante=settings.SITE_URL + '/agenda/'
+    )
 
     resend.api_key = os.environ.get(
         'RESEND_API_KEY'
@@ -484,17 +460,13 @@ def invia_email_agenda_giornaliera(studio):
 
         return 'Errore: RESEND_API_KEY non configurata.'
 
-    email_destinatario = get_email_notifiche_studio(studio)
-
-    if not email_destinatario:
-        return 'Errore: nessuna email configurata per lo studio.'
-
     resend.Emails.send({
         "from": settings.EMAIL_FROM_NOTIFICHE,
         "to": [email_destinatario],
-        "subject": "Agenda operativa di oggi",
+        "subject": "Agenda operativa di oggi - Studio Tecnico Cloud",
         "html": messaggio_html,
-    }) 
+        "text": "Agenda operativa di oggi - Sono presenti eventi o attività da verificare nel gestionale Studio Tecnico Cloud.",
+    })
 
     return 'Email agenda inviata correttamente.'
 
@@ -608,7 +580,7 @@ def calendario_ics(request, codice):
 
     calendario.add(
         'prodid',
-        '-//Gestionale Studio Tecnico//Agenda Operativa//IT'
+        '-//Studio Tecnico Cloud//Agenda Operativa//IT'
     )
 
     calendario.add('version', '2.0')
@@ -702,7 +674,7 @@ def calendario_ics(request, codice):
 
         evento.add(
             'uid',
-            f'evento-agenda-{evento_agenda.id}@gestionale-studio'
+            f'evento-agenda-{evento_agenda.id}@studiotecnicocloud'
         )
 
         evento.add(
