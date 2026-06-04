@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'utenti',
     'landing',
     'billing',
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -221,3 +222,56 @@ EMAIL_FROM_NOTIFICHE = os.environ.get(
     'EMAIL_FROM_NOTIFICHE',
     'Gestionale Studio <onboarding@resend.dev>'
 )
+
+# =========================
+# STORAGE DOCUMENTI - BACKBLAZE B2
+# =========================
+
+USE_BACKBLAZE_B2 = os.environ.get(
+    'USE_BACKBLAZE_B2',
+    'False'
+) == 'True'
+
+
+if USE_BACKBLAZE_B2:
+
+    AWS_ACCESS_KEY_ID = os.environ.get(
+        'B2_APPLICATION_KEY_ID'
+    )
+
+    AWS_SECRET_ACCESS_KEY = os.environ.get(
+        'B2_APPLICATION_KEY'
+    )
+
+    AWS_STORAGE_BUCKET_NAME = os.environ.get(
+        'B2_BUCKET_NAME'
+    )
+
+    AWS_S3_REGION_NAME = os.environ.get(
+        'B2_REGION_NAME'
+    )
+
+    AWS_S3_ENDPOINT_URL = os.environ.get(
+        'B2_ENDPOINT_URL'
+    )
+
+    AWS_S3_CUSTOM_DOMAIN = None
+
+    AWS_DEFAULT_ACL = None
+
+    AWS_QUERYSTRING_AUTH = True
+
+    AWS_S3_FILE_OVERWRITE = False
+
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
