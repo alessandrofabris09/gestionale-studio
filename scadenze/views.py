@@ -14,6 +14,7 @@ from agenda.models import EventoAgenda
 
 from studi.models import Studio
 from studi.utils import get_studio_utente
+from studi.email_templates import layout_email_base, tabella_email
 from studi.notifiche import get_email_notifiche_studio
 from studi.permessi import (
     puo_usare_agenda,
@@ -462,6 +463,10 @@ def eventi_calendario(request):
 
 
 def invia_email_scadenze_leggera(studio):
+    """
+    Invia allo studio una email riepilogativa delle scadenze
+    dei prossimi 7 giorni.
+    """
 
     oggi = now().date()
 
@@ -480,7 +485,13 @@ def invia_email_scadenze_leggera(studio):
 
         return 'Nessuna scadenza da notificare.'
 
-    righe_html = []
+    email_destinatario = get_email_notifiche_studio(studio)
+
+    if not email_destinatario:
+
+        return 'Errore: nessuna email configurata per lo studio.'
+
+    righe_tabella = []
 
     for scadenza in scadenze:
 
@@ -490,71 +501,86 @@ def invia_email_scadenze_leggera(studio):
             else '-'
         )
 
-        righe_html.append(
-            f"""
-            <tr>
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
-                    {scadenza.titolo}
-                </td>
+        cliente = '-'
 
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
-                    {scadenza.data_scadenza}
-                </td>
+        if scadenza.pratica and scadenza.pratica.cliente:
+            cliente = scadenza.pratica.cliente
 
-                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">
-                    {pratica}
-                </td>
-            </tr>
-            """
-        )
+        comune = '-'
 
-    messaggio_html = f"""
-    <div style="font-family:Arial, sans-serif; color:#111827;">
+        if scadenza.pratica and scadenza.pratica.comune:
+            comune = scadenza.pratica.comune
 
-        <h2>
-            Alert scadenze - Gestionale Studio Tecnico
-        </h2>
+        giorni_mancanti = (
+            scadenza.data_scadenza - oggi
+        ).days
 
-        <p>
-            Di seguito le scadenze da verificare entro i prossimi 7 giorni.
-        </p>
+        if giorni_mancanti == 0:
+            stato = 'Scade oggi'
+        elif giorni_mancanti == 1:
+            stato = 'Scade domani'
+        else:
+            stato = f'Tra {giorni_mancanti} giorni'
 
-        <table style="border-collapse:collapse;width:100%;margin-top:20px;">
+        righe_tabella.append([
+            scadenza.titolo,
+            scadenza.data_scadenza.strftime('%d/%m/%Y'),
+            stato,
+            pratica,
+            cliente,
+            comune,
+        ])
 
-            <thead>
+    tabella = tabella_email(
+        headers=[
+            'Scadenza',
+            'Data',
+            'Stato',
+            'Pratica',
+            'Cliente',
+            'Comune',
+        ],
+        rows=righe_tabella
+    )
 
-                <tr style="background:#111827;color:white;">
+    contenuto_html = f"""
+    <p style="font-size:16px;line-height:1.6;margin:0;color:#374151;">
+        Gentile studio,
+        <br>
+        di seguito trovi il riepilogo delle scadenze operative da verificare
+        entro i prossimi 7 giorni.
+    </p>
 
-                    <th style="padding:10px;text-align:left;">
-                        Scadenza
-                    </th>
+    <div style="
+        margin-top:24px;
+        background:#f9fafb;
+        border:1px solid #e5e7eb;
+        border-radius:14px;
+        padding:18px 20px;
+    ">
+        <div style="font-size:14px;color:#6b7280;font-weight:bold;text-transform:uppercase;letter-spacing:0.06em;">
+            Riepilogo
+        </div>
 
-                    <th style="padding:10px;text-align:left;">
-                        Data
-                    </th>
+        <div style="font-size:34px;font-weight:bold;color:#111827;margin-top:6px;">
+            {scadenze.count()}
+        </div>
 
-                    <th style="padding:10px;text-align:left;">
-                        Pratica
-                    </th>
-
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                {''.join(righe_html)}
-
-            </tbody>
-
-        </table>
-
-        <p style="margin-top:25px;color:#6b7280;font-size:13px;">
-            Email generata automaticamente dal Gestionale Studio Tecnico.
-        </p>
-
+        <div style="font-size:15px;color:#6b7280;margin-top:4px;">
+            scadenze aperte entro il {limite.strftime('%d/%m/%Y')}
+        </div>
     </div>
+
+    {tabella}
     """
+
+    messaggio_html = layout_email_base(
+        titolo='Alert scadenze',
+        sottotitolo='Promemoria automatico delle scadenze operative dello studio.',
+        contenuto_html=contenuto_html,
+        testo_pulsante='Apri scadenze',
+        url_pulsante=settings.SITE_URL + '/scadenze/'
+    )
 
     resend.api_key = os.environ.get(
         'RESEND_API_KEY'
@@ -564,19 +590,14 @@ def invia_email_scadenze_leggera(studio):
 
         return 'Errore: RESEND_API_KEY non configurata.'
 
-    email_destinatario = get_email_notifiche_studio(studio)
-
-    if not email_destinatario:
-        return 'Errore: nessuna email configurata per lo studio.'
-
     resend.Emails.send({
         "from": settings.EMAIL_FROM_NOTIFICHE,
         "to": [email_destinatario],
-        "subject": "Alert scadenze - Gestionale Studio Tecnico",
+        "subject": "Alert scadenze - Studio Tecnico Cloud",
         "html": messaggio_html,
     })
 
-    return 'Email alert scadenze inviata correttamente con Resend.'
+    return 'Email alert scadenze inviata correttamente.'
 
 
 @login_required
