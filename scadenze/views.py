@@ -591,14 +591,10 @@ def invia_email_scadenze_leggera(studio):
 
         return 'Errore: RESEND_API_KEY non configurata.'
 
-    print("INVIO EMAIL SCADENZE IN CORSO")
-    print("DESTINATARIO:", email_destinatario)
-    print("OGGETTO: TEST SCADENZE - Studio Tecnico Cloud")
-
-    resend.Emails.send({
+      resend.Emails.send({
         "from": settings.EMAIL_FROM_NOTIFICHE,
         "to": [email_destinatario],
-        "subject": "TEST SCADENZE - Studio Tecnico Cloud",
+        "subject": "Alert scadenze - Studio Tecnico Cloud",
         "html": messaggio_html,
     })
 
