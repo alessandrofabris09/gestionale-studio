@@ -5,6 +5,7 @@ import resend
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils.timezone import now
@@ -590,10 +591,14 @@ def invia_email_scadenze_leggera(studio):
 
         return 'Errore: RESEND_API_KEY non configurata.'
 
+    print("INVIO EMAIL SCADENZE IN CORSO")
+    print("DESTINATARIO:", email_destinatario)
+    print("OGGETTO: TEST SCADENZE - Studio Tecnico Cloud")
+
     resend.Emails.send({
         "from": settings.EMAIL_FROM_NOTIFICHE,
         "to": [email_destinatario],
-        "subject": "Alert scadenze - Studio Tecnico Cloud",
+        "subject": "TEST SCADENZE - Studio Tecnico Cloud",
         "html": messaggio_html,
     })
 
