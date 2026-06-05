@@ -205,7 +205,8 @@ def modifica_ruolo_utente(request, profilo_id):
     Regole:
     - solo titolare/superuser
     - solo utenti dello stesso studio
-    - il titolare non può togliere a sé stesso il ruolo TITOLARE
+    - un utente non può modificare il proprio ruolo
+    - deve sempre restare almeno un TITOLARE nello studio
     """
 
     studio = get_studio_utente(request)
@@ -239,20 +240,42 @@ def modifica_ruolo_utente(request, profilo_id):
                 'ruolo'
             )
 
-            if (
-                profilo.user == request.user and
-                profilo.ruolo == 'TITOLARE' and
-                nuovo_ruolo != 'TITOLARE'
-            ):
+            ruolo_attuale = profilo.ruolo
+
+            # BLOCCO 1:
+            # Il titolare non può cambiare il proprio ruolo.
+            if profilo.user == request.user and nuovo_ruolo != ruolo_attuale:
 
                 messages.error(
                     request,
-                    'Non puoi rimuovere il ruolo TITOLARE dal tuo stesso utente.'
+                    'Non puoi modificare il ruolo del tuo stesso utente.'
                 )
 
                 return redirect(
                     'utenti_studio'
                 )
+
+            # BLOCCO 2:
+            # Se l'utente è TITOLARE, non può essere degradato se è l'unico titolare.
+            if ruolo_attuale == 'TITOLARE' and nuovo_ruolo != 'TITOLARE':
+
+                altri_titolari = ProfiloUtente.objects.filter(
+                    studio=studio,
+                    ruolo='TITOLARE'
+                ).exclude(
+                    id=profilo.id
+                ).exists()
+
+                if not altri_titolari:
+
+                    messages.error(
+                        request,
+                        'Non puoi rimuovere l’ultimo TITOLARE dello studio.'
+                    )
+
+                    return redirect(
+                        'utenti_studio'
+                    )
 
             form.save()
 
