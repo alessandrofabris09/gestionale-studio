@@ -240,6 +240,41 @@
             color:#111827;
         }
 
+        .message-wrapper{
+            margin-bottom:22px;
+        }
+
+        .message{
+            padding:14px 18px;
+            border-radius:12px;
+            margin-bottom:10px;
+            font-weight:bold;
+        }
+
+        .message-success{
+            background:#dcfce7;
+            color:#166534;
+            border:1px solid #86efac;
+        }
+
+        .message-error{
+            background:#fee2e2;
+            color:#991b1b;
+            border:1px solid #fecaca;
+        }
+
+        .message-warning{
+            background:#fef3c7;
+            color:#92400e;
+            border:1px solid #fde68a;
+        }
+
+        .message-info{
+            background:#dbeafe;
+            color:#1e40af;
+            border:1px solid #bfdbfe;
+        }
+
         form p{
             margin-bottom:16px;
         }
@@ -343,7 +378,6 @@
                 Ricerca globale
             </a>
 
-
             {% if request.user|can_use_pratiche %}
 
                 <div class="menu-section">
@@ -371,7 +405,6 @@
                 </a>
 
             {% endif %}
-
 
             {% if request.user|can_use_agenda %}
 
@@ -410,7 +443,6 @@
 
             {% endif %}
 
-
             {% if request.user|can_view_parcelle %}
 
                 <div class="menu-section">
@@ -423,7 +455,6 @@
                 </a>
 
             {% endif %}
-
 
             {% if request.user|can_manage_users or request.user|can_manage_subscription or request.user|can_manage_backup %}
 
@@ -465,7 +496,6 @@
 
             {% endif %}
 
-
             {% if request.user.is_superuser %}
 
                 <div class="menu-section">
@@ -478,7 +508,6 @@
                 </a>
 
             {% endif %}
-
 
             <form method="post" action="/logout/" style="margin:0;">
                 {% csrf_token %}
@@ -507,6 +536,29 @@
         </div>
 
         <div class="content">
+
+            {% if messages %}
+                <div class="message-wrapper">
+                    {% for message in messages %}
+
+                        <div class="
+                            message
+                            {% if message.tags == 'success' %}
+                                message-success
+                            {% elif message.tags == 'error' %}
+                                message-error
+                            {% elif message.tags == 'warning' %}
+                                message-warning
+                            {% else %}
+                                message-info
+                            {% endif %}
+                        ">
+                            {{ message }}
+                        </div>
+
+                    {% endfor %}
+                </div>
+            {% endif %}
 
             {% block content %}
             {% endblock %}
