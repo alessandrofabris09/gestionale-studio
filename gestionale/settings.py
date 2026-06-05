@@ -33,13 +33,24 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'gestionale-studio-ti32.onrender.com',
+
     'app.studiotecnicocloud.it',
+    'studiotecnicocloud.it',
+    'www.studiotecnicocloud.it',
+
+    'app.studiotecnicocloud.it.',
+    'studiotecnicocloud.it.',
+    'www.studiotecnicocloud.it.',
+
+    '.studiotecnicocloud.it',
 ]
 
 
 CSRF_TRUSTED_ORIGINS = [
     'https://gestionale-studio-ti32.onrender.com',
     'https://app.studiotecnicocloud.it',
+    'https://studiotecnicocloud.it',
+    'https://www.studiotecnicocloud.it',
 ]
 
 
