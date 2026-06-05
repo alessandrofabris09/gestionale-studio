@@ -436,8 +436,7 @@ def checkout_success(request):
     """
     Pagina di ritorno dopo Stripe Checkout.
 
-    Non si fida semplicemente del ritorno alla pagina success:
-    verifica la sessione direttamente con Stripe usando session_id.
+    Verifica la sessione direttamente con Stripe usando session_id.
     Se Stripe conferma pagamento e subscription valida, attiva il PRO.
     """
 
@@ -458,29 +457,38 @@ def checkout_success(request):
                 session_id
             )
 
-            metadata = session.get(
+            metadata = getattr(
+                session,
                 'metadata',
                 {}
-            )
+            ) or {}
 
             studio_id = metadata.get(
                 'studio_id'
             )
 
-            mode = session.get(
-                'mode'
+            mode = getattr(
+                session,
+                'mode',
+                None
             )
 
-            payment_status = session.get(
-                'payment_status'
+            payment_status = getattr(
+                session,
+                'payment_status',
+                None
             )
 
-            subscription_id = session.get(
-                'subscription'
+            subscription_id = getattr(
+                session,
+                'subscription',
+                None
             )
 
-            customer_id = session.get(
-                'customer'
+            customer_id = getattr(
+                session,
+                'customer',
+                None
             )
 
             if (
