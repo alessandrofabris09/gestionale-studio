@@ -437,7 +437,8 @@ def checkout_success(request):
     Pagina di ritorno dopo Stripe Checkout.
 
     Verifica la sessione direttamente con Stripe usando session_id.
-    Se Stripe conferma pagamento e subscription valida, attiva il PRO.
+    Compatibile anche con versioni Stripe che non supportano .get()
+    o .to_dict_recursive().
     """
 
     studio = get_studio_utente(request)
@@ -475,66 +476,59 @@ def checkout_success(request):
     try:
 
         session = stripe.checkout.Session.retrieve(
-            session_id,
-            expand=[
-                'subscription',
-                'customer',
-            ]
+            session_id
         )
 
-        session_data = session.to_dict_recursive()
-
-        metadata = session_data.get(
+        metadata = getattr(
+            session,
             'metadata',
-            {}
-        ) or {}
-
-        studio_id = metadata.get(
-            'studio_id'
+            None
         )
 
-        mode = session_data.get(
-            'mode'
+        studio_id = None
+
+        if metadata:
+
+            try:
+                studio_id = metadata['studio_id']
+
+            except Exception:
+
+                studio_id = getattr(
+                    metadata,
+                    'studio_id',
+                    None
+                )
+
+        mode = getattr(
+            session,
+            'mode',
+            None
         )
 
-        payment_status = session_data.get(
-            'payment_status'
+        payment_status = getattr(
+            session,
+            'payment_status',
+            None
         )
 
-        status = session_data.get(
-            'status'
+        status = getattr(
+            session,
+            'status',
+            None
         )
 
-        subscription_data = session_data.get(
-            'subscription'
+        subscription_id = getattr(
+            session,
+            'subscription',
+            None
         )
 
-        customer_data = session_data.get(
-            'customer'
+        customer_id = getattr(
+            session,
+            'customer',
+            None
         )
-
-        subscription_id = None
-        customer_id = None
-
-        if isinstance(subscription_data, dict):
-
-            subscription_id = subscription_data.get(
-                'id'
-            )
-
-        else:
-
-            subscription_id = subscription_data
-
-        if isinstance(customer_data, dict):
-
-            customer_id = customer_data.get(
-                'id'
-            )
-
-        else:
-
-            customer_id = customer_data
 
         if (
             str(studio.id) == str(studio_id) and
@@ -562,6 +556,7 @@ def checkout_success(request):
                 'con lo studio corrente. '
                 f'Studio gestionale: {studio.id} - '
                 f'Studio Stripe: {studio_id} - '
+                f'Mode: {mode} - '
                 f'Stato sessione: {status} - '
                 f'Pagamento: {payment_status} - '
                 f'Subscription: {subscription_id}'
