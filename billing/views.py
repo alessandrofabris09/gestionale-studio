@@ -449,79 +449,130 @@ def checkout_success(request):
     messaggio = None
     errore = None
 
-    if studio and session_id:
+    if not studio:
 
-        try:
+        return redirect(
+            'login'
+        )
 
-            session = stripe.checkout.Session.retrieve(
-                session_id
-            )
+    if not session_id:
 
-            metadata = getattr(
-                session,
-                'metadata',
-                {}
-            ) or {}
+        errore = (
+            'Sessione Stripe non trovata. '
+            'Non è stato possibile verificare automaticamente il pagamento.'
+        )
 
-            studio_id = metadata.get(
-                'studio_id'
-            )
+        return render(
+            request,
+            'billing/success.html',
+            {
+                'studio': studio,
+                'messaggio': messaggio,
+                'errore': errore,
+            }
+        )
 
-            mode = getattr(
-                session,
-                'mode',
-                None
-            )
+    try:
 
-            payment_status = getattr(
-                session,
-                'payment_status',
-                None
-            )
-
-            subscription_id = getattr(
-                session,
+        session = stripe.checkout.Session.retrieve(
+            session_id,
+            expand=[
                 'subscription',
-                None
-            )
-
-            customer_id = getattr(
-                session,
                 'customer',
-                None
+            ]
+        )
+
+        session_data = session.to_dict_recursive()
+
+        metadata = session_data.get(
+            'metadata',
+            {}
+        ) or {}
+
+        studio_id = metadata.get(
+            'studio_id'
+        )
+
+        mode = session_data.get(
+            'mode'
+        )
+
+        payment_status = session_data.get(
+            'payment_status'
+        )
+
+        status = session_data.get(
+            'status'
+        )
+
+        subscription_data = session_data.get(
+            'subscription'
+        )
+
+        customer_data = session_data.get(
+            'customer'
+        )
+
+        subscription_id = None
+        customer_id = None
+
+        if isinstance(subscription_data, dict):
+
+            subscription_id = subscription_data.get(
+                'id'
             )
 
-            if (
-                str(studio.id) == str(studio_id) and
-                mode == 'subscription' and
-                payment_status == 'paid' and
-                subscription_id
-            ):
+        else:
 
-                attiva_piano_pro(
-                    studio=studio,
-                    customer_id=customer_id,
-                    subscription_id=subscription_id
-                )
+            subscription_id = subscription_data
 
-                messaggio = (
-                    'Pagamento verificato correttamente. '
-                    'Il piano PRO è stato attivato.'
-                )
+        if isinstance(customer_data, dict):
 
-            else:
+            customer_id = customer_data.get(
+                'id'
+            )
 
-                messaggio = (
-                    'Pagamento ricevuto, ma lo stato non risulta ancora completamente confermato. '
-                    'Attendi qualche minuto o torna alla pagina abbonamento.'
-                )
+        else:
 
-        except Exception as e:
+            customer_id = customer_data
+
+        if (
+            str(studio.id) == str(studio_id) and
+            mode == 'subscription' and
+            status == 'complete' and
+            payment_status == 'paid' and
+            subscription_id
+        ):
+
+            attiva_piano_pro(
+                studio=studio,
+                customer_id=customer_id,
+                subscription_id=subscription_id
+            )
+
+            messaggio = (
+                'Pagamento verificato correttamente. '
+                'Il piano PRO è stato attivato.'
+            )
+
+        else:
 
             errore = (
-                'Non è stato possibile verificare automaticamente il pagamento: '
-                f'{str(e)}'
+                'Pagamento ricevuto, ma i dati Stripe non coincidono ancora '
+                'con lo studio corrente. '
+                f'Studio gestionale: {studio.id} - '
+                f'Studio Stripe: {studio_id} - '
+                f'Stato sessione: {status} - '
+                f'Pagamento: {payment_status} - '
+                f'Subscription: {subscription_id}'
             )
+
+    except Exception as e:
+
+        errore = (
+            'Non è stato possibile verificare automaticamente il pagamento: '
+            f'{str(e)}'
+        )
 
     return render(
         request,
