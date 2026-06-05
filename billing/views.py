@@ -437,8 +437,7 @@ def checkout_success(request):
     Pagina di ritorno dopo Stripe Checkout.
 
     Verifica la sessione direttamente con Stripe usando session_id.
-    Compatibile anche con versioni Stripe che non supportano .get()
-    o .to_dict_recursive().
+    Compatibile anche con versioni Stripe meno recenti. 
     """
 
     studio = get_studio_utente(request)
