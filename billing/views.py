@@ -436,16 +436,91 @@ def checkout_success(request):
     """
     Pagina di ritorno dopo Stripe Checkout.
 
-    Non attiva il piano PRO.
-    L'attivazione avviene solo tramite webhook Stripe verificato.
+    Non si fida semplicemente del ritorno alla pagina success:
+    verifica la sessione direttamente con Stripe usando session_id.
+    Se Stripe conferma pagamento e subscription valida, attiva il PRO.
     """
 
     studio = get_studio_utente(request)
+
+    session_id = request.GET.get(
+        'session_id'
+    )
+
+    messaggio = None
+    errore = None
+
+    if studio and session_id:
+
+        try:
+
+            session = stripe.checkout.Session.retrieve(
+                session_id
+            )
+
+            metadata = session.get(
+                'metadata',
+                {}
+            )
+
+            studio_id = metadata.get(
+                'studio_id'
+            )
+
+            mode = session.get(
+                'mode'
+            )
+
+            payment_status = session.get(
+                'payment_status'
+            )
+
+            subscription_id = session.get(
+                'subscription'
+            )
+
+            customer_id = session.get(
+                'customer'
+            )
+
+            if (
+                str(studio.id) == str(studio_id) and
+                mode == 'subscription' and
+                payment_status == 'paid' and
+                subscription_id
+            ):
+
+                attiva_piano_pro(
+                    studio=studio,
+                    customer_id=customer_id,
+                    subscription_id=subscription_id
+                )
+
+                messaggio = (
+                    'Pagamento verificato correttamente. '
+                    'Il piano PRO è stato attivato.'
+                )
+
+            else:
+
+                messaggio = (
+                    'Pagamento ricevuto, ma lo stato non risulta ancora completamente confermato. '
+                    'Attendi qualche minuto o torna alla pagina abbonamento.'
+                )
+
+        except Exception as e:
+
+            errore = (
+                'Non è stato possibile verificare automaticamente il pagamento: '
+                f'{str(e)}'
+            )
 
     return render(
         request,
         'billing/success.html',
         {
-            'studio': studio
+            'studio': studio,
+            'messaggio': messaggio,
+            'errore': errore,
         }
     )

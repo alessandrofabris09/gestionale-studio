@@ -21,11 +21,21 @@ Pagamento ricevuto
     {% if errore %}
 
         <h2 style="color:#991b1b;">
-            Configurazione pagamento non disponibile
+            Verifica pagamento non completata
         </h2>
 
         <p>
             {{ errore }}
+        </p>
+
+    {% elif messaggio %}
+
+        <h2 style="color:#166534;">
+            Piano aggiornato
+        </h2>
+
+        <p>
+            {{ messaggio }}
         </p>
 
     {% else %}
@@ -39,34 +49,29 @@ Pagamento ricevuto
             il piano del tuo studio verrà aggiornato automaticamente al piano PRO.
         </p>
 
-        <p style="color:#6b7280;">
-            L'attivazione non avviene da questa pagina, ma solo dopo conferma sicura
-            ricevuta direttamente da Stripe tramite webhook.
-        </p>
+    {% endif %}
 
-        {% if studio %}
+    {% if studio %}
 
-            <div style="
-                background:#f9fafb;
-                border:1px solid #e5e7eb;
-                padding:18px;
-                border-radius:16px;
-                margin-top:24px;
-            ">
-                <p style="margin:0;">
-                    <strong>Studio:</strong> {{ studio.nome }}
-                </p>
+        <div style="
+            background:#f9fafb;
+            border:1px solid #e5e7eb;
+            padding:18px;
+            border-radius:16px;
+            margin-top:24px;
+        ">
+            <p style="margin:0;">
+                <strong>Studio:</strong> {{ studio.nome }}
+            </p>
 
-                <p style="margin:8px 0 0;">
-                    <strong>Piano attuale:</strong> {{ studio.get_piano_display }}
-                </p>
+            <p style="margin:8px 0 0;">
+                <strong>Piano attuale:</strong> {{ studio.get_piano_display }}
+            </p>
 
-                <p style="margin:8px 0 0;">
-                    <strong>Stato abbonamento:</strong> {{ studio.get_stato_abbonamento_display }}
-                </p>
-            </div>
-
-        {% endif %}
+            <p style="margin:8px 0 0;">
+                <strong>Stato abbonamento:</strong> {{ studio.get_stato_abbonamento_display }}
+            </p>
+        </div>
 
     {% endif %}
 
