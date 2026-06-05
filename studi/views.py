@@ -227,6 +227,12 @@ def modifica_ruolo_utente(request, profilo_id):
         studio=studio
     )
 
+    # IMPORTANTE:
+    # salvo il ruolo originale PRIMA di creare/validare il form,
+    # perché ModelForm può modificare l'istanza in memoria durante is_valid().
+    ruolo_originale = profilo.ruolo
+    utente_originale_id = profilo.user.id
+
     if request.method == 'POST':
 
         form = ProfiloUtenteRuoloForm(
@@ -240,11 +246,13 @@ def modifica_ruolo_utente(request, profilo_id):
                 'ruolo'
             )
 
-            ruolo_attuale = profilo.ruolo
-
             # BLOCCO 1:
-            # Il titolare non può cambiare il proprio ruolo.
-            if profilo.user == request.user and nuovo_ruolo != ruolo_attuale:
+            # Nessun utente può cambiare il proprio ruolo.
+            # Può modificare nome, cognome ed email, ma NON il ruolo.
+            if (
+                utente_originale_id == request.user.id and
+                nuovo_ruolo != ruolo_originale
+            ):
 
                 messages.error(
                     request,
@@ -256,8 +264,11 @@ def modifica_ruolo_utente(request, profilo_id):
                 )
 
             # BLOCCO 2:
-            # Se l'utente è TITOLARE, non può essere degradato se è l'unico titolare.
-            if ruolo_attuale == 'TITOLARE' and nuovo_ruolo != 'TITOLARE':
+            # Non può mai restare uno studio senza almeno un TITOLARE.
+            if (
+                ruolo_originale == 'TITOLARE' and
+                nuovo_ruolo != 'TITOLARE'
+            ):
 
                 altri_titolari = ProfiloUtente.objects.filter(
                     studio=studio,
