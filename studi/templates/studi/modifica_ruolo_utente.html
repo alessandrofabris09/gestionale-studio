@@ -4,31 +4,33 @@
 
 <div class="page-header">
     <div>
-        <h1>Modifica ruolo utente</h1>
-        <p>Assegna il ruolo corretto all’utente dello studio.</p>
+        <h1>Modifica utente</h1>
+        <p>Aggiorna i dati dell’account e il ruolo nello studio.</p>
     </div>
 </div>
 
 <div class="card">
 
-    <p>
-        <strong>Utente:</strong>
-        {{ profilo.user.username }}
-    </p>
+    <div class="detail-grid">
+        <div>
+            <strong>Username</strong>
+            <p>{{ profilo.user.username }}</p>
+        </div>
 
-    <p>
-        <strong>Email:</strong>
-        {{ profilo.user.email|default:"-" }}
-    </p>
+        <div>
+            <strong>Studio</strong>
+            <p>{{ studio.nome }}</p>
+        </div>
+    </div>
 
-    <form method="post">
+    <form method="post" style="margin-top: 24px;">
         {% csrf_token %}
 
         {{ form.as_p }}
 
         <div style="margin-top: 20px;">
             <button type="submit" class="btn btn-primary">
-                Salva ruolo
+                Salva modifiche
             </button>
 
             <a href="{% url 'utenti_studio' %}" class="btn btn-secondary">

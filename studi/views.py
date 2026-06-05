@@ -200,7 +200,7 @@ def utenti_studio(request):
 @login_required
 def modifica_ruolo_utente(request, profilo_id):
     """
-    Modifica il ruolo di un utente dello stesso studio.
+    Modifica i dati principali e il ruolo di un utente dello stesso studio.
 
     Regole:
     - solo titolare/superuser
@@ -258,7 +258,7 @@ def modifica_ruolo_utente(request, profilo_id):
 
             messages.success(
                 request,
-                'Ruolo utente aggiornato correttamente.'
+                'Dati utente aggiornati correttamente.'
             )
 
             return redirect(

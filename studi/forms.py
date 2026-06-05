@@ -60,6 +60,39 @@ class StudioForm(forms.ModelForm):
 
 class ProfiloUtenteRuoloForm(forms.ModelForm):
 
+    first_name = forms.CharField(
+        label='Nome',
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'form-control',
+                'placeholder': 'Nome utente'
+            }
+        )
+    )
+
+    last_name = forms.CharField(
+        label='Cognome',
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'form-control',
+                'placeholder': 'Cognome utente'
+            }
+        )
+    )
+
+    email = forms.EmailField(
+        label='Email account utente',
+        required=False,
+        widget=forms.EmailInput(
+            attrs={
+                'class': 'form-control',
+                'placeholder': 'email@studio.it'
+            }
+        )
+    )
+
     class Meta:
         model = ProfiloUtente
 
@@ -78,3 +111,41 @@ class ProfiloUtenteRuoloForm(forms.ModelForm):
                 }
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.user:
+
+            self.fields['first_name'].initial = self.instance.user.first_name
+            self.fields['last_name'].initial = self.instance.user.last_name
+            self.fields['email'].initial = self.instance.user.email
+
+    def save(self, commit=True):
+
+        profilo = super().save(commit=False)
+
+        user = profilo.user
+
+        user.first_name = self.cleaned_data.get(
+            'first_name',
+            ''
+        )
+
+        user.last_name = self.cleaned_data.get(
+            'last_name',
+            ''
+        )
+
+        user.email = self.cleaned_data.get(
+            'email',
+            ''
+        )
+
+        if commit:
+
+            user.save()
+            profilo.save()
+
+        return profilo
