@@ -11,7 +11,7 @@
         padding:40px;
         border-radius:28px;
         box-shadow:0 12px 30px rgba(0,0,0,0.10);
-        max-width:900px;
+        max-width:980px;
     }
 
     .badge{
@@ -22,6 +22,11 @@
         background:#eef2ff;
         color:#3730a3;
         margin-bottom:20px;
+    }
+
+    .badge-pro{
+        background:#dcfce7;
+        color:#166534;
     }
 
     .grid{
@@ -50,6 +55,58 @@
         color:#111827;
     }
 
+    .plans{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:22px;
+        margin-top:32px;
+    }
+
+    .plan{
+        border:1px solid #e5e7eb;
+        border-radius:22px;
+        padding:26px;
+        background:#ffffff;
+    }
+
+    .plan.highlight{
+        border:2px solid #2563eb;
+        box-shadow:0 14px 35px rgba(37,99,235,0.12);
+    }
+
+    .plan h3{
+        font-size:24px;
+        margin-bottom:10px;
+    }
+
+    .price{
+        font-size:36px;
+        font-weight:900;
+        margin:12px 0;
+    }
+
+    .price span{
+        font-size:14px;
+        color:#6b7280;
+        font-weight:normal;
+    }
+
+    .plan p{
+        color:#4b5563;
+        line-height:1.6;
+    }
+
+    .plan ul{
+        list-style:none;
+        padding:0;
+        margin:20px 0;
+    }
+
+    .plan li{
+        margin-bottom:10px;
+        color:#374151;
+    }
+
     .btn{
         display:inline-flex;
         align-items:center;
@@ -60,10 +117,36 @@
         border-radius:14px;
         text-decoration:none;
         font-weight:800;
+        border:0;
+        cursor:pointer;
     }
 
-    @media(max-width:800px){
-        .grid{
+    .btn:hover{
+        background:#1f2937;
+    }
+
+    .btn-secondary{
+        background:#e5e7eb;
+        color:#111827;
+    }
+
+    .btn-secondary:hover{
+        background:#d1d5db;
+    }
+
+    .notice{
+        background:#eff6ff;
+        border:1px solid #bfdbfe;
+        color:#1e3a8a;
+        border-radius:16px;
+        padding:18px;
+        margin-top:22px;
+        line-height:1.6;
+    }
+
+    @media(max-width:850px){
+        .grid,
+        .plans{
             grid-template-columns:1fr;
         }
     }
@@ -71,7 +154,7 @@
 
 <div class="billing-card">
 
-    <span class="badge">
+    <span class="badge {% if studio.piano == 'PRO' %}badge-pro{% endif %}">
         Piano {{ studio.get_piano_display }}
     </span>
 
@@ -80,7 +163,8 @@
     </h2>
 
     <p>
-        Stato abbonamento: <strong>{{ studio.get_stato_abbonamento_display }}</strong>
+        Stato abbonamento:
+        <strong>{{ studio.get_stato_abbonamento_display }}</strong>
     </p>
 
     <div class="grid">
@@ -113,10 +197,84 @@
 
     </div>
 
-    <a href="/billing/checkout/pro/" class="btn">
-        <i class="fa-solid fa-crown"></i>
-        Passa al piano PRO
-    </a>
+    <div class="plans">
+
+        <div class="plan">
+            <h3>
+                Free
+            </h3>
+
+            <div class="price">
+                € 0
+                <span>/ mese</span>
+            </div>
+
+            <p>
+                Piano base per provare il gestionale e gestire un numero limitato
+                di pratiche e documenti.
+            </p>
+
+            <ul>
+                <li>✓ 10/20 pratiche secondo configurazione studio</li>
+                <li>✓ 1 utente</li>
+                <li>✓ Storage limitato</li>
+                <li>✓ Funzioni essenziali</li>
+            </ul>
+
+            {% if studio.piano == 'FREE' %}
+                <span class="btn btn-secondary">
+                    Piano attuale
+                </span>
+            {% endif %}
+        </div>
+
+        <div class="plan highlight">
+            <h3>
+                Pro
+            </h3>
+
+            <div class="price">
+                € 19
+                <span>/ mese + IVA primo anno</span>
+            </div>
+
+            <p>
+                Prezzo di lancio per il primo anno.
+                Dal secondo anno il piano Pro passa a
+                <strong>€ 29/mese + IVA</strong>.
+            </p>
+
+            <ul>
+                <li>✓ Pratiche estese</li>
+                <li>✓ Più utenti dello studio</li>
+                <li>✓ Maggiore spazio documenti</li>
+                <li>✓ Alert email, agenda e gestione completa</li>
+                <li>✓ PDF pratiche e parcelle</li>
+            </ul>
+
+            {% if studio.piano == 'PRO' and studio.stato_abbonamento == 'ATTIVO' %}
+
+                <span class="btn btn-secondary">
+                    Piano PRO attivo
+                </span>
+
+            {% else %}
+
+                <a href="/billing/checkout/pro/" class="btn">
+                    <i class="fa-solid fa-crown"></i>
+                    Passa al piano PRO
+                </a>
+
+            {% endif %}
+        </div>
+
+    </div>
+
+    <div class="notice">
+        L'attivazione del piano PRO avviene solo dopo conferma sicura del pagamento
+        da parte di Stripe. La pagina di ritorno dal pagamento non abilita automaticamente
+        il piano.
+    </div>
 
 </div>
 

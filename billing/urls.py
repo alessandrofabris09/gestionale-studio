@@ -21,5 +21,4 @@ urlpatterns = [
         views.stripe_webhook,
         name='stripe_webhook'
     ),
-    
 ]

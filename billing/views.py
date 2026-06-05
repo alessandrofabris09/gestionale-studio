@@ -1,3 +1,4 @@
+import os
 import stripe
 
 from django.conf import settings
@@ -16,7 +17,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 def attiva_piano_pro(studio, customer_id=None, subscription_id=None):
     """
     Attiva il piano PRO per lo studio.
-    Questa funzione deve essere richiamata solo dopo conferma Stripe valida.
+    Deve essere richiamata solo dopo conferma Stripe valida.
     """
 
     studio.piano = 'PRO'
@@ -53,13 +54,22 @@ def disattiva_piano_pro(studio):
     studio.save()
 
 
+def aggiorna_stato_abbonamento(studio, stato):
+    """
+    Aggiorna solo lo stato dell'abbonamento senza cambiare piano e limiti.
+    """
+
+    studio.stato_abbonamento = stato
+    studio.save()
+
+
 @csrf_exempt
 def stripe_webhook(request):
     """
     Webhook Stripe.
 
     Il piano PRO viene attivato solo da eventi Stripe verificati.
-    La pagina success non attiva più il piano PRO.
+    La pagina success non attiva mai il piano PRO.
     """
 
     payload = request.body
@@ -80,27 +90,52 @@ def stripe_webhook(request):
 
     except ValueError:
 
-        return HttpResponse(status=400)
+        return HttpResponse(
+            status=400
+        )
 
     except stripe.error.SignatureVerificationError:
 
-        return HttpResponse(status=400)
+        return HttpResponse(
+            status=400
+        )
 
-    event_type = event.get('type')
+    event_type = event.get(
+        'type'
+    )
 
-    # 1. Checkout completato
+    # =========================
+    # CHECKOUT COMPLETATO
+    # =========================
+
     if event_type == 'checkout.session.completed':
 
         session = event['data']['object']
 
-        metadata = session.get('metadata', {})
+        metadata = session.get(
+            'metadata',
+            {}
+        )
 
-        studio_id = metadata.get('studio_id')
+        studio_id = metadata.get(
+            'studio_id'
+        )
 
-        mode = session.get('mode')
-        payment_status = session.get('payment_status')
-        subscription_id = session.get('subscription')
-        customer_id = session.get('customer')
+        mode = session.get(
+            'mode'
+        )
+
+        payment_status = session.get(
+            'payment_status'
+        )
+
+        subscription_id = session.get(
+            'subscription'
+        )
+
+        customer_id = session.get(
+            'customer'
+        )
 
         if (
             studio_id and
@@ -122,15 +157,24 @@ def stripe_webhook(request):
                 )
 
             except Studio.DoesNotExist:
+
                 pass
 
-    # 2. Fattura pagata: mantiene o riattiva il PRO
+    # =========================
+    # FATTURA PAGATA
+    # =========================
+
     elif event_type == 'invoice.paid':
 
         invoice = event['data']['object']
 
-        subscription_id = invoice.get('subscription')
-        customer_id = invoice.get('customer')
+        subscription_id = invoice.get(
+            'subscription'
+        )
+
+        customer_id = invoice.get(
+            'customer'
+        )
 
         if subscription_id:
 
@@ -147,14 +191,20 @@ def stripe_webhook(request):
                 )
 
             except Studio.DoesNotExist:
+
                 pass
 
-    # 3. Pagamento fallito: segnala abbonamento scaduto
+    # =========================
+    # PAGAMENTO FALLITO
+    # =========================
+
     elif event_type == 'invoice.payment_failed':
 
         invoice = event['data']['object']
 
-        subscription_id = invoice.get('subscription')
+        subscription_id = invoice.get(
+            'subscription'
+        )
 
         if subscription_id:
 
@@ -164,20 +214,34 @@ def stripe_webhook(request):
                     stripe_subscription_id=subscription_id
                 )
 
-                studio.stato_abbonamento = 'SCADUTO'
-                studio.save()
+                aggiorna_stato_abbonamento(
+                    studio,
+                    'SCADUTO'
+                )
 
             except Studio.DoesNotExist:
+
                 pass
 
-    # 4. Subscription aggiornata
+    # =========================
+    # SUBSCRIPTION AGGIORNATA
+    # =========================
+
     elif event_type == 'customer.subscription.updated':
 
         subscription = event['data']['object']
 
-        subscription_id = subscription.get('id')
-        customer_id = subscription.get('customer')
-        status = subscription.get('status')
+        subscription_id = subscription.get(
+            'id'
+        )
+
+        customer_id = subscription.get(
+            'customer'
+        )
+
+        status = subscription.get(
+            'status'
+        )
 
         if subscription_id:
 
@@ -199,23 +263,41 @@ def stripe_webhook(request):
                     )
 
                 elif status in [
-                    'canceled',
+                    'past_due',
                     'unpaid',
+                    'incomplete',
                     'incomplete_expired',
                     'paused',
                 ]:
 
-                    disattiva_piano_pro(studio)
+                    aggiorna_stato_abbonamento(
+                        studio,
+                        'SCADUTO'
+                    )
+
+                elif status in [
+                    'canceled',
+                ]:
+
+                    disattiva_piano_pro(
+                        studio
+                    )
 
             except Studio.DoesNotExist:
+
                 pass
 
-    # 5. Subscription cancellata
+    # =========================
+    # SUBSCRIPTION CANCELLATA
+    # =========================
+
     elif event_type == 'customer.subscription.deleted':
 
         subscription = event['data']['object']
 
-        subscription_id = subscription.get('id')
+        subscription_id = subscription.get(
+            'id'
+        )
 
         if subscription_id:
 
@@ -225,51 +307,110 @@ def stripe_webhook(request):
                     stripe_subscription_id=subscription_id
                 )
 
-                disattiva_piano_pro(studio)
+                disattiva_piano_pro(
+                    studio
+                )
 
             except Studio.DoesNotExist:
+
                 pass
 
-    return HttpResponse(status=200)
+    return HttpResponse(
+        status=200
+    )
 
 
 @login_required
 def checkout_pro(request):
     """
     Crea la sessione Stripe Checkout per passare al piano PRO.
+
+    Strategia prezzo consigliata:
+    - prezzo Stripe mensile base: € 29/mese
+    - coupon Stripe: € 10/mese di sconto per 12 mesi
+    - prezzo effettivo primo anno: € 19/mese
     """
 
     studio = get_studio_utente(request)
 
     if not studio:
-        return redirect('login')
 
-    session = stripe.checkout.Session.create(
-        mode='subscription',
+        return redirect(
+            'login'
+        )
 
-        customer_email=request.user.email,
+    if not settings.STRIPE_SECRET_KEY or not settings.STRIPE_PRICE_PRO_MONTHLY:
 
-        line_items=[
+        return render(
+            request,
+            'billing/success.html',
+            {
+                'studio': studio,
+                'errore': (
+                    'Stripe non è ancora configurato correttamente. '
+                    'Contatta il supporto.'
+                )
+            }
+        )
+
+    checkout_data = {
+        'mode': 'subscription',
+
+        'line_items': [
             {
                 'price': settings.STRIPE_PRICE_PRO_MONTHLY,
                 'quantity': 1,
             }
         ],
 
-        success_url=settings.SITE_URL + '/billing/success/',
-        cancel_url=settings.SITE_URL + '/studi/abbonamento/',
+        'success_url': (
+            settings.SITE_URL +
+            '/billing/success/?session_id={CHECKOUT_SESSION_ID}'
+        ),
 
-        metadata={
+        'cancel_url': (
+            settings.SITE_URL +
+            '/studi/abbonamento/'
+        ),
+
+        'metadata': {
             'studio_id': str(studio.id),
             'user_id': str(request.user.id),
         },
 
-        subscription_data={
+        'subscription_data': {
             'metadata': {
                 'studio_id': str(studio.id),
                 'user_id': str(request.user.id),
             }
-        }
+        },
+
+        'billing_address_collection': 'auto',
+    }
+
+    if studio.stripe_customer_id:
+
+        checkout_data['customer'] = studio.stripe_customer_id
+
+    else:
+
+        checkout_data['customer_email'] = request.user.email
+
+    coupon_primo_anno = os.environ.get(
+        'STRIPE_COUPON_PRO_FIRST_YEAR',
+        ''
+    )
+
+    if coupon_primo_anno:
+
+        checkout_data['discounts'] = [
+            {
+                'coupon': coupon_primo_anno
+            }
+        ]
+
+    session = stripe.checkout.Session.create(
+        **checkout_data
     )
 
     return redirect(

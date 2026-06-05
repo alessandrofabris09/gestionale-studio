@@ -1,11 +1,11 @@
 {% extends 'base/base.html' %}
 
 {% block title %}
-Pagamento completato
+Pagamento ricevuto
 {% endblock %}
 
 {% block page_title %}
-Pagamento completato
+Pagamento ricevuto
 {% endblock %}
 
 {% block content %}
@@ -18,17 +18,57 @@ Pagamento completato
     max-width:760px;
 ">
 
-    <h2>
-        Pagamento completato
-    </h2>
+    {% if errore %}
 
-    <p>
-        Grazie. Il pagamento è stato completato correttamente.
-    </p>
+        <h2 style="color:#991b1b;">
+            Configurazione pagamento non disponibile
+        </h2>
 
-    <p>
-        A breve il piano del tuo studio verrà aggiornato al piano PRO.
-    </p>
+        <p>
+            {{ errore }}
+        </p>
+
+    {% else %}
+
+        <h2>
+            Pagamento in elaborazione
+        </h2>
+
+        <p>
+            Grazie. Se il pagamento è stato completato correttamente,
+            il piano del tuo studio verrà aggiornato automaticamente al piano PRO.
+        </p>
+
+        <p style="color:#6b7280;">
+            L'attivazione non avviene da questa pagina, ma solo dopo conferma sicura
+            ricevuta direttamente da Stripe tramite webhook.
+        </p>
+
+        {% if studio %}
+
+            <div style="
+                background:#f9fafb;
+                border:1px solid #e5e7eb;
+                padding:18px;
+                border-radius:16px;
+                margin-top:24px;
+            ">
+                <p style="margin:0;">
+                    <strong>Studio:</strong> {{ studio.nome }}
+                </p>
+
+                <p style="margin:8px 0 0;">
+                    <strong>Piano attuale:</strong> {{ studio.get_piano_display }}
+                </p>
+
+                <p style="margin:8px 0 0;">
+                    <strong>Stato abbonamento:</strong> {{ studio.get_stato_abbonamento_display }}
+                </p>
+            </div>
+
+        {% endif %}
+
+    {% endif %}
 
     <br>
 
