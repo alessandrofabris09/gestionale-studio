@@ -325,10 +325,8 @@ def checkout_pro(request):
     """
     Crea la sessione Stripe Checkout per passare al piano PRO.
 
-    Strategia prezzo consigliata:
-    - prezzo Stripe mensile base: € 29/mese
-    - coupon Stripe: € 10/mese di sconto per 12 mesi
-    - prezzo effettivo primo anno: € 19/mese
+    Usa come email principale quella dello studio.
+    Se esiste già un cliente Stripe, aggiorna anche la sua email.
     """
 
     studio = get_studio_utente(request)
@@ -352,6 +350,8 @@ def checkout_pro(request):
                 )
             }
         )
+
+    email_checkout = studio.email or request.user.email
 
     checkout_data = {
         'mode': 'subscription',
@@ -390,11 +390,23 @@ def checkout_pro(request):
 
     if studio.stripe_customer_id:
 
+        try:
+
+            stripe.Customer.modify(
+                studio.stripe_customer_id,
+                email=email_checkout,
+                name=studio.nome,
+            )
+
+        except Exception:
+
+            pass
+
         checkout_data['customer'] = studio.stripe_customer_id
 
     else:
 
-        checkout_data['customer_email'] = request.user.email
+        checkout_data['customer_email'] = email_checkout
 
     coupon_primo_anno = os.environ.get(
         'STRIPE_COUPON_PRO_FIRST_YEAR',
