@@ -19,3 +19,25 @@ def home(request):
         request,
         'landing/home.html'
     )
+
+
+def privacy_policy(request):
+    """
+    Pagina Privacy Policy.
+    """
+
+    return render(
+        request,
+        'landing/privacy.html'
+    )
+
+
+def termini_utilizzo(request):
+    """
+    Pagina Termini di utilizzo.
+    """
+
+    return render(
+        request,
+        'landing/termini.html'
+    )

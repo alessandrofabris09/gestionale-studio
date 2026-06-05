@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>
+        Registrazione | Studio Tecnico Cloud
+    </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            font-family:Arial, sans-serif;
+            background:#f3f4f6;
+            color:#111827;
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:30px;
+        }
+
+        .container{
+            width:100%;
+            max-width:720px;
+            background:white;
+            border-radius:18px;
+            box-shadow:0 18px 45px rgba(0,0,0,0.12);
+            overflow:hidden;
+        }
+
+        .header{
+            background:#111827;
+            color:white;
+            padding:34px;
+        }
+
+        .header h1{
+            font-size:30px;
+            margin-bottom:8px;
+        }
+
+        .header p{
+            color:#d1d5db;
+            font-size:15px;
+        }
+
+        .content{
+            padding:34px;
+        }
+
+        form p{
+            margin-bottom:18px;
+        }
+
+        label{
+            display:block;
+            font-weight:bold;
+            margin-bottom:7px;
+            color:#374151;
+        }
+
+        input{
+            width:100%;
+            padding:12px 14px;
+            border:1px solid #d1d5db;
+            border-radius:10px;
+            font-size:15px;
+        }
+
+        input[type="checkbox"]{
+            width:auto;
+            margin-right:8px;
+        }
+
+        .helptext{
+            display:block;
+            color:#6b7280;
+            font-size:13px;
+            margin-top:6px;
+        }
+
+        ul.errorlist{
+            list-style:none;
+            color:#dc2626;
+            font-size:14px;
+            margin-bottom:8px;
+        }
+
+        .legal-box{
+            background:#f9fafb;
+            border:1px solid #e5e7eb;
+            border-radius:12px;
+            padding:16px;
+            margin:20px 0;
+            font-size:14px;
+            color:#4b5563;
+        }
+
+        .legal-box a{
+            color:#2563eb;
+            font-weight:bold;
+            text-decoration:none;
+        }
+
+        .btn{
+            display:inline-block;
+            width:100%;
+            border:0;
+            background:#2563eb;
+            color:white;
+            padding:14px 18px;
+            border-radius:10px;
+            font-size:16px;
+            font-weight:bold;
+            cursor:pointer;
+        }
+
+        .btn:hover{
+            background:#1d4ed8;
+        }
+
+        .footer{
+            margin-top:22px;
+            text-align:center;
+            color:#6b7280;
+            font-size:14px;
+        }
+
+        .footer a{
+            color:#2563eb;
+            font-weight:bold;
+            text-decoration:none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="header">
+            <h1>
+                Crea il tuo studio
+            </h1>
+
+            <p>
+                Attiva Studio Tecnico Cloud e prova il gestionale gratuitamente per 14 giorni.
+            </p>
+        </div>
+
+        <div class="content">
+
+            <form method="post">
+                {% csrf_token %}
+
+                {{ form.non_field_errors }}
+
+                <p>
+                    {{ form.nome_studio.label_tag }}
+                    {{ form.nome_studio.errors }}
+                    {{ form.nome_studio }}
+                </p>
+
+                <p>
+                    {{ form.username.label_tag }}
+                    {{ form.username.errors }}
+                    {{ form.username }}
+                    {% if form.username.help_text %}
+                        <span class="helptext">{{ form.username.help_text }}</span>
+                    {% endif %}
+                </p>
+
+                <p>
+                    {{ form.email.label_tag }}
+                    {{ form.email.errors }}
+                    {{ form.email }}
+                </p>
+
+                <p>
+                    {{ form.telefono.label_tag }}
+                    {{ form.telefono.errors }}
+                    {{ form.telefono }}
+                </p>
+
+                <p>
+                    {{ form.password1.label_tag }}
+                    {{ form.password1.errors }}
+                    {{ form.password1 }}
+                    {% if form.password1.help_text %}
+                        <span class="helptext">{{ form.password1.help_text }}</span>
+                    {% endif %}
+                </p>
+
+                <p>
+                    {{ form.password2.label_tag }}
+                    {{ form.password2.errors }}
+                    {{ form.password2 }}
+                    {% if form.password2.help_text %}
+                        <span class="helptext">{{ form.password2.help_text }}</span>
+                    {% endif %}
+                </p>
+
+                <div class="legal-box">
+                    <p style="margin-bottom:12px;">
+                        Prima di creare l’account consulta:
+                        <a href="/privacy/" target="_blank">Privacy Policy</a>
+                        e
+                        <a href="/termini/" target="_blank">Termini di utilizzo</a>.
+                    </p>
+
+                    <p>
+                        {{ form.accetta_privacy.errors }}
+                        {{ form.accetta_privacy }}
+                        {{ form.accetta_privacy.label_tag }}
+                    </p>
+
+                    <p>
+                        {{ form.accetta_termini.errors }}
+                        {{ form.accetta_termini }}
+                        {{ form.accetta_termini.label_tag }}
+                    </p>
+                </div>
+
+                <button type="submit" class="btn">
+                    Crea account studio
+                </button>
+
+            </form>
+
+            <div class="footer">
+                Hai già un account?
+                <a href="/login/">Accedi</a>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

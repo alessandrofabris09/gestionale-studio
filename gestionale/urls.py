@@ -8,40 +8,100 @@ from django.contrib.auth import views as auth_views
 
 urlpatterns = [
 
-    path('studi/', include('studi.urls')),
-    
-    path('', include('landing.urls')),
+    path(
+        'studi/',
+        include('studi.urls')
+    ),
 
-    path('dashboard/', include('dashboard.urls')),
+    path(
+        '',
+        include('landing.urls')
+    ),
 
-    path('login/', auth_views.LoginView.as_view(), name='login'),     
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path(
+        'accounts/',
+        include('accounts.urls')
+    ),
 
-    path('clienti/', include('clienti.urls')),
+    path(
+        'dashboard/',
+        include('dashboard.urls')
+    ),
 
-    path('immobili/', include('immobili.urls')),
+    path(
+        'login/',
+        auth_views.LoginView.as_view(),
+        name='login'
+    ),
 
-    path('pratiche/', include('pratiche.urls')),
+    path(
+        'logout/',
+        auth_views.LogoutView.as_view(),
+        name='logout'
+    ),
 
-    path('documenti/', include('documenti.urls')),
+    path(
+        'clienti/',
+        include('clienti.urls')
+    ),
 
-    path('scadenze/', include('scadenze.urls')),
+    path(
+        'immobili/',
+        include('immobili.urls')
+    ),
 
-    path('parcelle/', include('parcelle.urls')),
+    path(
+        'pratiche/',
+        include('pratiche.urls')
+    ),
 
-    path('agenda/', include('agenda.urls')),
+    path(
+        'documenti/',
+        include('documenti.urls')
+    ),
 
-    path('workflow/', include('workflow.urls')),
+    path(
+        'scadenze/',
+        include('scadenze.urls')
+    ),
 
-    path('utenti/', include('utenti.urls')),
+    path(
+        'parcelle/',
+        include('parcelle.urls')
+    ),
 
-    path('backups/', include('backups.urls')),
+    path(
+        'agenda/',
+        include('agenda.urls')
+    ),
 
-    path('admin/', admin.site.urls),
+    path(
+        'workflow/',
+        include('workflow.urls')
+    ),
 
-    path('billing/', include('billing.urls')),
+    path(
+        'utenti/',
+        include('utenti.urls')
+    ),
+
+    path(
+        'backups/',
+        include('backups.urls')
+    ),
+
+    path(
+        'admin/',
+        admin.site.urls
+    ),
+
+    path(
+        'billing/',
+        include('billing.urls')
+    ),
 
 ]
+
 
 if settings.DEBUG:
 
