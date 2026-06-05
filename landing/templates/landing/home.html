@@ -1,24 +1,20 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
 
     <title>
-        Gestionale Studio Tecnico
+        Studio Tecnico Cloud | Gestionale per studi tecnici
     </title>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-    >
+    <meta name="description" content="Gestionale online per geometri, architetti e studi tecnici. Pratiche, clienti, immobili, documenti, scadenze, agenda e parcelle in un unico ambiente cloud.">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
     <style>
-
         *{
             margin:0;
             padding:0;
@@ -27,728 +23,715 @@
 
         body{
             font-family:Arial, sans-serif;
-            background:#f8fafc;
             color:#111827;
+            background:#f9fafb;
+            line-height:1.6;
         }
 
         a{
             text-decoration:none;
         }
 
-        .container{
-            width:100%;
-            max-width:1250px;
-            margin:auto;
-            padding:0 25px;
-        }
-
-        /* NAVBAR */
-
         .navbar{
-            position:sticky;
-            top:0;
-            z-index:100;
+            width:100%;
+            padding:22px 8%;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
             background:white;
             border-bottom:1px solid #e5e7eb;
-        }
-
-        .navbar-content{
-            height:80px;
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
+            position:sticky;
+            top:0;
+            z-index:10;
         }
 
         .logo{
+            font-size:22px;
+            font-weight:bold;
+            color:#111827;
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+
+        .logo i{
+            color:#2563eb;
+        }
+
+        .nav-actions{
             display:flex;
             align-items:center;
             gap:12px;
-            font-size:24px;
-            font-weight:900;
-            color:#111827;
-        }
-
-        .logo-icon{
-            width:48px;
-            height:48px;
-            border-radius:14px;
-            background:#2563eb;
-            color:white;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-        }
-
-        .nav-links{
-            display:flex;
-            align-items:center;
-            gap:14px;
         }
 
         .btn{
-            display:inline-flex;
-            align-items:center;
-            justify-content:center;
-            gap:8px;
-            padding:13px 20px;
-            border-radius:14px;
-            font-weight:700;
-            transition:.2s;
+            display:inline-block;
+            padding:12px 18px;
+            border-radius:10px;
+            font-weight:bold;
+            font-size:15px;
+            transition:0.2s;
         }
 
-        .btn-dark{
-            background:#111827;
+        .btn-primary{
+            background:#2563eb;
             color:white;
         }
 
-        .btn-dark:hover{
-            background:#1f2937;
+        .btn-primary:hover{
+            background:#1d4ed8;
         }
 
-        .btn-light{
-            border:1px solid #d1d5db;
+        .btn-secondary{
+            background:#e5e7eb;
             color:#111827;
-            background:white;
         }
 
-        .btn-light:hover{
-            background:#f3f4f6;
+        .btn-secondary:hover{
+            background:#d1d5db;
         }
-
-        /* HERO */
 
         .hero{
-            padding:90px 0;
-        }
-
-        .hero-grid{
+            padding:90px 8% 70px;
             display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:70px;
+            grid-template-columns:1.1fr 0.9fr;
+            gap:55px;
             align-items:center;
+            background:linear-gradient(135deg,#ffffff 0%,#eff6ff 100%);
         }
 
-        .hero-badge{
+        .badge{
             display:inline-flex;
             align-items:center;
-            gap:10px;
+            gap:8px;
+            padding:8px 12px;
+            border-radius:999px;
             background:#dbeafe;
             color:#1d4ed8;
-            padding:10px 16px;
-            border-radius:999px;
-            font-weight:700;
-            margin-bottom:24px;
+            font-size:14px;
+            font-weight:bold;
+            margin-bottom:22px;
         }
 
         .hero h1{
-            font-size:62px;
-            line-height:1.05;
-            margin-bottom:25px;
+            font-size:52px;
+            line-height:1.08;
+            margin-bottom:22px;
+            color:#111827;
         }
 
         .hero p{
-            font-size:20px;
-            line-height:1.7;
+            font-size:19px;
             color:#4b5563;
-            margin-bottom:35px;
-        }
-
-        .hero-buttons{
-            display:flex;
-            gap:15px;
-            flex-wrap:wrap;
-        }
-
-        .hero-card{
-            background:white;
-            border-radius:28px;
-            padding:35px;
-            box-shadow:0 20px 50px rgba(0,0,0,0.10);
-        }
-
-        .hero-card-header{
-            display:flex;
-            justify-content:space-between;
             margin-bottom:30px;
+            max-width:680px;
         }
 
-        .hero-card-title{
-            font-size:22px;
-            font-weight:800;
+        .hero-actions{
+            display:flex;
+            gap:14px;
+            flex-wrap:wrap;
+            margin-bottom:28px;
         }
 
-        .mini-card{
-            background:#f9fafb;
-            border:1px solid #e5e7eb;
-            border-radius:18px;
-            padding:18px;
-            margin-bottom:18px;
-        }
-
-        .mini-card strong{
-            display:block;
-            margin-bottom:8px;
-            font-size:16px;
-        }
-
-        .mini-card p{
-            margin:0;
+        .hero-note{
             font-size:14px;
             color:#6b7280;
         }
 
-        /* FEATURES */
+        .dashboard-preview{
+            background:#111827;
+            border-radius:24px;
+            padding:22px;
+            box-shadow:0 25px 55px rgba(15,23,42,0.25);
+            color:white;
+        }
+
+        .preview-top{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:20px;
+            color:#d1d5db;
+            font-size:14px;
+        }
+
+        .preview-grid{
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+            gap:14px;
+        }
+
+        .preview-card{
+            background:#1f2937;
+            padding:20px;
+            border-radius:16px;
+            border:1px solid #374151;
+        }
+
+        .preview-card i{
+            color:#60a5fa;
+            font-size:22px;
+            margin-bottom:12px;
+        }
+
+        .preview-card strong{
+            display:block;
+            font-size:24px;
+            margin-bottom:4px;
+        }
+
+        .preview-card span{
+            color:#d1d5db;
+            font-size:14px;
+        }
 
         .section{
-            padding:90px 0;
+            padding:80px 8%;
         }
 
         .section-title{
             text-align:center;
-            margin-bottom:65px;
+            max-width:760px;
+            margin:0 auto 50px;
         }
 
         .section-title h2{
-            font-size:46px;
-            margin-bottom:18px;
+            font-size:38px;
+            margin-bottom:14px;
         }
 
         .section-title p{
             color:#6b7280;
-            font-size:19px;
-            max-width:760px;
-            margin:auto;
-            line-height:1.7;
+            font-size:18px;
         }
 
-        .features-grid{
+        .features{
             display:grid;
             grid-template-columns:repeat(3,1fr);
-            gap:28px;
+            gap:24px;
         }
 
-        .feature-card{
+        .feature{
             background:white;
-            padding:35px;
-            border-radius:24px;
-            box-shadow:0 10px 30px rgba(0,0,0,0.06);
+            border:1px solid #e5e7eb;
+            border-radius:18px;
+            padding:28px;
+            box-shadow:0 2px 12px rgba(0,0,0,0.04);
         }
 
-        .feature-icon{
-            width:68px;
-            height:68px;
-            border-radius:18px;
+        .feature i{
+            width:48px;
+            height:48px;
+            border-radius:12px;
             background:#eff6ff;
             color:#2563eb;
             display:flex;
             align-items:center;
             justify-content:center;
-            font-size:28px;
-            margin-bottom:24px;
+            font-size:22px;
+            margin-bottom:18px;
         }
 
-        .feature-card h3{
-            font-size:24px;
-            margin-bottom:14px;
+        .feature h3{
+            font-size:20px;
+            margin-bottom:10px;
         }
 
-        .feature-card p{
+        .feature p{
             color:#6b7280;
-            line-height:1.7;
+            font-size:15px;
         }
 
-        /* PRICING */
-
-        .pricing{
+        .security{
             background:#111827;
             color:white;
         }
 
-        .pricing-grid{
+        .security .section-title p{
+            color:#d1d5db;
+        }
+
+        .security-grid{
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:24px;
+        }
+
+        .security-card{
+            background:#1f2937;
+            border:1px solid #374151;
+            border-radius:18px;
+            padding:28px;
+        }
+
+        .security-card i{
+            color:#60a5fa;
+            font-size:24px;
+            margin-bottom:16px;
+        }
+
+        .security-card h3{
+            margin-bottom:10px;
+            font-size:20px;
+        }
+
+        .security-card p{
+            color:#d1d5db;
+            font-size:15px;
+        }
+
+        .pricing{
             display:grid;
             grid-template-columns:repeat(2,1fr);
-            gap:30px;
-            margin-top:50px;
+            gap:28px;
+            max-width:980px;
+            margin:0 auto;
         }
 
-        .pricing-card{
+        .price-card{
             background:white;
-            color:#111827;
-            border-radius:28px;
-            padding:40px;
+            border:1px solid #e5e7eb;
+            border-radius:22px;
+            padding:34px;
+            box-shadow:0 2px 12px rgba(0,0,0,0.04);
         }
 
-        .pricing-card.featured{
-            transform:scale(1.04);
-            border:4px solid #2563eb;
+        .price-card.highlight{
+            border:2px solid #2563eb;
+            box-shadow:0 18px 45px rgba(37,99,235,0.14);
+        }
+
+        .price-card h3{
+            font-size:26px;
+            margin-bottom:10px;
         }
 
         .price{
-            font-size:60px;
-            font-weight:900;
-            margin:25px 0;
+            font-size:42px;
+            font-weight:bold;
+            margin:16px 0;
         }
 
-        .pricing-list{
-            display:grid;
-            gap:14px;
-            margin:35px 0;
+        .price span{
+            font-size:15px;
+            color:#6b7280;
+            font-weight:normal;
         }
 
-        .pricing-item{
-            display:flex;
-            align-items:center;
-            gap:10px;
+        .price-card ul{
+            list-style:none;
+            margin:24px 0;
         }
 
-        .pricing-item i{
+        .price-card li{
+            margin-bottom:12px;
+            color:#374151;
+        }
+
+        .price-card li i{
             color:#16a34a;
+            margin-right:8px;
         }
-
-        /* CTA */
 
         .cta{
-            padding:100px 0;
+            background:#eff6ff;
             text-align:center;
         }
 
-        .cta-box{
-            background:linear-gradient(
-                135deg,
-                #2563eb,
-                #1d4ed8
-            );
-
-            border-radius:34px;
-            padding:70px;
-            color:white;
+        .cta h2{
+            font-size:40px;
+            margin-bottom:14px;
         }
 
-        .cta-box h2{
-            font-size:54px;
-            margin-bottom:24px;
+        .cta p{
+            color:#4b5563;
+            font-size:18px;
+            margin-bottom:28px;
         }
 
-        .cta-box p{
-            font-size:20px;
-            line-height:1.7;
-            max-width:760px;
-            margin:auto auto 35px auto;
-        }
-
-        .btn-white{
+        .footer{
+            padding:34px 8%;
             background:white;
+            border-top:1px solid #e5e7eb;
+            color:#6b7280;
+            font-size:14px;
+            display:flex;
+            justify-content:space-between;
+            gap:20px;
+            flex-wrap:wrap;
+        }
+
+        .footer strong{
             color:#111827;
         }
 
-        .btn-white:hover{
-            background:#f3f4f6;
-        }
-
-        /* FOOTER */
-
-        footer{
-            padding:35px 0;
-            border-top:1px solid #e5e7eb;
-            text-align:center;
-            color:#6b7280;
-        }
-
-        /* RESPONSIVE */
-
         @media(max-width:1000px){
-
-            .hero-grid,
-            .features-grid,
-            .pricing-grid{
+            .hero{
                 grid-template-columns:1fr;
             }
 
-            .hero h1{
-                font-size:48px;
+            .features,
+            .security-grid{
+                grid-template-columns:repeat(2,1fr);
             }
 
-            .section-title h2{
-                font-size:38px;
-            }
-
-            .cta-box h2{
-                font-size:40px;
-            }
-
-            .pricing-card.featured{
-                transform:none;
+            .pricing{
+                grid-template-columns:1fr;
             }
         }
 
+        @media(max-width:700px){
+            .navbar{
+                flex-direction:column;
+                gap:16px;
+                align-items:flex-start;
+            }
+
+            .nav-actions{
+                width:100%;
+                flex-direction:column;
+                align-items:stretch;
+            }
+
+            .btn{
+                text-align:center;
+            }
+
+            .hero{
+                padding:60px 6%;
+            }
+
+            .hero h1{
+                font-size:38px;
+            }
+
+            .section{
+                padding:60px 6%;
+            }
+
+            .features,
+            .security-grid{
+                grid-template-columns:1fr;
+            }
+
+            .preview-grid{
+                grid-template-columns:1fr;
+            }
+        }
     </style>
 </head>
 
 <body>
 
-    <nav class="navbar">
+    <header class="navbar">
 
-        <div class="container navbar-content">
-
-            <a class="logo" href="/">
-
-                <div class="logo-icon">
-                    <i class="fa-solid fa-building"></i>
-                </div>
-
-                Gestionale Studio Tecnico
-
-            </a>
-
-            <div class="nav-links">
-
-                <a
-                    class="btn btn-light"
-                    href="/login/"
-                >
-                    Accedi
-                </a>
-
-                <a
-                    class="btn btn-dark"
-                    href="/utenti/registrazione/"
-                >
-                    Prova gratis
-                </a>
-
-            </div>
-
+        <div class="logo">
+            <i class="fa-solid fa-cloud"></i>
+            Studio Tecnico Cloud
         </div>
 
-    </nav>
+        <div class="nav-actions">
+            <a href="/login/" class="btn btn-secondary">
+                Accedi
+            </a>
+
+            <a href="/accounts/registrazione/" class="btn btn-primary">
+                Prova gratis
+            </a>
+        </div>
+
+    </header>
+
 
     <section class="hero">
 
-        <div class="container hero-grid">
-
-            <div>
-
-                <div class="hero-badge">
-                    <i class="fa-solid fa-bolt"></i>
-                    SaaS per studi tecnici
-                </div>
-
-                <h1>
-                    Gestisci il tuo studio tecnico in modo professionale
-                </h1>
-
-                <p>
-                    Un’unica piattaforma per clienti, pratiche edilizie,
-                    catasto, documenti, agenda, workflow, parcelle
-                    e controllo economico.
-                </p>
-
-                <div class="hero-buttons">
-
-                    <a
-                        class="btn btn-dark"
-                        href="/utenti/registrazione/"
-                    >
-                        <i class="fa-solid fa-rocket"></i>
-                        Inizia gratis
-                    </a>
-
-                    <a
-                        class="btn btn-light"
-                        href="/login/"
-                    >
-                        <i class="fa-solid fa-right-to-bracket"></i>
-                        Accedi
-                    </a>
-
-                </div>
-
+        <div>
+            <div class="badge">
+                <i class="fa-solid fa-circle-check"></i>
+                Gestionale cloud per studi tecnici
             </div>
 
-            <div>
+            <h1>
+                Organizza pratiche, scadenze, documenti e parcelle in un unico gestionale.
+            </h1>
 
-                <div class="hero-card">
+            <p>
+                Studio Tecnico Cloud è pensato per geometri, architetti e professionisti tecnici
+                che vogliono gestire clienti, immobili, pratiche, documenti, agenda operativa,
+                scadenze e parcelle da un ambiente semplice e sicuro.
+            </p>
 
-                    <div class="hero-card-header">
+            <div class="hero-actions">
+                <a href="/accounts/registrazione/" class="btn btn-primary">
+                    Prova gratis 14 giorni
+                </a>
 
-                        <div class="hero-card-title">
-                            Dashboard studio
-                        </div>
+                <a href="/login/" class="btn btn-secondary">
+                    Accedi al gestionale
+                </a>
+            </div>
 
-                        <i class="fa-solid fa-chart-line"></i>
+            <div class="hero-note">
+                Nessuna installazione sul computer. Accesso online da browser.
+            </div>
+        </div>
 
-                    </div>
+        <div class="dashboard-preview">
 
-                    <div class="mini-card">
-                        <strong>
-                            126 pratiche attive
-                        </strong>
+            <div class="preview-top">
+                <span>Dashboard studio</span>
+                <span>Online</span>
+            </div>
 
-                        <p>
-                            Workflow, scadenze e avanzamento pratiche
-                        </p>
-                    </div>
-
-                    <div class="mini-card">
-                        <strong>
-                            € 48.250 da incassare
-                        </strong>
-
-                        <p>
-                            Parcelle, compensi e controllo economico
-                        </p>
-                    </div>
-
-                    <div class="mini-card">
-                        <strong>
-                            Archivio digitale completo
-                        </strong>
-
-                        <p>
-                            PDF, DWG, P7M, PEC e documenti tecnici
-                        </p>
-                    </div>
-
+            <div class="preview-grid">
+                <div class="preview-card">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <strong>Pratiche</strong>
+                    <span>Archivio operativo dello studio</span>
                 </div>
 
+                <div class="preview-card">
+                    <i class="fa-solid fa-clock"></i>
+                    <strong>Scadenze</strong>
+                    <span>Promemoria automatici via email</span>
+                </div>
+
+                <div class="preview-card">
+                    <i class="fa-solid fa-file-lines"></i>
+                    <strong>Documenti</strong>
+                    <span>File collegati a pratiche e immobili</span>
+                </div>
+
+                <div class="preview-card">
+                    <i class="fa-solid fa-euro-sign"></i>
+                    <strong>Parcelle</strong>
+                    <span>PDF e riepiloghi economici</span>
+                </div>
             </div>
 
         </div>
 
     </section>
+
 
     <section class="section">
 
-        <div class="container">
+        <div class="section-title">
+            <h2>
+                Tutto quello che serve per gestire uno studio tecnico.
+            </h2>
 
-            <div class="section-title">
+            <p>
+                Le funzioni principali sono pensate per il lavoro quotidiano di uno studio:
+                pratiche, documenti, agenda, scadenze, parcelle e utenti.
+            </p>
+        </div>
 
-                <h2>
-                    Tutto ciò che serve a uno studio tecnico
-                </h2>
+        <div class="features">
 
+            <div class="feature">
+                <i class="fa-solid fa-users"></i>
+                <h3>Clienti e immobili</h3>
                 <p>
-                    Pensato per geometri, architetti, ingegneri
-                    e studi professionali moderni.
+                    Gestisci l’anagrafica dei clienti e collega ogni immobile alle pratiche dello studio.
                 </p>
-
             </div>
 
-            <div class="features-grid">
+            <div class="feature">
+                <i class="fa-solid fa-folder-open"></i>
+                <h3>Pratiche tecniche</h3>
+                <p>
+                    Organizza pratiche edilizie, catastali, relazioni, incarichi e attività operative.
+                </p>
+            </div>
 
-                <div class="feature-card">
+            <div class="feature">
+                <i class="fa-solid fa-file-arrow-up"></i>
+                <h3>Documenti cloud</h3>
+                <p>
+                    Carica documenti e allegati collegandoli direttamente alla pratica di riferimento.
+                </p>
+            </div>
 
-                    <div class="feature-icon">
-                        <i class="fa-solid fa-folder-tree"></i>
-                    </div>
+            <div class="feature">
+                <i class="fa-solid fa-calendar-days"></i>
+                <h3>Agenda operativa</h3>
+                <p>
+                    Tieni sotto controllo appuntamenti, attività e impegni giornalieri dello studio.
+                </p>
+            </div>
 
-                    <h3>
-                        Gestione pratiche
-                    </h3>
+            <div class="feature">
+                <i class="fa-solid fa-bell"></i>
+                <h3>Alert scadenze</h3>
+                <p>
+                    Ricevi riepiloghi email per scadenze imminenti e attività da verificare.
+                </p>
+            </div>
 
-                    <p>
-                        CILA, SCIA, PDC, Catasto, Successioni,
-                        Sanatorie e workflow automatizzati.
-                    </p>
-
-                </div>
-
-                <div class="feature-card">
-
-                    <div class="feature-icon">
-                        <i class="fa-solid fa-file-signature"></i>
-                    </div>
-
-                    <h3>
-                        Documenti e P7M
-                    </h3>
-
-                    <p>
-                        Caricamento multiplo, archiviazione cloud,
-                        PEC, file firmati digitalmente e ricerca globale.
-                    </p>
-
-                </div>
-
-                <div class="feature-card">
-
-                    <div class="feature-icon">
-                        <i class="fa-solid fa-calendar-days"></i>
-                    </div>
-
-                    <h3>
-                        Agenda e scadenze
-                    </h3>
-
-                    <p>
-                        Calendario intelligente, notifiche,
-                        appuntamenti e controllo operativo.
-                    </p>
-
-                </div>
-
+            <div class="feature">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                <h3>Parcelle e PDF</h3>
+                <p>
+                    Crea parcelle, preventivi e riepiloghi PDF con una grafica chiara e professionale.
+                </p>
             </div>
 
         </div>
 
     </section>
 
-    <section class="section pricing">
 
-        <div class="container">
+    <section class="section security">
 
-            <div class="section-title">
+        <div class="section-title">
+            <h2>
+                Documenti e dati organizzati in cloud.
+            </h2>
 
-                <h2>
-                    Prezzi semplici e trasparenti
-                </h2>
+            <p>
+                Il gestionale separa gli studi e conserva i documenti in uno storage cloud dedicato,
+                con accesso controllato dagli utenti dello studio.
+            </p>
+        </div>
 
+        <div class="security-grid">
+
+            <div class="security-card">
+                <i class="fa-solid fa-lock"></i>
+                <h3>Accesso riservato</h3>
                 <p>
-                    Parti gratis, poi passa al piano PRO quando il tuo studio cresce.
+                    Ogni studio accede solo ai propri clienti, immobili, pratiche, documenti e utenti.
                 </p>
-
             </div>
 
-            <div class="pricing-grid">
+            <div class="security-card">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <h3>Storage documenti</h3>
+                <p>
+                    I documenti caricati vengono archiviati su Backblaze B2, servizio cloud adatto alla conservazione file.
+                </p>
+            </div>
 
-                <div class="pricing-card">
-
-                    <h3>
-                        FREE
-                    </h3>
-
-                    <div class="price">
-                        €0
-                    </div>
-
-                    <div class="pricing-list">
-
-                        <div class="pricing-item">
-                            <i class="fa-solid fa-check"></i>
-                            20 pratiche incluse
-                        </div>
-
-                        <div class="pricing-item">
-                            <i class="fa-solid fa-check"></i>
-                            1 utente
-                        </div>
-
-                        <div class="pricing-item">
-                            <i class="fa-solid fa-check"></i>
-                            500 MB di storage documenti
-                        </div>
-
-                        <div class="pricing-item">
-                            <i class="fa-solid fa-check"></i>
-                            Clienti, immobili, pratiche e agenda
-                        </div>
-
-                    </div>
-
-                    <a
-                        class="btn btn-light"
-                        href="/utenti/registrazione/"
-                    >
-                        Inizia gratis
-                    </a>
-
-                </div>
-
-                <div class="pricing-card featured">
-
-                    <h3>
-                        PRO
-                    </h3>
-
-                    <div class="price">
-                        €29
-                        <span style="font-size:18px;font-weight:700;">
-                            / mese
-                        </span>
-                    </div>
-
-                    <div class="pricing-list">
-
-                        <div class="pricing-item">
-                            <i class="fa-solid fa-check"></i>
-                            Pratiche illimitate
-                        </div>
-
-                        <div class="pricing-item">
-                            <i class="fa-solid fa-check"></i>
-                            Utenti e collaboratori
-                        </div>
-
-                        <div class="pricing-item">
-                            <i class="fa-solid fa-check"></i>
-                            Workflow avanzati e checklist operative
-                        </div>
-
-                        <div class="pricing-item">
-                            <i class="fa-solid fa-check"></i>
-                            Documenti tecnici, parcelle e scadenze
-                        </div>
-
-                        <div class="pricing-item">
-                            <i class="fa-solid fa-check"></i>
-                            Dashboard, notifiche e backup
-                        </div>
-
-                    </div>
-
-                    <a
-                        class="btn btn-dark"
-                        href="/utenti/registrazione/"
-                    >
-                        Prova gratis e passa a PRO
-                    </a>
-
-                </div>
-
+            <div class="security-card">
+                <i class="fa-solid fa-user-gear"></i>
+                <h3>Ruoli utenti</h3>
+                <p>
+                    Il titolare può gestire gli utenti dello studio, assegnare ruoli e controllare le autorizzazioni.
+                </p>
             </div>
 
         </div>
 
     </section>
 
-    <section class="cta">
 
-        <div class="container">
+    <section class="section">
 
-            <div class="cta-box">
+        <div class="section-title">
+            <h2>
+                Piani semplici per partire subito.
+            </h2>
 
-                <h2>
-                    Porta il tuo studio al livello successivo
-                </h2>
+            <p>
+                Puoi iniziare con il piano gratuito e passare al piano Pro quando lo studio cresce.
+            </p>
+        </div>
+
+        <div class="pricing">
+
+            <div class="price-card">
+                <h3>Free</h3>
+
+                <div class="price">
+                    € 0
+                    <span>/ mese</span>
+                </div>
 
                 <p>
-                    Automatizza il lavoro, organizza il team
-                    e gestisci tutto da un’unica piattaforma professionale.
+                    Ideale per provare il gestionale e gestire un numero limitato di pratiche.
                 </p>
 
-                <a
-                    class="btn btn-white"
-                    href="/utenti/registrazione/"
-                >
-                    <i class="fa-solid fa-rocket"></i>
-                    Crea il tuo studio
+                <ul>
+                    <li><i class="fa-solid fa-check"></i>Gestione clienti e immobili</li>
+                    <li><i class="fa-solid fa-check"></i>Pratiche limitate</li>
+                    <li><i class="fa-solid fa-check"></i>Documenti base</li>
+                    <li><i class="fa-solid fa-check"></i>Agenda e scadenze</li>
+                </ul>
+
+                <a href="/accounts/registrazione/" class="btn btn-secondary">
+                    Inizia gratis
                 </a>
+            </div>
 
+            <div class="price-card highlight">
+                <h3>Pro</h3>
+
+                <div class="price">
+                    € 19
+                    <span>/ mese</span>
+                </div>
+
+                <p>
+                    Pensato per studi tecnici che vogliono lavorare in modo continuativo e professionale.
+                </p>
+
+                <ul>
+                    <li><i class="fa-solid fa-check"></i>Pratiche estese</li>
+                    <li><i class="fa-solid fa-check"></i>Più utenti dello studio</li>
+                    <li><i class="fa-solid fa-check"></i>Maggiore spazio documenti</li>
+                    <li><i class="fa-solid fa-check"></i>Alert email e gestione completa</li>
+                </ul>
+
+                <a href="/accounts/registrazione/" class="btn btn-primary">
+                    Prova gratis 14 giorni
+                </a>
             </div>
 
         </div>
 
     </section>
 
-    <footer>
 
-        <div class="container">
+    <section class="section cta">
 
-            © 2026 Gestionale Studio Tecnico
+        <h2>
+            Porta il tuo studio tecnico in cloud.
+        </h2>
 
+        <p>
+            Prova Studio Tecnico Cloud e organizza il lavoro quotidiano in un unico ambiente.
+        </p>
+
+        <a href="/accounts/registrazione/" class="btn btn-primary">
+            Crea il tuo studio
+        </a>
+
+        <a href="/login/" class="btn btn-secondary">
+            Accedi
+        </a>
+
+    </section>
+
+
+    <footer class="footer">
+
+        <div>
+            <strong>Studio Tecnico Cloud</strong><br>
+            Gestionale online per studi tecnici.
+        </div>
+
+        <div>
+            Contatti: info@studiotecnicocloud.it
+        </div>
+
+        <div>
+            © 2026 Studio Tecnico Cloud
         </div>
 
     </footer>
 
 </body>
+
 </html>
