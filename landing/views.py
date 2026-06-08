@@ -1,7 +1,9 @@
-from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from datetime import timedelta
 
 from django.contrib.auth.models import User
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from django.utils import timezone
 
 from studi.models import Studio, ProfiloUtente
 
@@ -48,15 +50,16 @@ def termini_utilizzo(request):
     )
 
 
-def ripristina_titolare(request, codice):
+def crea_superuser_iniziale(request, codice):
     """
     Funzione temporanea di emergenza.
 
-    Serve solo per ripristinare il ruolo TITOLARE senza usare la Shell Render.
+    Serve solo per creare il primo superuser e lo studio iniziale
+    dopo il passaggio a un database nuovo.
     Dopo l'uso va rimossa.
     """
 
-    CODICE_SICUREZZA = 'RIPRISTINO-FABRIS-2026'
+    CODICE_SICUREZZA = 'CREA-SUPERUSER-FABRIS-2026'
 
     if codice != CODICE_SICUREZZA:
 
@@ -66,32 +69,55 @@ def ripristina_titolare(request, codice):
             content_type='text/plain'
         )
 
+    username = request.GET.get(
+        'username',
+        'admin'
+    ).strip()
+
     email = request.GET.get(
         'email',
         ''
     ).strip()
 
-    if not email:
+    password = request.GET.get(
+        'password',
+        ''
+    ).strip()
+
+    nome_studio = request.GET.get(
+        'studio',
+        'Studio Tecnico'
+    ).strip()
+
+    if not email or not password:
 
         return HttpResponse(
-            'Devi indicare ?email=...',
+            'Devi indicare ?email=...&password=...',
             status=400,
             content_type='text/plain'
         )
 
-    try:
+    user = User.objects.filter(
+        email=email
+    ).first()
 
-        user = User.objects.get(
-            email=email
+    if not user:
+
+        user = User.objects.create_superuser(
+            username=username,
+            email=email,
+            password=password
         )
 
-    except User.DoesNotExist:
+    else:
 
-        return HttpResponse(
-            f'Utente con email {email} non trovato.',
-            status=404,
-            content_type='text/plain'
-        )
+        user.username = username
+        user.email = email
+        user.is_active = True
+        user.is_staff = True
+        user.is_superuser = True
+        user.set_password(password)
+        user.save()
 
     studio = Studio.objects.filter(
         titolare=user
@@ -99,28 +125,32 @@ def ripristina_titolare(request, codice):
 
     if not studio:
 
-        profilo_esistente = ProfiloUtente.objects.filter(
-            user=user
-        ).select_related(
-            'studio'
-        ).first()
-
-        if profilo_esistente:
-            studio = profilo_esistente.studio
-
-    if not studio:
-
-        studio = Studio.objects.order_by(
-            'id'
-        ).first()
-
-    if not studio:
-
-        return HttpResponse(
-            'Nessuno studio trovato.',
-            status=404,
-            content_type='text/plain'
+        studio = Studio.objects.create(
+            nome=nome_studio,
+            email=email,
+            telefono='',
+            titolare=user,
+            piano='PRO',
+            stato_abbonamento='ATTIVO',
+            trial_fino_al=timezone.now().date() + timedelta(days=14),
+            limite_pratiche=999999,
+            limite_utenti=999999,
+            limite_storage_mb=50000,
+            attivo=True,
         )
+
+    else:
+
+        studio.nome = nome_studio
+        studio.email = email
+        studio.titolare = user
+        studio.piano = 'PRO'
+        studio.stato_abbonamento = 'ATTIVO'
+        studio.limite_pratiche = 999999
+        studio.limite_utenti = 999999
+        studio.limite_storage_mb = 50000
+        studio.attivo = True
+        studio.save()
 
     profilo, created = ProfiloUtente.objects.get_or_create(
         user=user,
@@ -134,21 +164,14 @@ def ripristina_titolare(request, codice):
     profilo.ruolo = 'TITOLARE'
     profilo.save()
 
-    studio.titolare = user
-    studio.attivo = True
-    studio.save()
-
-    user.is_active = True
-    user.is_staff = True
-    user.save()
-
     testo = (
-        'Ripristino completato.\n\n'
-        f'Utente: {user.username}\n'
+        'Creazione completata.\n\n'
+        f'Username: {user.username}\n'
         f'Email: {user.email}\n'
+        f'Superuser: {user.is_superuser}\n'
         f'Studio: {studio.nome}\n'
         f'Ruolo: {profilo.ruolo}\n\n'
-        'Ora prova di nuovo il login.'
+        'Ora puoi accedere dal login.'
     )
 
     return HttpResponse(

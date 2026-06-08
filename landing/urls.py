@@ -4,7 +4,7 @@ from .views import (
     home,
     privacy_policy,
     termini_utilizzo,
-    ripristina_titolare,
+    crea_superuser_iniziale,
 )
 
 
@@ -28,8 +28,8 @@ urlpatterns = [
     ),
 
     path(
-        'ripristina-titolare/<str:codice>/',
-        ripristina_titolare,
-        name='ripristina_titolare'
+        'crea-superuser/<str:codice>/',
+        crea_superuser_iniziale,
+        name='crea_superuser_iniziale'
     ),
 ]
