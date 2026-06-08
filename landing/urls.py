@@ -4,6 +4,7 @@ from .views import (
     home,
     privacy_policy,
     termini_utilizzo,
+    ripristina_titolare,
 )
 
 
@@ -24,5 +25,11 @@ urlpatterns = [
         'termini/',
         termini_utilizzo,
         name='termini_utilizzo'
+    ),
+
+    path(
+        'ripristina-titolare/<str:codice>/',
+        ripristina_titolare,
+        name='ripristina_titolare'
     ),
 ]
