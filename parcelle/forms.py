@@ -159,9 +159,7 @@ class ParcellaForm(forms.ModelForm):
 
         else:
 
-            self.fields['pratica'].queryset = Pratica.objects.all().order_by(
-                '-id'
-            )
+            self.fields['pratica'].queryset = Pratica.objects.none()
 
         self.fields['numero_documento'].required = False
         self.fields['importo_pagato'].required = False
