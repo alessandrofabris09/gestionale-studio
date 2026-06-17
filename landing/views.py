@@ -685,3 +685,72 @@ def carica_workflow_professionali(request, codice):
         testo,
         content_type='text/plain'
     )
+
+
+def pulisci_workflow_doppi(request, codice):
+    """
+    Funzione temporanea.
+    Disattiva i vecchi workflow generici caricati prima dei workflow professionali.
+    Dopo l'uso va rimossa.
+    """
+
+    CODICE_SICUREZZA = 'PULISCI-WORKFLOW-DOPPI-2026'
+
+    if codice != CODICE_SICUREZZA:
+        return HttpResponse(
+            'Codice non valido',
+            status=403,
+            content_type='text/plain'
+        )
+
+    workflow_da_disattivare = [
+        'Autorizzazione Paesaggistica',
+        'Compatibilità Paesaggistica',
+        'DOCFA',
+        'PREGEO',
+        'Frazionamento',
+        'Tipo mappale',
+        'Voltura catastale',
+        'Successione',
+        'Perizia tecnica',
+        'Relazione tecnica',
+        'Relazione paesaggistica',
+        'Sanatoria edilizia',
+        'ENEA',
+        'Pratica catastale',
+        'Computo metrico',
+        'Direzione lavori',
+        'Sicurezza cantiere',
+        'Comunicazione fine lavori',
+        'Accertamento di conformità',
+    ]
+
+    disattivati = []
+    non_trovati = []
+
+    for nome in workflow_da_disattivare:
+        workflow = TipoWorkflow.objects.filter(nome=nome).first()
+
+        if workflow:
+            workflow.attivo = False
+            workflow.save()
+            disattivati.append(nome)
+        else:
+            non_trovati.append(nome)
+
+    testo = 'Pulizia workflow doppi completata.\n\n'
+
+    testo += f'Workflow disattivati: {len(disattivati)}\n'
+    for nome in disattivati:
+        testo += f'- {nome}\n'
+
+    testo += f'\nWorkflow non trovati: {len(non_trovati)}\n'
+    for nome in non_trovati:
+        testo += f'- {nome}\n'
+
+    testo += '\nOra controlla la tendina Tipo pratica.\n'
+
+    return HttpResponse(
+        testo,
+        content_type='text/plain'
+    )    

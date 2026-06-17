@@ -5,6 +5,7 @@ from .views import (
     privacy_policy,
     termini_utilizzo,
     carica_workflow_professionali,
+    pulisci_workflow_doppi,
 )
 
 
@@ -19,5 +20,11 @@ urlpatterns = [
         'carica-workflow-professionali/<str:codice>/',
         carica_workflow_professionali,
         name='carica_workflow_professionali'
+    ),
+
+    path(
+        'pulisci-workflow-doppi/<str:codice>/',
+        pulisci_workflow_doppi,
+        name='pulisci_workflow_doppi'
     ),
 ]
