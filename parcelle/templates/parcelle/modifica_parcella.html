@@ -138,6 +138,29 @@ Modifica parcella
         background:#f9fafb;
     }
 
+    .field input[type="checkbox"]{
+        width:auto;
+        transform:scale(1.2);
+        margin-right:8px;
+    }
+
+    .checkbox-field{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        background:#f9fafb;
+        border:1px solid #d1d5db;
+        border-radius:14px;
+        padding:14px 16px;
+        min-height:50px;
+    }
+
+    .checkbox-field label{
+        margin:0;
+        font-weight:bold;
+        color:#374151;
+    }
+
     .field input:focus,
     .field select:focus,
     .field textarea:focus{
@@ -150,6 +173,23 @@ Modifica parcella
     textarea{
         min-height:120px;
         resize:vertical;
+    }
+
+    .help{
+        font-size:12px;
+        color:#6b7280;
+        margin-top:6px;
+        line-height:1.4;
+    }
+
+    .error-box{
+        background:#fee2e2;
+        border:1px solid #dc2626;
+        color:#7f1d1d;
+        padding:16px 18px;
+        border-radius:14px;
+        margin-bottom:25px;
+        font-size:14px;
     }
 
     .actions{
@@ -209,10 +249,10 @@ Modifica parcella
                 </span>
             {% endif %}
 
-            {% if parcella.importo %}
+            {% if parcella.totale_documento %}
                 <span class="badge">
                     <i class="fa-solid fa-euro-sign"></i>
-                    € {{ parcella.importo }}
+                    Totale € {{ parcella.totale_documento }}
                 </span>
             {% endif %}
 
@@ -223,6 +263,16 @@ Modifica parcella
     <form method="post">
 
         {% csrf_token %}
+
+        {% if form.errors %}
+            <div class="error-box">
+                <strong>Errore nel salvataggio.</strong>
+                <br>
+                Controlla i campi evidenziati e riprova.
+                <br><br>
+                {{ form.errors }}
+            </div>
+        {% endif %}
 
         <div class="section">
 
@@ -242,6 +292,14 @@ Modifica parcella
                     {{ form.tipo_documento }}
                 </div>
 
+                <div class="field">
+                    <label>Numero documento</label>
+                    {{ form.numero_documento }}
+                    <div class="help">
+                        Lascia vuoto per generarlo automaticamente.
+                    </div>
+                </div>
+
                 <div class="field full">
                     <label>Descrizione</label>
                     {{ form.descrizione }}
@@ -254,14 +312,17 @@ Modifica parcella
         <div class="section">
 
             <div class="section-title">
-                Aspetti economici
+                Compenso professionale
             </div>
 
             <div class="form-grid">
 
                 <div class="field">
-                    <label>Importo totale</label>
+                    <label>Compenso / imponibile base</label>
                     {{ form.importo }}
+                    <div class="help">
+                        Inserisci il compenso professionale esclusi cassa, IVA e bollo.
+                    </div>
                 </div>
 
                 <div class="field">
@@ -274,9 +335,99 @@ Modifica parcella
                     {{ form.stato }}
                 </div>
 
+            </div>
+
+        </div>
+
+        <div class="section">
+
+            <div class="section-title">
+                Cassa previdenziale
+            </div>
+
+            <div class="form-grid">
+
                 <div class="field">
-                    <label>Numero documento</label>
-                    {{ form.numero_documento }}
+                    <div class="checkbox-field">
+                        {{ form.applica_cassa }}
+                        <label>Applica contributo cassa</label>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Tipo cassa</label>
+                    {{ form.tipo_cassa }}
+                    <div class="help">
+                        Geometri 5%, Inarcassa 4%, EPPI 5%, oppure manuale.
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Aliquota cassa (%)</label>
+                    {{ form.aliquota_cassa }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="section">
+
+            <div class="section-title">
+                IVA e marca da bollo
+            </div>
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <div class="checkbox-field">
+                        {{ form.applica_iva }}
+                        <label>Applica IVA</label>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Aliquota IVA (%)</label>
+                    {{ form.iva }}
+                </div>
+
+                <div class="field">
+                    <div class="checkbox-field">
+                        {{ form.applica_bollo }}
+                        <label>Applica marca da bollo</label>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Importo marca da bollo</label>
+                    {{ form.importo_bollo }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="section">
+
+            <div class="section-title">
+                Date
+            </div>
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <label>Data emissione</label>
+                    {{ form.data_emissione }}
+                </div>
+
+                <div class="field">
+                    <label>Data scadenza</label>
+                    {{ form.data_scadenza }}
+                </div>
+
+                <div class="field">
+                    <label>Data pagamento</label>
+                    {{ form.data_pagamento }}
                 </div>
 
             </div>
