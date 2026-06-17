@@ -165,6 +165,7 @@ class Parcella(models.Model):
             prefisso = self.get_prefisso_documento()
 
             ultimo_numero = Parcella.objects.filter(
+                pratica__studio=self.pratica.studio,
                 tipo_documento=self.tipo_documento,
                 data_emissione__year=anno
             ).count() + 1
