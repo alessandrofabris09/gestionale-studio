@@ -341,9 +341,7 @@ def modifica_pratica(request, pratica_id):
 
         if form.is_valid():
 
-            pratica = form.save(commit=False)
-            pratica.studio = studio
-            pratica.save()
+            pratica = form.save()
 
             Attivita.objects.create(
                 pratica=pratica,
