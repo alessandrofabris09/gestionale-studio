@@ -70,6 +70,29 @@ def get_eventi_queryset(request):
     )
 
 
+def get_studio_agenda(request):
+    """
+    Restituisce lo studio da usare per l'agenda.
+
+    Per utenti normali usa lo studio collegato al profilo.
+    Per superuser, se non trova uno studio collegato, usa il primo studio attivo.
+    """
+
+    studio = get_studio_utente(request)
+
+    if studio:
+        return studio
+
+    if request.user.is_superuser:
+        return Studio.objects.filter(
+            attivo=True
+        ).order_by(
+            'id'
+        ).first()
+
+    return None
+
+
 @login_required
 def lista_agenda(request):
 
@@ -133,10 +156,14 @@ def nuovo_evento(request):
     if not puo_usare_agenda(request):
         return accesso_negato(request)
 
-    studio = get_studio_utente(request)
+    studio = get_studio_agenda(request)
 
-    if not studio and not request.user.is_superuser:
-        return redirect('login')
+    if not studio:
+        return HttpResponse(
+            'Errore: nessuno studio disponibile per creare eventi agenda.',
+            status=400,
+            content_type='text/plain'
+        )
 
     if request.method == 'POST':
 
@@ -149,11 +176,7 @@ def nuovo_evento(request):
 
             evento = form.save(commit=False)
 
-            if not request.user.is_superuser:
-                evento.studio = studio
-
-            elif not evento.studio:
-                evento.studio = studio
+            evento.studio = studio
 
             evento.save()
 
@@ -187,17 +210,20 @@ def nuovo_evento(request):
         }
     )
 
-
 @login_required
 def modifica_evento(request, evento_id):
 
     if not puo_usare_agenda(request):
         return accesso_negato(request)
 
-    studio = get_studio_utente(request)
+    studio = get_studio_agenda(request)
 
-    if not studio and not request.user.is_superuser:
-        return redirect('login')
+    if not studio:
+        return HttpResponse(
+            'Errore: nessuno studio disponibile per modificare eventi agenda.',
+            status=400,
+            content_type='text/plain'
+        )
 
     evento = get_object_or_404(
         get_eventi_queryset(request),
@@ -216,7 +242,7 @@ def modifica_evento(request, evento_id):
 
             evento = form.save(commit=False)
 
-            if not request.user.is_superuser:
+            if not evento.studio:
                 evento.studio = studio
 
             evento.save()
