@@ -60,6 +60,7 @@ def carica_tipi_pratica(request, codice):
         'Sicurezza cantiere',
         'Accesso atti',
         'APE',
+        'ENEA',
         'Altro',
     ]
 
