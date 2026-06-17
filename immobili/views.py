@@ -227,9 +227,7 @@ def modifica_immobile(request, immobile_id):
 
         if form.is_valid():
 
-            immobile = form.save(commit=False)
-            immobile.studio = studio
-            immobile.save()
+            immobile = form.save()
 
             return redirect(
                 'dettaglio_immobile',
