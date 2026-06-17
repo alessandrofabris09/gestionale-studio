@@ -145,7 +145,7 @@ def nuova_scadenza(request):
                 )
 
                 EventoAgenda.objects.create(
-                    studio=studio,
+                    studio=scadenza.pratica.studio,
                     titolo=f'Scadenza: {scadenza.titolo}',
                     tipo='SCADENZA',
                     priorita='MEDIA',
