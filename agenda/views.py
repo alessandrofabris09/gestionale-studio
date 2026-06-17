@@ -597,126 +597,18 @@ def invia_agenda_email_cron(request, codice):
 
 
 def calendario_ics(request, codice):
+    """
+    Esportazione ICS temporaneamente disattivata.
 
-    if codice != CODICE_ICS_AGENDA:
+    Motivo:
+    la versione precedente esportava tutti gli eventi agenda di tutti gli studi
+    usando un unico codice globale. Prima del lancio multi-studio è più sicuro
+    disattivarla e riattivarla successivamente con un codice ICS separato
+    per ogni studio.
+    """
 
-        return redirect('/')
-
-    calendario = Calendar()
-
-    calendario.add(
-        'prodid',
-        '-//Studio Tecnico Cloud//Agenda Operativa//IT'
+    return HttpResponse(
+        'Calendario ICS temporaneamente non disponibile.',
+        status=403,
+        content_type='text/plain'
     )
-
-    calendario.add('version', '2.0')
-    calendario.add('calscale', 'GREGORIAN')
-    calendario.add('method', 'PUBLISH')
-
-    eventi = EventoAgenda.objects.filter(
-        completato=False
-    ).order_by(
-        'studio__nome',
-        'data',
-        'ora_inizio'
-    )
-
-    for evento_agenda in eventi:
-
-        evento = Event()
-
-        titolo = evento_agenda.titolo
-
-        if evento_agenda.studio:
-            titolo = f'{evento_agenda.studio.nome} - {titolo}'
-
-        evento.add(
-            'summary',
-            titolo
-        )
-
-        descrizione = ''
-
-        descrizione += (
-            f'Tipo: '
-            f'{evento_agenda.get_tipo_display()}\n'
-        )
-
-        descrizione += (
-            f'Priorità: '
-            f'{evento_agenda.get_priorita_display()}\n'
-        )
-
-        if evento_agenda.cliente:
-
-            descrizione += (
-                f'Cliente: '
-                f'{evento_agenda.cliente}\n'
-            )
-
-        if evento_agenda.pratica:
-
-            descrizione += (
-                f'Pratica: '
-                f'{evento_agenda.pratica}\n'
-            )
-
-        if evento_agenda.descrizione:
-
-            descrizione += (
-                f'Note: '
-                f'{evento_agenda.descrizione}\n'
-            )
-
-        evento.add(
-            'description',
-            descrizione
-        )
-
-        ora_inizio = (
-            evento_agenda.ora_inizio
-            if evento_agenda.ora_inizio
-            else time(9, 0)
-        )
-
-        ora_fine = (
-            evento_agenda.ora_fine
-            if evento_agenda.ora_fine
-            else time(10, 0)
-        )
-
-        inizio = datetime.combine(
-            evento_agenda.data,
-            ora_inizio
-        )
-
-        fine = datetime.combine(
-            evento_agenda.data,
-            ora_fine
-        )
-
-        evento.add('dtstart', inizio)
-        evento.add('dtend', fine)
-
-        evento.add(
-            'uid',
-            f'evento-agenda-{evento_agenda.id}@studiotecnicocloud'
-        )
-
-        evento.add(
-            'dtstamp',
-            datetime.now()
-        )
-
-        calendario.add_component(evento)
-
-    response = HttpResponse(
-        calendario.to_ical(),
-        content_type='text/calendar'
-    )
-
-    response[
-        'Content-Disposition'
-    ] = 'inline; filename="agenda_operativa.ics"'
-
-    return response
