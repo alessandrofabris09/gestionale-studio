@@ -219,9 +219,7 @@ def modifica_cliente(request, cliente_id):
 
         if form.is_valid():
 
-            cliente = form.save(commit=False)
-            cliente.studio = studio
-            cliente.save()
+            cliente = form.save()
 
             return redirect(
                 'dettaglio_cliente',
