@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.models import User
 
 from clienti.models import Cliente
 from pratiche.models import Pratica
@@ -38,3 +39,13 @@ class EventoAgendaForm(forms.ModelForm):
             self.fields['pratica'].queryset = Pratica.objects.filter(
                 studio=studio
             ).order_by('-id')
+
+            self.fields['assegnato_a'].queryset = User.objects.filter(
+                profilo_studio__studio=studio
+            ).order_by('username')
+
+        else:
+
+            self.fields['cliente'].queryset = Cliente.objects.none()
+            self.fields['pratica'].queryset = Pratica.objects.none()
+            self.fields['assegnato_a'].queryset = User.objects.none()
