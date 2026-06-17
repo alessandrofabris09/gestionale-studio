@@ -118,9 +118,6 @@ def nuova_parcella(request):
                 if parcella.pratica.studio != studio:
                     return accesso_negato(request)
 
-            if parcella.iva is None:
-                parcella.iva = 0
-
             parcella.save()
 
             Attivita.objects.create(
@@ -380,8 +377,11 @@ def pdf_parcella(request, parcella_id):
     tipo_documento = parcella.get_tipo_documento_display().upper()
 
     imponibile = parcella.imponibile
+    importo_cassa = parcella.importo_cassa
+    imponibile_iva = parcella.imponibile_iva
     importo_iva = parcella.importo_iva
-    totale = parcella.totale_con_iva
+    importo_bollo = parcella.importo_bollo_effettivo
+    totale = parcella.totale_documento
     pagato = parcella.importo_pagato or Decimal('0.00')
     saldo = parcella.saldo_residuo
 
@@ -798,8 +798,49 @@ def pdf_parcella(request, parcella_id):
 
         return y_pos - row_h
 
-    y = amount_row("Imponibile", euro(imponibile), y)
-    y = amount_row(f"IVA {percentuale(parcella.iva)}", euro(importo_iva), y)
+    y = amount_row(
+        "Compenso professionale",
+        euro(imponibile),
+        y
+    )
+
+    if parcella.applica_cassa:
+
+        y = amount_row(
+            f"Contributo cassa {percentuale(parcella.aliquota_cassa)} - {parcella.get_tipo_cassa_display()}",
+            euro(importo_cassa),
+            y
+        )
+
+        y = amount_row(
+            "Imponibile IVA",
+            euro(imponibile_iva),
+            y
+        )
+
+    if parcella.applica_iva:
+
+        y = amount_row(
+            f"IVA {percentuale(parcella.iva)}",
+            euro(importo_iva),
+            y
+        )
+
+    else:
+
+        y = amount_row(
+            "IVA non applicata",
+            euro(Decimal('0.00')),
+            y
+        )
+
+    if parcella.applica_bollo:
+
+        y = amount_row(
+            "Marca da bollo",
+            euro(importo_bollo),
+            y
+        )
 
     y = amount_row(
         "Totale documento",
@@ -809,7 +850,11 @@ def pdf_parcella(request, parcella_id):
         fill_color=colors.HexColor("#f3f4f6")
     )
 
-    y = amount_row("Importo pagato", euro(pagato), y)
+    y = amount_row(
+        "Importo pagato",
+        euro(pagato),
+        y
+    )
 
     y = amount_row(
         "Saldo residuo",
@@ -891,299 +936,6 @@ def pdf_parcella(request, parcella_id):
     p.drawRightString(
         width - margin_x,
         footer_y - 5,
-        f"{tipo_documento} ID {parcella.id}"
-    )
-
-    p.showPage()
-    p.save()
-
-    buffer.seek(0)
-
-    filename = (
-        f"{parcella.get_tipo_documento_display().lower()}_"
-        f"{parcella.numero_documento or parcella.id}.pdf"
-    )
-
-    filename = filename.replace(
-        " ",
-        "_"
-    ).replace(
-        "/",
-        "-"
-    )
-
-    return FileResponse(
-        buffer,
-        as_attachment=True,
-        filename=filename
-    )
-
-    def small_row(label, value, x, y_pos):
-        p.setFont("Helvetica-Bold", 8)
-        p.setFillColor(colors.HexColor("#6b7280"))
-        p.drawString(
-            x,
-            y_pos,
-            label.upper()
-        )
-
-        p.setFont("Helvetica", 10)
-        p.setFillColor(colors.HexColor("#111827"))
-        p.drawString(
-            x,
-            y_pos - 14,
-            testo(value)
-        )
-
-    col_w = (width - 2 * margin_x) / 4
-
-    small_row(
-        "Data emissione",
-        data_it(parcella.data_emissione),
-        margin_x,
-        y
-    )
-
-    small_row(
-        "Data scadenza",
-        data_it(parcella.data_scadenza),
-        margin_x + col_w,
-        y
-    )
-
-    small_row(
-        "Data pagamento",
-        data_it(parcella.data_pagamento),
-        margin_x + col_w * 2,
-        y
-    )
-
-    small_row(
-        "ID interno",
-        parcella.id,
-        margin_x + col_w * 3,
-        y
-    )
-
-    y -= 55
-
-    # =========================
-    # DESCRIZIONE PRESTAZIONE
-    # =========================
-
-    p.setFont("Helvetica-Bold", 12)
-    p.setFillColor(colors.HexColor("#111827"))
-    p.drawString(
-        margin_x,
-        y,
-        "Descrizione prestazione"
-    )
-
-    y -= 22
-
-    p.setStrokeColor(colors.HexColor("#e5e7eb"))
-    p.setFillColor(colors.HexColor("#f9fafb"))
-    p.roundRect(
-        margin_x,
-        y - 58,
-        width - 2 * margin_x,
-        70,
-        8,
-        fill=True,
-        stroke=True
-    )
-
-    p.setFillColor(colors.HexColor("#111827"))
-
-    draw_wrapped_text(
-        p,
-        parcella.descrizione,
-        margin_x + 14,
-        y - 12,
-        width - 2 * margin_x - 28,
-        font_name="Helvetica",
-        font_size=10,
-        line_height=13
-    )
-
-    y -= 95
-
-    # =========================
-    # TABELLA IMPORTI
-    # =========================
-
-    p.setFont("Helvetica-Bold", 12)
-    p.setFillColor(colors.HexColor("#111827"))
-    p.drawString(
-        margin_x,
-        y,
-        "Riepilogo economico"
-    )
-
-    y -= 22
-
-    table_x = margin_x
-    table_w = width - 2 * margin_x
-    row_h = 28
-
-    p.setFillColor(colors.HexColor("#111827"))
-    p.rect(
-        table_x,
-        y - row_h,
-        table_w,
-        row_h,
-        fill=True,
-        stroke=False
-    )
-
-    p.setFillColor(colors.white)
-    p.setFont("Helvetica-Bold", 9)
-    p.drawString(table_x + 12, y - 18, "Voce")
-    p.drawRightString(table_x + table_w - 12, y - 18, "Importo")
-
-    y -= row_h
-
-    def amount_row(label, value, y_pos, bold=False, fill_color=None):
-
-        if fill_color:
-            p.setFillColor(fill_color)
-            p.rect(
-                table_x,
-                y_pos - row_h,
-                table_w,
-                row_h,
-                fill=True,
-                stroke=False
-            )
-
-        p.setStrokeColor(colors.HexColor("#e5e7eb"))
-        p.line(
-            table_x,
-            y_pos - row_h,
-            table_x + table_w,
-            y_pos - row_h
-        )
-
-        p.setFillColor(colors.HexColor("#111827"))
-
-        if bold:
-            p.setFont("Helvetica-Bold", 10)
-        else:
-            p.setFont("Helvetica", 10)
-
-        p.drawString(
-            table_x + 12,
-            y_pos - 18,
-            label
-        )
-
-        p.drawRightString(
-            table_x + table_w - 12,
-            y_pos - 18,
-            value
-        )
-
-        return y_pos - row_h
-
-    y = amount_row(
-        "Imponibile",
-        euro(imponibile),
-        y
-    )
-
-    y = amount_row(
-        f"IVA {parcella.iva}%",
-        euro(importo_iva),
-        y
-    )
-
-    y = amount_row(
-        "Totale documento",
-        euro(totale),
-        y,
-        bold=True,
-        fill_color=colors.HexColor("#f3f4f6")
-    )
-
-    y = amount_row(
-        "Importo pagato",
-        euro(pagato),
-        y
-    )
-
-    y = amount_row(
-        "Saldo residuo",
-        euro(saldo),
-        y,
-        bold=True,
-        fill_color=colors.HexColor("#ecfdf5")
-    )
-
-    y -= 35
-
-    # =========================
-    # NOTE
-    # =========================
-
-    p.setFont("Helvetica-Bold", 12)
-    p.setFillColor(colors.HexColor("#111827"))
-    p.drawString(
-        margin_x,
-        y,
-        "Note"
-    )
-
-    y -= 22
-
-    note = parcella.note if parcella.note else "Nessuna nota inserita."
-
-    p.setFillColor(colors.HexColor("#f9fafb"))
-    p.roundRect(
-        margin_x,
-        y - 58,
-        width - 2 * margin_x,
-        70,
-        8,
-        fill=True,
-        stroke=True
-    )
-
-    p.setFillColor(colors.HexColor("#374151"))
-    draw_wrapped_text(
-        p,
-        note,
-        margin_x + 14,
-        y - 14,
-        width - 2 * margin_x - 28,
-        font_name="Helvetica",
-        font_size=9,
-        line_height=12
-    )
-
-    # =========================
-    # FOOTER
-    # =========================
-
-    p.setStrokeColor(colors.HexColor("#e5e7eb"))
-    p.line(
-        margin_x,
-        45,
-        width - margin_x,
-        45
-    )
-
-    p.setFillColor(colors.HexColor("#6b7280"))
-    p.setFont("Helvetica", 8)
-
-    p.drawString(
-        margin_x,
-        30,
-        "Documento generato automaticamente da Studio Tecnico Cloud"
-    )
-
-    p.drawRightString(
-        width - margin_x,
-        30,
         f"{tipo_documento} ID {parcella.id}"
     )
 
