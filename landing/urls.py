@@ -4,7 +4,7 @@ from .views import (
     home,
     privacy_policy,
     termini_utilizzo,
-    carica_workflow_base,
+    carica_workflow_professionali,
 )
 
 
@@ -16,8 +16,8 @@ urlpatterns = [
     path('termini/', termini_utilizzo, name='termini_utilizzo'),
 
     path(
-        'carica-workflow-base/<str:codice>/',
-        carica_workflow_base,
-        name='carica_workflow_base'
+        'carica-workflow-professionali/<str:codice>/',
+        carica_workflow_professionali,
+        name='carica_workflow_professionali'
     ),
 ]
