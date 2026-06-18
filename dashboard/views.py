@@ -495,3 +495,6 @@ def backup_manuale(request):
             'backup_folder': backup_folder
         }
     )
+
+def privacy_policy(request):
+    return render(request, "dashboard/privacy.html")
