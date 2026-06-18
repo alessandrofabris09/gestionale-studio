@@ -1,132 +1,490 @@
-{% extends "base/base.html" %}
+{% extends 'base/base.html' %}
 
-{% block title %}Ore pratica{% endblock %}
+{% block title %}
+Ore lavorate
+{% endblock %}
+
+{% block page_title %}
+Ore lavorate
+{% endblock %}
 
 {% block content %}
 
-<div class="container mt-4">
+<style>
+    .page-header{
+        background:white;
+        padding:28px;
+        border-radius:18px;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
+        margin-bottom:25px;
+    }
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    .page-header h1{
+        margin:0 0 8px 0;
+        font-size:38px;
+        color:#111827;
+        display:flex;
+        align-items:center;
+        gap:12px;
+    }
+
+    .page-header p{
+        margin:0;
+        color:#6b7280;
+        font-size:18px;
+    }
+
+    .page-actions{
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;
+        margin-bottom:25px;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:10px;
+        text-decoration:none;
+        font-weight:bold;
+        font-size:15px;
+        border:none;
+        cursor:pointer;
+    }
+
+    .btn:hover{
+        background:#374151;
+        color:white;
+    }
+
+    .btn-primary{
+        background:#2563eb;
+    }
+
+    .btn-primary:hover{
+        background:#1d4ed8;
+    }
+
+    .btn-light{
+        background:white;
+        color:#111827;
+        border:1px solid #d1d5db;
+    }
+
+    .btn-light:hover{
+        background:#f3f4f6;
+        color:#111827;
+    }
+
+    .summary-grid{
+        display:grid;
+        grid-template-columns:repeat(3, 1fr);
+        gap:18px;
+        margin-bottom:25px;
+    }
+
+    .summary-card{
+        background:white;
+        padding:24px;
+        border-radius:18px;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:18px;
+    }
+
+    .summary-label{
+        color:#6b7280;
+        font-size:15px;
+        font-weight:bold;
+        margin-bottom:8px;
+    }
+
+    .summary-value{
+        font-size:30px;
+        font-weight:bold;
+        color:#111827;
+    }
+
+    .summary-icon{
+        width:54px;
+        height:54px;
+        border-radius:16px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:24px;
+        background:#eef2ff;
+        color:#3730a3;
+        flex-shrink:0;
+    }
+
+    .summary-icon.money{
+        background:#dcfce7;
+        color:#166534;
+    }
+
+    .summary-icon.warn{
+        background:#fef3c7;
+        color:#92400e;
+    }
+
+    .card{
+        background:white;
+        padding:28px;
+        border-radius:18px;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
+        margin-bottom:30px;
+    }
+
+    .card h2{
+        margin-bottom:20px;
+        color:#111827;
+        display:flex;
+        align-items:center;
+        gap:10px;
+    }
+
+    .table-wrap{
+        width:100%;
+        overflow-x:auto;
+    }
+
+    table{
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    th{
+        text-align:left;
+        padding:14px 12px;
+        color:#6b7280;
+        font-size:14px;
+        border-bottom:2px solid #e5e7eb;
+        white-space:nowrap;
+    }
+
+    td{
+        padding:16px 12px;
+        border-bottom:1px solid #e5e7eb;
+        color:#111827;
+        vertical-align:top;
+    }
+
+    tr:last-child td{
+        border-bottom:none;
+    }
+
+    .text-end{
+        text-align:right;
+    }
+
+    .item-title{
+        font-weight:bold;
+        color:#111827;
+        margin-bottom:4px;
+    }
+
+    .muted{
+        color:#6b7280;
+        font-size:14px;
+    }
+
+    .badge{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:7px 12px;
+        border-radius:999px;
+        font-size:13px;
+        font-weight:bold;
+        white-space:nowrap;
+        background:#f3f4f6;
+        color:#374151;
+        margin-right:6px;
+        margin-bottom:6px;
+    }
+
+    .badge-ok{
+        background:#dcfce7;
+        color:#166534;
+    }
+
+    .badge-warn{
+        background:#fef3c7;
+        color:#92400e;
+    }
+
+    .badge-type{
+        background:#eef2ff;
+        color:#3730a3;
+    }
+
+    .badge-muted{
+        background:#f3f4f6;
+        color:#4b5563;
+    }
+
+    .action-btn{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:8px 12px;
+        border-radius:8px;
+        text-decoration:none;
+        font-size:14px;
+        font-weight:bold;
+        color:white;
+        white-space:nowrap;
+        background:#2563eb;
+        margin:2px;
+    }
+
+    .action-btn:hover{
+        background:#1d4ed8;
+        color:white;
+    }
+
+    .delete-small{
+        background:#dc2626;
+    }
+
+    .delete-small:hover{
+        background:#b91c1c;
+    }
+
+    .empty-state{
+        text-align:center;
+        padding:45px 20px;
+        color:#6b7280;
+    }
+
+    .empty-state i{
+        font-size:44px;
+        color:#d1d5db;
+        margin-bottom:16px;
+    }
+
+    .empty-state h3{
+        color:#111827;
+        margin-bottom:8px;
+    }
+
+    @media(max-width:1000px){
+        .summary-grid{
+            grid-template-columns:1fr;
+        }
+
+        .page-header h1{
+            font-size:32px;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <h1>
+        <i class="fa-solid fa-clock"></i>
+        Ore lavorate
+    </h1>
+
+    <p>
+        Pratica:
+        <strong>{{ pratica.oggetto }}</strong>
+    </p>
+</div>
+
+<div class="page-actions">
+
+    <a class="btn btn-light" href="{% url 'dettaglio_pratica' pratica.id %}">
+        <i class="fa-solid fa-arrow-left"></i>
+        Torna alla pratica
+    </a>
+
+    <a class="btn btn-primary" href="{% url 'nuova_voce_ora' pratica.id %}">
+        <i class="fa-solid fa-plus"></i>
+        Nuova voce ore
+    </a>
+
+</div>
+
+<div class="summary-grid">
+
+    <div class="summary-card">
         <div>
-            <h1 class="h3 mb-1">Ore lavorate</h1>
-            <p class="text-muted mb-0">
-                Pratica: {{ pratica.oggetto }}
+            <div class="summary-label">Totale ore</div>
+            <div class="summary-value">{{ totale_ore }}</div>
+        </div>
+
+        <div class="summary-icon">
+            <i class="fa-solid fa-hourglass-half"></i>
+        </div>
+    </div>
+
+    <div class="summary-card">
+        <div>
+            <div class="summary-label">Valore fatturabile</div>
+            <div class="summary-value">€ {{ totale_importo|floatformat:2 }}</div>
+        </div>
+
+        <div class="summary-icon money">
+            <i class="fa-solid fa-euro-sign"></i>
+        </div>
+    </div>
+
+    <div class="summary-card">
+        <div>
+            <div class="summary-label">Da fatturare</div>
+            <div class="summary-value">€ {{ totale_non_fatturato|floatformat:2 }}</div>
+        </div>
+
+        <div class="summary-icon warn">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+        </div>
+    </div>
+
+</div>
+
+<div class="card">
+
+    <h2>
+        <i class="fa-solid fa-list-check"></i>
+        Dettaglio attività registrate
+    </h2>
+
+    {% if voci %}
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Utente</th>
+                        <th>Attività</th>
+                        <th>Descrizione</th>
+                        <th class="text-end">Ore</th>
+                        <th class="text-end">Tariffa</th>
+                        <th class="text-end">Importo</th>
+                        <th>Stato</th>
+                        <th class="text-end">Azioni</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for voce in voci %}
+                        <tr>
+                            <td>
+                                <strong>{{ voce.data|date:"d/m/Y" }}</strong>
+                            </td>
+
+                            <td>
+                                {% if voce.utente %}
+                                    {{ voce.utente.get_full_name|default:voce.utente.username }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <span class="badge badge-type">
+                                    <i class="fa-solid fa-tag"></i>
+                                    {{ voce.get_tipo_attivita_display }}
+                                </span>
+                            </td>
+
+                            <td>
+                                {% if voce.descrizione %}
+                                    <div class="item-title">{{ voce.descrizione|truncatechars:90 }}</div>
+                                {% else %}
+                                    <span class="muted">Nessuna descrizione</span>
+                                {% endif %}
+
+                                {% if voce.note %}
+                                    <div class="muted">
+                                        Note: {{ voce.note|truncatechars:80 }}
+                                    </div>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-end">
+                                <strong>{{ voce.ore }}</strong>
+                            </td>
+
+                            <td class="text-end">
+                                € {{ voce.tariffa_oraria|floatformat:2 }}
+                            </td>
+
+                            <td class="text-end">
+                                <strong>€ {{ voce.importo|floatformat:2 }}</strong>
+                            </td>
+
+                            <td>
+                                {% if voce.fatturabile %}
+                                    <span class="badge badge-ok">
+                                        <i class="fa-solid fa-check"></i>
+                                        Fatturabile
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-muted">
+                                        <i class="fa-solid fa-ban"></i>
+                                        Non fatturabile
+                                    </span>
+                                {% endif %}
+
+                                {% if voce.inserita_in_parcella %}
+                                    <span class="badge badge-type">
+                                        <i class="fa-solid fa-file-invoice"></i>
+                                        In parcella
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-warn">
+                                        <i class="fa-solid fa-clock"></i>
+                                        Da fatturare
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-end">
+                                <a class="action-btn" href="{% url 'modifica_voce_ora' voce.id %}">
+                                    <i class="fa-solid fa-pen"></i>
+                                    Modifica
+                                </a>
+
+                                <a class="action-btn delete-small" href="{% url 'elimina_voce_ora' voce.id %}">
+                                    <i class="fa-solid fa-trash"></i>
+                                    Elimina
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+
+    {% else %}
+
+        <div class="empty-state">
+            <i class="fa-regular fa-clock"></i>
+
+            <h3>Nessuna voce ore inserita</h3>
+
+            <p>
+                Registra le attività svolte sulla pratica per tenere sotto controllo
+                il tempo impiegato e il valore da fatturare.
             </p>
-        </div>
 
-        <div>
-            <a href="{% url 'dettaglio_pratica' pratica.id %}" class="btn btn-outline-secondary">
-                Torna alla pratica
-            </a>
-
-            <a href="{% url 'nuova_voce_ora' pratica.id %}" class="btn btn-primary">
-                Nuova voce ore
+            <a class="btn btn-primary" href="{% url 'nuova_voce_ora' pratica.id %}">
+                <i class="fa-solid fa-plus"></i>
+                Inserisci prima voce ore
             </a>
         </div>
-    </div>
 
-    <div class="row mb-4">
-
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted">Totale ore</div>
-                    <div class="h4 mb-0">{{ totale_ore }}</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted">Valore fatturabile</div>
-                    <div class="h4 mb-0">€ {{ totale_importo|floatformat:2 }}</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted">Da fatturare</div>
-                    <div class="h4 mb-0">€ {{ totale_non_fatturato|floatformat:2 }}</div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="card shadow-sm">
-        <div class="card-body">
-
-            {% if voci %}
-
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Utente</th>
-                                <th>Attività</th>
-                                <th>Descrizione</th>
-                                <th class="text-end">Ore</th>
-                                <th class="text-end">Tariffa</th>
-                                <th class="text-end">Importo</th>
-                                <th>Stato</th>
-                                <th class="text-end">Azioni</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for voce in voci %}
-                                <tr>
-                                    <td>{{ voce.data|date:"d/m/Y" }}</td>
-                                    <td>
-                                        {% if voce.utente %}
-                                            {{ voce.utente.get_full_name|default:voce.utente.username }}
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ voce.get_tipo_attivita_display }}</td>
-                                    <td>{{ voce.descrizione|default:"-"|truncatechars:80 }}</td>
-                                    <td class="text-end">{{ voce.ore }}</td>
-                                    <td class="text-end">€ {{ voce.tariffa_oraria|floatformat:2 }}</td>
-                                    <td class="text-end">€ {{ voce.importo|floatformat:2 }}</td>
-                                    <td>
-                                        {% if voce.fatturabile %}
-                                            <span class="badge bg-success">Fatturabile</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">Non fatturabile</span>
-                                        {% endif %}
-
-                                        {% if voce.inserita_in_parcella %}
-                                            <span class="badge bg-primary">In parcella</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-end">
-                                        <a href="{% url 'modifica_voce_ora' voce.id %}" class="btn btn-sm btn-outline-primary">
-                                            Modifica
-                                        </a>
-                                        <a href="{% url 'elimina_voce_ora' voce.id %}" class="btn btn-sm btn-outline-danger">
-                                            Elimina
-                                        </a>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-            {% else %}
-
-                <p class="text-muted mb-0">
-                    Nessuna voce ore inserita per questa pratica.
-                </p>
-
-            {% endif %}
-
-        </div>
-    </div>
+    {% endif %}
 
 </div>
 
