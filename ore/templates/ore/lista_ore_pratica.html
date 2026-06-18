@@ -80,6 +80,14 @@ Ore lavorate
         color:#111827;
     }
 
+    .btn-success{
+        background:#16a34a;
+    }
+
+    .btn-success:hover{
+        background:#15803d;
+    }
+
     .summary-grid{
         display:grid;
         grid-template-columns:repeat(3, 1fr);
@@ -309,6 +317,13 @@ Ore lavorate
         <i class="fa-solid fa-plus"></i>
         Nuova voce ore
     </a>
+
+    {% if totale_non_fatturato > 0 %}
+    <a class="btn" href="{% url 'genera_parcella_da_ore' pratica.id %}">
+        <i class="fa-solid fa-file-invoice-dollar"></i>
+        Genera parcella da ore
+    </a>
+{% endif %}
 
 </div>
 
