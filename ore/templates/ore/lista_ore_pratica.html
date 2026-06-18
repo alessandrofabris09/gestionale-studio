@@ -54,6 +54,7 @@ Ore lavorate
         font-size:15px;
         border:none;
         cursor:pointer;
+        white-space:nowrap;
     }
 
     .btn:hover{
@@ -82,10 +83,12 @@ Ore lavorate
 
     .btn-success{
         background:#16a34a;
+        color:white;
     }
 
     .btn-success:hover{
         background:#15803d;
+        color:white;
     }
 
     .summary-grid{
@@ -192,6 +195,10 @@ Ore lavorate
         text-align:right;
     }
 
+    .nowrap{
+        white-space:nowrap;
+    }
+
     .item-title{
         font-weight:bold;
         color:#111827;
@@ -265,8 +272,14 @@ Ore lavorate
     .delete-small:hover{
         background:#b91c1c;
     }
-    
-    .empty-state i{
+
+    .empty-state{
+        text-align:center;
+        padding:45px 20px;
+        color:#6b7280;
+    }
+
+    .empty-state > i{
         font-size:44px;
         color:#d1d5db;
         margin-bottom:16px;
@@ -281,6 +294,12 @@ Ore lavorate
     .empty-state h3{
         color:#111827;
         margin-bottom:8px;
+    }
+
+    .empty-state p{
+        font-size:16px;
+        line-height:1.6;
+        margin-bottom:20px;
     }
 
     @media(max-width:1000px){
@@ -319,11 +338,11 @@ Ore lavorate
     </a>
 
     {% if totale_non_fatturato > 0 %}
-    <a class="btn" href="{% url 'genera_parcella_da_ore' pratica.id %}">
-        <i class="fa-solid fa-file-invoice-dollar"></i>
-        Genera parcella da ore
-    </a>
-{% endif %}
+        <a class="btn btn-success" href="{% url 'genera_parcella_da_ore' pratica.id %}">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            Genera parcella da ore
+        </a>
+    {% endif %}
 
 </div>
 
@@ -381,9 +400,9 @@ Ore lavorate
                         <th>Utente</th>
                         <th>Attività</th>
                         <th>Descrizione</th>
-                        <th class="text-end">Ore</th>
-                        <th class="text-end">Tariffa</th>
-                        <th class="text-end">Importo</th>
+                        <th class="text-end nowrap">Ore</th>
+                        <th class="text-end nowrap">Tariffa</th>
+                        <th class="text-end nowrap">Importo</th>
                         <th>Stato</th>
                         <th class="text-end">Azioni</th>
                     </tr>
@@ -413,7 +432,9 @@ Ore lavorate
 
                             <td>
                                 {% if voce.descrizione %}
-                                    <div class="item-title">{{ voce.descrizione|truncatechars:90 }}</div>
+                                    <div class="item-title">
+                                        {{ voce.descrizione|truncatechars:90 }}
+                                    </div>
                                 {% else %}
                                     <span class="muted">Nessuna descrizione</span>
                                 {% endif %}
@@ -425,15 +446,15 @@ Ore lavorate
                                 {% endif %}
                             </td>
 
-                            <td class="text-end">
+                            <td class="text-end nowrap">
                                 <strong>{{ voce.ore }}</strong>
                             </td>
 
-                            <td class="text-end">
+                            <td class="text-end nowrap">
                                 € {{ voce.tariffa_oraria|floatformat:2 }}
                             </td>
 
-                            <td class="text-end">
+                            <td class="text-end nowrap">
                                 <strong>€ {{ voce.importo|floatformat:2 }}</strong>
                             </td>
 
