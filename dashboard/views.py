@@ -498,3 +498,6 @@ def backup_manuale(request):
 
 def privacy_policy(request):
     return render(request, "dashboard/privacy.html")
+
+def cookie_policy(request):
+    return render(request, "dashboard/cookie.html")

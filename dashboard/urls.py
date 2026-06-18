@@ -12,4 +12,5 @@ urlpatterns = [
     path('ricerca/', ricerca_globale, name='ricerca_globale'),
     path('backup/', backup_manuale, name='backup_manuale'),
     path("privacy-policy/", views.privacy_policy, name="privacy_policy"),
+    path("cookie-policy/", views.cookie_policy, name="cookie_policy"),
 ]
