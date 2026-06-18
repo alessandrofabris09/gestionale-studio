@@ -30,7 +30,7 @@
 
         .container{
             width:100%;
-            max-width:720px;
+            max-width:760px;
             background:white;
             border-radius:18px;
             box-shadow:0 18px 45px rgba(0,0,0,0.12);
@@ -76,9 +76,18 @@
             font-size:15px;
         }
 
+        input:focus{
+            outline:none;
+            border-color:#2563eb;
+            box-shadow:0 0 0 3px rgba(37,99,235,0.12);
+        }
+
         input[type="checkbox"]{
             width:auto;
-            margin-right:8px;
+            padding:0;
+            margin:0;
+            transform:scale(1.08);
+            accent-color:#2563eb;
         }
 
         .helptext{
@@ -98,11 +107,16 @@
         .legal-box{
             background:#f9fafb;
             border:1px solid #e5e7eb;
-            border-radius:12px;
-            padding:16px;
-            margin:20px 0;
-            font-size:14px;
+            border-radius:14px;
+            padding:20px 22px;
+            margin:24px 0 28px;
             color:#4b5563;
+        }
+
+        .legal-box p{
+            margin-bottom:16px;
+            font-size:15px;
+            color:#374151;
         }
 
         .legal-box a{
@@ -111,17 +125,46 @@
             text-decoration:none;
         }
 
+        .legal-box a:hover{
+            color:#1d4ed8;
+            text-decoration:underline;
+        }
+
+        .legal-check{
+            display:flex;
+            align-items:flex-start;
+            gap:10px;
+            margin:12px 0;
+            font-weight:bold;
+            color:#1f2937;
+            line-height:1.45;
+        }
+
+        .legal-check input{
+            margin-top:4px;
+            flex-shrink:0;
+        }
+
+        .legal-check span{
+            display:block;
+        }
+
+        .legal-error{
+            margin-top:4px;
+        }
+
         .btn{
             display:inline-block;
             width:100%;
             border:0;
             background:#2563eb;
             color:white;
-            padding:14px 18px;
+            padding:15px 18px;
             border-radius:10px;
             font-size:16px;
             font-weight:bold;
             cursor:pointer;
+            transition:0.2s;
         }
 
         .btn:hover{
@@ -139,6 +182,29 @@
             color:#2563eb;
             font-weight:bold;
             text-decoration:none;
+        }
+
+        .footer a:hover{
+            text-decoration:underline;
+        }
+
+        @media(max-width:700px){
+            body{
+                padding:18px;
+                align-items:flex-start;
+            }
+
+            .header{
+                padding:28px 24px;
+            }
+
+            .content{
+                padding:28px 24px;
+            }
+
+            .header h1{
+                font-size:26px;
+            }
         }
     </style>
 </head>
@@ -212,43 +278,36 @@
                 <div class="legal-box">
                     <p>
                         Prima di creare l’account, ti invitiamo a consultare
-                        <a href="/privacy-policy/" target="_blank">
+                        <a href="/privacy-policy/" target="_blank" rel="noopener">
                             l’Informativa Privacy
                         </a>
                         e i
-                        <a href="/termini/" target="_blank">
+                        <a href="/termini/" target="_blank" rel="noopener">
                             Termini di utilizzo
                         </a>.
                     </p>
 
+                    <div class="legal-error">
+                        {{ form.accetta_privacy.errors }}
+                    </div>
+
                     <label class="legal-check">
-                        <input type="checkbox" name="privacy_accettata" required>
+                        {{ form.accetta_privacy }}
                         <span>
                             Dichiaro di aver letto l’Informativa Privacy.
                         </span>
                     </label>
 
+                    <div class="legal-error">
+                        {{ form.accetta_termini.errors }}
+                    </div>
+
                     <label class="legal-check">
-                        <input type="checkbox" name="termini_accettati" required>
+                        {{ form.accetta_termini }}
                         <span>
                             Dichiaro di accettare i Termini di utilizzo del servizio.
                         </span>
                     </label>
-                </div>
-                
-                </p>
-
-                    <p>
-                        {{ form.accetta_privacy.errors }}
-                        {{ form.accetta_privacy }}
-                        {{ form.accetta_privacy.label_tag }}
-                    </p>
-
-                    <p>
-                        {{ form.accetta_termini.errors }}
-                        {{ form.accetta_termini }}
-                        {{ form.accetta_termini.label_tag }}
-                    </p>
                 </div>
 
                 <button type="submit" class="btn">
