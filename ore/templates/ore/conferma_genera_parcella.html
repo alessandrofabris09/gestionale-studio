@@ -1,0 +1,185 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Genera parcella da ore
+{% endblock %}
+
+{% block page_title %}
+Genera parcella da ore
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .card{
+        background:white;
+        padding:28px;
+        border-radius:18px;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
+        margin-bottom:30px;
+        max-width:1000px;
+    }
+
+    .card h1{
+        margin:0 0 10px 0;
+        color:#111827;
+        font-size:34px;
+        display:flex;
+        align-items:center;
+        gap:12px;
+    }
+
+    .muted{
+        color:#6b7280;
+        font-size:16px;
+        line-height:1.6;
+    }
+
+    .summary-grid{
+        display:grid;
+        grid-template-columns:repeat(2, 1fr);
+        gap:18px;
+        margin:24px 0;
+    }
+
+    .summary-card{
+        background:#f9fafb;
+        border:1px solid #e5e7eb;
+        border-radius:16px;
+        padding:22px;
+    }
+
+    .summary-label{
+        color:#6b7280;
+        font-size:14px;
+        font-weight:bold;
+        margin-bottom:8px;
+    }
+
+    .summary-value{
+        color:#111827;
+        font-size:30px;
+        font-weight:bold;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:10px;
+        text-decoration:none;
+        font-weight:bold;
+        font-size:15px;
+        border:none;
+        cursor:pointer;
+    }
+
+    .btn:hover{
+        background:#374151;
+        color:white;
+    }
+
+    .btn-primary{
+        background:#2563eb;
+    }
+
+    .btn-primary:hover{
+        background:#1d4ed8;
+    }
+
+    .btn-light{
+        background:white;
+        color:#111827;
+        border:1px solid #d1d5db;
+    }
+
+    .btn-light:hover{
+        background:#f3f4f6;
+        color:#111827;
+    }
+
+    .actions{
+        display:flex;
+        justify-content:space-between;
+        gap:12px;
+        flex-wrap:wrap;
+        border-top:1px solid #e5e7eb;
+        padding-top:22px;
+        margin-top:22px;
+    }
+
+    .warning{
+        background:#fef3c7;
+        color:#92400e;
+        border:1px solid #fde68a;
+        padding:16px;
+        border-radius:14px;
+        margin-top:18px;
+        line-height:1.5;
+    }
+
+    @media(max-width:800px){
+        .summary-grid{
+            grid-template-columns:1fr;
+        }
+    }
+</style>
+
+<div class="card">
+
+    <h1>
+        <i class="fa-solid fa-file-invoice-dollar"></i>
+        Genera parcella da ore
+    </h1>
+
+    <p class="muted">
+        Verrà creata una nuova parcella collegata alla pratica
+        <strong>{{ pratica.oggetto }}</strong>, usando le ore fatturabili
+        non ancora inserite in parcella.
+    </p>
+
+    <div class="summary-grid">
+
+        <div class="summary-card">
+            <div class="summary-label">Ore da fatturare</div>
+            <div class="summary-value">{{ totale_ore }}</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">Importo da riportare in parcella</div>
+            <div class="summary-value">€ {{ totale_importo|floatformat:2 }}</div>
+        </div>
+
+    </div>
+
+    <div class="warning">
+        Dopo la generazione, queste voci ore saranno segnate come
+        <strong>già inserite in parcella</strong>, così non verranno fatturate due volte.
+        La parcella creata potrà comunque essere modificata prima di generare il PDF.
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="actions">
+
+            <a href="{% url 'lista_ore_pratica' pratica.id %}" class="btn btn-light">
+                <i class="fa-solid fa-arrow-left"></i>
+                Annulla
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                Crea parcella
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

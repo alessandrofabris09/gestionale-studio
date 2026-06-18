@@ -3,9 +3,16 @@ from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
 
 from pratiche.models import Pratica
 from studi.utils import get_studio_utente
+from studi.permessi import (
+    puo_modificare_parcelle,
+)
+
+from attivita.models import Attivita
+from parcelle.models import Parcella
 
 from .forms import VoceOraForm
 from .models import VoceOra
@@ -35,10 +42,23 @@ def get_pratica_studio(request, pratica_id):
     return studio, pratica
 
 
+def valore_ore_expr():
+    return ExpressionWrapper(
+        F('ore') * F('tariffa_oraria'),
+        output_field=DecimalField(
+            max_digits=12,
+            decimal_places=2
+        )
+    )
+
+
 @login_required
 def lista_ore_pratica(request, pratica_id):
 
-    studio, pratica = get_pratica_studio(request, pratica_id)
+    studio, pratica = get_pratica_studio(
+        request,
+        pratica_id
+    )
 
     if not studio:
         return redirect('login')
@@ -54,10 +74,7 @@ def lista_ore_pratica(request, pratica_id):
         totale=Sum('ore')
     )['totale'] or Decimal('0.00')
 
-    valore_expr = ExpressionWrapper(
-        F('ore') * F('tariffa_oraria'),
-        output_field=DecimalField(max_digits=12, decimal_places=2)
-    )
+    valore_expr = valore_ore_expr()
 
     totale_importo = voci.filter(
         fatturabile=True
@@ -72,6 +89,13 @@ def lista_ore_pratica(request, pratica_id):
         totale=Sum(valore_expr)
     )['totale'] or Decimal('0.00')
 
+    ore_non_fatturate = voci.filter(
+        fatturabile=True,
+        inserita_in_parcella=False
+    ).aggregate(
+        totale=Sum('ore')
+    )['totale'] or Decimal('0.00')
+
     return render(
         request,
         'ore/lista_ore_pratica.html',
@@ -81,6 +105,7 @@ def lista_ore_pratica(request, pratica_id):
             'totale_ore': totale_ore,
             'totale_importo': totale_importo,
             'totale_non_fatturato': totale_non_fatturato,
+            'ore_non_fatturate': ore_non_fatturate,
         }
     )
 
@@ -88,7 +113,10 @@ def lista_ore_pratica(request, pratica_id):
 @login_required
 def nuova_voce_ora(request, pratica_id):
 
-    studio, pratica = get_pratica_studio(request, pratica_id)
+    studio, pratica = get_pratica_studio(
+        request,
+        pratica_id
+    )
 
     if not studio:
         return redirect('login')
@@ -103,6 +131,17 @@ def nuova_voce_ora(request, pratica_id):
             voce.pratica = pratica
             voce.utente = request.user
             voce.save()
+
+            Attivita.objects.create(
+                pratica=pratica,
+                utente=request.user,
+                tipo='ALTRO',
+                descrizione=(
+                    f'Inserita voce ore: '
+                    f'{voce.get_tipo_attivita_display()} - '
+                    f'{voce.ore} ore'
+                )
+            )
 
             return redirect(
                 'lista_ore_pratica',
@@ -151,6 +190,13 @@ def modifica_voce_ora(request, voce_id):
 
             form.save()
 
+            Attivita.objects.create(
+                pratica=pratica,
+                utente=request.user,
+                tipo='MODIFICA',
+                descrizione='Modificata voce ore lavorate'
+            )
+
             return redirect(
                 'lista_ore_pratica',
                 pratica_id=pratica.id
@@ -191,6 +237,13 @@ def elimina_voce_ora(request, voce_id):
 
         voce.delete()
 
+        Attivita.objects.create(
+            pratica=pratica,
+            utente=request.user,
+            tipo='ELIMINAZIONE',
+            descrizione='Eliminata voce ore lavorate'
+        )
+
         return redirect(
             'lista_ore_pratica',
             pratica_id=pratica.id
@@ -202,5 +255,92 @@ def elimina_voce_ora(request, voce_id):
         {
             'voce': voce,
             'pratica': pratica,
+        }
+    )
+
+
+@login_required
+def genera_parcella_da_ore(request, pratica_id):
+
+    if not puo_modificare_parcelle(request):
+        return accesso_negato(request)
+
+    studio, pratica = get_pratica_studio(
+        request,
+        pratica_id
+    )
+
+    if not studio:
+        return redirect('login')
+
+    voci_da_fatturare = VoceOra.objects.filter(
+        pratica=pratica,
+        fatturabile=True,
+        inserita_in_parcella=False
+    )
+
+    valore_expr = valore_ore_expr()
+
+    totale_importo = voci_da_fatturare.aggregate(
+        totale=Sum(valore_expr)
+    )['totale'] or Decimal('0.00')
+
+    totale_ore = voci_da_fatturare.aggregate(
+        totale=Sum('ore')
+    )['totale'] or Decimal('0.00')
+
+    if totale_importo <= 0:
+
+        return render(
+            request,
+            'ore/nessuna_ora_da_fatturare.html',
+            {
+                'pratica': pratica,
+            }
+        )
+
+    if request.method == 'POST':
+
+        descrizione = (
+            f'Compenso professionale per attività svolte sulla pratica '
+            f'"{pratica.oggetto}", come da consuntivo ore lavorate. '
+            f'Totale ore fatturabili: {totale_ore}.'
+        )
+
+        parcella = Parcella.objects.create(
+            pratica=pratica,
+            tipo_documento='PARCELLA',
+            descrizione=descrizione,
+            importo=totale_importo,
+            data_emissione=timezone.now().date(),
+        )
+
+        voci_da_fatturare.update(
+            inserita_in_parcella=True
+        )
+
+        Attivita.objects.create(
+            pratica=pratica,
+            utente=request.user,
+            tipo='PARCELLA',
+            descrizione=(
+                f'Generata parcella da consuntivo ore: '
+                f'{parcella.numero_documento}'
+            )
+        )
+
+        return redirect(
+            'modifica_parcella',
+            parcella_id=parcella.id
+        )
+
+    return render(
+        request,
+        'ore/conferma_genera_parcella.html',
+        {
+            'pratica': pratica,
+            'totale_importo': totale_importo,
+            'totale_ore': totale_ore,
+            'voci_da_fatturare': voci_da_fatturare,
         }
     )

@@ -15,6 +15,11 @@ urlpatterns = [
         name='nuova_voce_ora'
     ),
     path(
+        'pratica/<int:pratica_id>/genera-parcella/',
+        views.genera_parcella_da_ore,
+        name='genera_parcella_da_ore'
+    ),
+    path(
         'voce/<int:voce_id>/modifica/',
         views.modifica_voce_ora,
         name='modifica_voce_ora'
