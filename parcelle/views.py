@@ -368,7 +368,6 @@ def pdf_parcella(request, parcella_id):
     p = canvas.Canvas(buffer, pagesize=A4)
 
     width, height = A4
-
     margin_x = 20 * mm
 
     studio = parcella.pratica.studio if parcella.pratica else None
@@ -384,8 +383,6 @@ def pdf_parcella(request, parcella_id):
     totale = parcella.totale_documento
     pagato = parcella.importo_pagato or Decimal('0.00')
     saldo = parcella.saldo_residuo
-
-    footer_y = 42
 
     # =========================
     # HEADER
@@ -864,64 +861,61 @@ def pdf_parcella(request, parcella_id):
         fill_color=colors.HexColor("#ecfdf5")
     )
 
-    y -= 26
-
     # =========================
-    # NOTE
+    # NOTE FINALI
     # =========================
 
-    note_box_h = 48
-
-    if y - note_box_h < 80:
-        note_box_h = max(30, y - 90)
-
-    p.setFont("Helvetica-Bold", 12)
-    p.setFillColor(colors.HexColor("#111827"))
-    p.drawString(
-        margin_x,
-        y,
-        "Note"
-    )
-
-    y -= 18
-
-    note = parcella.note if parcella.note else "Nessuna nota inserita."
+    note_y = 92
+    note_h = 54
 
     p.setFillColor(colors.HexColor("#f9fafb"))
     p.setStrokeColor(colors.HexColor("#e5e7eb"))
+
     p.roundRect(
         margin_x,
-        y - note_box_h,
+        note_y,
         width - 2 * margin_x,
-        note_box_h,
+        note_h,
         8,
         fill=True,
         stroke=True
     )
 
-    p.setFillColor(colors.HexColor("#374151"))
+    p.setFillColor(colors.HexColor("#6b7280"))
+    p.setFont("Helvetica-Bold", 8)
+    p.drawString(
+        margin_x + 14,
+        note_y + note_h - 17,
+        "NOTE"
+    )
+
+    note = parcella.note if parcella.note else "Nessuna nota inserita."
+
+    p.setFillColor(colors.HexColor("#111827"))
     draw_wrapped_text(
         p,
         note,
         margin_x + 14,
-        y - 14,
+        note_y + note_h - 32,
         width - 2 * margin_x - 28,
         font_name="Helvetica",
         font_size=9,
         line_height=12,
-        min_y=y - note_box_h + 12
+        min_y=note_y + 10
     )
 
     # =========================
     # FOOTER
     # =========================
 
+    footer_y = 48
+
     p.setStrokeColor(colors.HexColor("#e5e7eb"))
     p.line(
         margin_x,
-        footer_y + 8,
+        footer_y + 16,
         width - margin_x,
-        footer_y + 8
+        footer_y + 16
     )
 
     p.setFillColor(colors.HexColor("#6b7280"))
@@ -929,14 +923,20 @@ def pdf_parcella(request, parcella_id):
 
     p.drawString(
         margin_x,
-        footer_y - 5,
+        footer_y,
         "Documento generato con Studio Tecnico Cloud"
+    )
+
+    numero_footer = (
+        parcella.numero_documento
+        if parcella.numero_documento
+        else f"ID {parcella.id}"
     )
 
     p.drawRightString(
         width - margin_x,
-        footer_y - 5,
-        f"{tipo_documento} ID {parcella.id}"
+        footer_y,
+        f"{tipo_documento} {numero_footer}"
     )
 
     p.showPage()
