@@ -100,6 +100,10 @@ urlpatterns = [
         include('billing.urls')
     ),
 
+    path(
+        'ore/',
+        include('ore.urls')
+    ),
 ]
 
 

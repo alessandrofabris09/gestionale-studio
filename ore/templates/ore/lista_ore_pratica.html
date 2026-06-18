@@ -1,0 +1,133 @@
+{% extends "base/base.html" %}
+
+{% block title %}Ore pratica{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h3 mb-1">Ore lavorate</h1>
+            <p class="text-muted mb-0">
+                Pratica: {{ pratica.oggetto }}
+            </p>
+        </div>
+
+        <div>
+            <a href="{% url 'dettaglio_pratica' pratica.id %}" class="btn btn-outline-secondary">
+                Torna alla pratica
+            </a>
+
+            <a href="{% url 'nuova_voce_ora' pratica.id %}" class="btn btn-primary">
+                Nuova voce ore
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Totale ore</div>
+                    <div class="h4 mb-0">{{ totale_ore }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Valore fatturabile</div>
+                    <div class="h4 mb-0">€ {{ totale_importo|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Da fatturare</div>
+                    <div class="h4 mb-0">€ {{ totale_non_fatturato|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            {% if voci %}
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Utente</th>
+                                <th>Attività</th>
+                                <th>Descrizione</th>
+                                <th class="text-end">Ore</th>
+                                <th class="text-end">Tariffa</th>
+                                <th class="text-end">Importo</th>
+                                <th>Stato</th>
+                                <th class="text-end">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for voce in voci %}
+                                <tr>
+                                    <td>{{ voce.data|date:"d/m/Y" }}</td>
+                                    <td>
+                                        {% if voce.utente %}
+                                            {{ voce.utente.get_full_name|default:voce.utente.username }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ voce.get_tipo_attivita_display }}</td>
+                                    <td>{{ voce.descrizione|default:"-"|truncatechars:80 }}</td>
+                                    <td class="text-end">{{ voce.ore }}</td>
+                                    <td class="text-end">€ {{ voce.tariffa_oraria|floatformat:2 }}</td>
+                                    <td class="text-end">€ {{ voce.importo|floatformat:2 }}</td>
+                                    <td>
+                                        {% if voce.fatturabile %}
+                                            <span class="badge bg-success">Fatturabile</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Non fatturabile</span>
+                                        {% endif %}
+
+                                        {% if voce.inserita_in_parcella %}
+                                            <span class="badge bg-primary">In parcella</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{% url 'modifica_voce_ora' voce.id %}" class="btn btn-sm btn-outline-primary">
+                                            Modifica
+                                        </a>
+                                        <a href="{% url 'elimina_voce_ora' voce.id %}" class="btn btn-sm btn-outline-danger">
+                                            Elimina
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            {% else %}
+
+                <p class="text-muted mb-0">
+                    Nessuna voce ore inserita per questa pratica.
+                </p>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

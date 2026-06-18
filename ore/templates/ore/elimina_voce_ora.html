@@ -1,0 +1,46 @@
+{% extends "base/base.html" %}
+
+{% block title %}Elimina voce ore{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="card shadow-sm border-danger">
+        <div class="card-body">
+
+            <h1 class="h4 text-danger mb-3">Elimina voce ore</h1>
+
+            <p>
+                Vuoi eliminare la voce ore del
+                <strong>{{ voce.data|date:"d/m/Y" }}</strong>
+                relativa a
+                <strong>{{ voce.get_tipo_attivita_display }}</strong>?
+            </p>
+
+            <p class="text-muted">
+                Ore: {{ voce.ore }} —
+                Importo: € {{ voce.importo|floatformat:2 }}
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'lista_ore_pratica' pratica.id %}" class="btn btn-outline-secondary">
+                        Annulla
+                    </a>
+
+                    <button type="submit" class="btn btn-danger">
+                        Elimina definitivamente
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

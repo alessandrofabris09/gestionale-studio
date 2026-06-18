@@ -1,0 +1,87 @@
+{% extends "base/base.html" %}
+
+{% block title %}{{ titolo }}{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="mb-3">
+        <h1 class="h3 mb-1">{{ titolo }}</h1>
+        <p class="text-muted mb-0">
+            Pratica: {{ pratica.oggetto }}
+        </p>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Data</label>
+                        {{ form.data }}
+                        {{ form.data.errors }}
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Tipo attività</label>
+                        {{ form.tipo_attivita }}
+                        {{ form.tipo_attivita.errors }}
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label">Ore</label>
+                        {{ form.ore }}
+                        {{ form.ore.errors }}
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label">Tariffa €/h</label>
+                        {{ form.tariffa_oraria }}
+                        {{ form.tariffa_oraria.errors }}
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Descrizione</label>
+                    {{ form.descrizione }}
+                    {{ form.descrizione.errors }}
+                </div>
+
+                <div class="form-check mb-3">
+                    {{ form.fatturabile }}
+                    <label class="form-check-label">
+                        Fatturabile
+                    </label>
+                    {{ form.fatturabile.errors }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Note interne</label>
+                    {{ form.note }}
+                    {{ form.note.errors }}
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'lista_ore_pratica' pratica.id %}" class="btn btn-outline-secondary">
+                        Annulla
+                    </a>
+
+                    <button type="submit" class="btn btn-primary">
+                        Salva
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

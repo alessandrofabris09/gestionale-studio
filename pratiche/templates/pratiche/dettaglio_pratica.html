@@ -205,6 +205,11 @@ Scheda pratica
         Attiva workflow
     </a>
 
+    <a class="btn" href="{% url 'lista_ore_pratica' pratica.id %}">
+        <i class="fa-solid fa-clock"></i>
+        Ore lavorate
+    </a>
+
     <a class="btn" href="/pratiche/{{ pratica.id }}/modifica/">
         <i class="fa-solid fa-pen"></i>
         Modifica pratica
@@ -302,6 +307,26 @@ Scheda pratica
         </div>
 
     </div>
+
+</div>
+
+<div class="card">
+
+    <h2>
+        <i class="fa-solid fa-clock"></i>
+        Consuntivo ore lavorate
+    </h2>
+
+    <p class="muted">
+        In questa sezione puoi registrare le ore impiegate sulla pratica,
+        indicare la tariffa oraria e calcolare il valore delle attività
+        da riportare eventualmente in parcella.
+    </p>
+
+    <a class="btn" href="{% url 'lista_ore_pratica' pratica.id %}">
+        <i class="fa-solid fa-clock"></i>
+        Apri ore lavorate
+    </a>
 
 </div>
 

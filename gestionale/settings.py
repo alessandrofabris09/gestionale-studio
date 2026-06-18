@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     'landing',
     'billing',
     'backups',
+    'ore',
 ]
 
 
