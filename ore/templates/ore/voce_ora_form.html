@@ -1,86 +1,328 @@
-{% extends "base/base.html" %}
+{% extends 'base/base.html' %}
 
-{% block title %}{{ titolo }}{% endblock %}
+{% block title %}
+{{ titolo }}
+{% endblock %}
+
+{% block page_title %}
+{{ titolo }}
+{% endblock %}
 
 {% block content %}
 
-<div class="container mt-4">
+<style>
+    .page-header{
+        background:white;
+        padding:28px;
+        border-radius:18px;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
+        margin-bottom:25px;
+    }
 
-    <div class="mb-3">
-        <h1 class="h3 mb-1">{{ titolo }}</h1>
-        <p class="text-muted mb-0">
-            Pratica: {{ pratica.oggetto }}
-        </p>
+    .page-header h1{
+        margin:0 0 8px 0;
+        font-size:38px;
+        color:#111827;
+        display:flex;
+        align-items:center;
+        gap:12px;
+    }
+
+    .page-header p{
+        margin:0;
+        color:#6b7280;
+        font-size:18px;
+    }
+
+    .card{
+        background:white;
+        padding:28px;
+        border-radius:18px;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
+        margin-bottom:30px;
+        max-width:1100px;
+    }
+
+    .form-grid{
+        display:grid;
+        grid-template-columns:repeat(4, 1fr);
+        gap:20px;
+        margin-bottom:20px;
+    }
+
+    .form-group{
+        margin-bottom:20px;
+    }
+
+    .form-group.full{
+        grid-column:1 / -1;
+    }
+
+    .form-label{
+        display:block;
+        font-size:14px;
+        font-weight:bold;
+        color:#374151;
+        margin-bottom:8px;
+    }
+
+    input,
+    select,
+    textarea{
+        width:100%;
+        padding:12px 14px;
+        border:1px solid #d1d5db;
+        border-radius:10px;
+        font-size:15px;
+        color:#111827;
+        background:white;
+        box-sizing:border-box;
+    }
+
+    textarea{
+        min-height:105px;
+        resize:vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus{
+        outline:none;
+        border-color:#2563eb;
+        box-shadow:0 0 0 3px rgba(37,99,235,0.15);
+    }
+
+    .check-box{
+        display:flex;
+        align-items:center;
+        gap:12px;
+        background:#f9fafb;
+        border:1px solid #e5e7eb;
+        border-radius:12px;
+        padding:14px 16px;
+        margin-bottom:22px;
+    }
+
+    .check-box input[type="checkbox"]{
+        width:20px;
+        height:20px;
+        padding:0;
+        margin:0;
+        flex-shrink:0;
+    }
+
+    .check-box label{
+        margin:0;
+        font-size:15px;
+        font-weight:bold;
+        color:#111827;
+    }
+
+    .check-help{
+        font-size:13px;
+        color:#6b7280;
+        margin-top:3px;
+    }
+
+    .form-actions{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:12px;
+        flex-wrap:wrap;
+        border-top:1px solid #e5e7eb;
+        padding-top:22px;
+        margin-top:10px;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:10px;
+        text-decoration:none;
+        font-weight:bold;
+        font-size:15px;
+        border:none;
+        cursor:pointer;
+    }
+
+    .btn:hover{
+        background:#374151;
+        color:white;
+    }
+
+    .btn-primary{
+        background:#2563eb;
+    }
+
+    .btn-primary:hover{
+        background:#1d4ed8;
+    }
+
+    .btn-light{
+        background:white;
+        color:#111827;
+        border:1px solid #d1d5db;
+    }
+
+    .btn-light:hover{
+        background:#f3f4f6;
+        color:#111827;
+    }
+
+    .help-card{
+        background:#f9fafb;
+        border:1px solid #e5e7eb;
+        padding:16px;
+        border-radius:14px;
+        margin-bottom:22px;
+        color:#4b5563;
+        font-size:14px;
+        line-height:1.5;
+    }
+
+    .help-card strong{
+        color:#111827;
+    }
+
+    .errorlist{
+        color:#dc2626;
+        margin:8px 0 0 0;
+        padding-left:18px;
+        font-size:14px;
+    }
+
+    @media(max-width:1000px){
+        .form-grid{
+            grid-template-columns:1fr 1fr;
+        }
+
+        .page-header h1{
+            font-size:32px;
+        }
+    }
+
+    @media(max-width:700px){
+        .form-grid{
+            grid-template-columns:1fr;
+        }
+
+        .card{
+            padding:22px;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <h1>
+        <i class="fa-solid fa-clock"></i>
+        {{ titolo }}
+    </h1>
+
+    <p>
+        Pratica:
+        <strong>{{ pratica.oggetto }}</strong>
+    </p>
+</div>
+
+<div class="card">
+
+    <div class="help-card">
+        <strong>Consuntivo attività.</strong>
+        Inserisci le ore lavorate, la tariffa oraria e indica se la voce è fatturabile.
+        L’importo verrà calcolato automaticamente nel riepilogo della pratica.
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body">
+    <form method="post">
+        {% csrf_token %}
 
-            <form method="post">
-                {% csrf_token %}
+        <div class="form-grid">
 
-                <div class="row">
+            <div class="form-group">
+                <label class="form-label" for="{{ form.data.id_for_label }}">
+                    Data
+                </label>
+                {{ form.data }}
+                {{ form.data.errors }}
+            </div>
 
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Data</label>
-                        {{ form.data }}
-                        {{ form.data.errors }}
-                    </div>
+            <div class="form-group">
+                <label class="form-label" for="{{ form.tipo_attivita.id_for_label }}">
+                    Tipo attività
+                </label>
+                {{ form.tipo_attivita }}
+                {{ form.tipo_attivita.errors }}
+            </div>
 
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Tipo attività</label>
-                        {{ form.tipo_attivita }}
-                        {{ form.tipo_attivita.errors }}
-                    </div>
+            <div class="form-group">
+                <label class="form-label" for="{{ form.ore.id_for_label }}">
+                    Ore
+                </label>
+                {{ form.ore }}
+                {{ form.ore.errors }}
+            </div>
 
-                    <div class="col-md-2 mb-3">
-                        <label class="form-label">Ore</label>
-                        {{ form.ore }}
-                        {{ form.ore.errors }}
-                    </div>
-
-                    <div class="col-md-2 mb-3">
-                        <label class="form-label">Tariffa €/h</label>
-                        {{ form.tariffa_oraria }}
-                        {{ form.tariffa_oraria.errors }}
-                    </div>
-
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Descrizione</label>
-                    {{ form.descrizione }}
-                    {{ form.descrizione.errors }}
-                </div>
-
-                <div class="form-check mb-3">
-                    {{ form.fatturabile }}
-                    <label class="form-check-label">
-                        Fatturabile
-                    </label>
-                    {{ form.fatturabile.errors }}
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Note interne</label>
-                    {{ form.note }}
-                    {{ form.note.errors }}
-                </div>
-
-                <div class="d-flex justify-content-between">
-                    <a href="{% url 'lista_ore_pratica' pratica.id %}" class="btn btn-outline-secondary">
-                        Annulla
-                    </a>
-
-                    <button type="submit" class="btn btn-primary">
-                        Salva
-                    </button>
-                </div>
-
-            </form>
+            <div class="form-group">
+                <label class="form-label" for="{{ form.tariffa_oraria.id_for_label }}">
+                    Tariffa €/h
+                </label>
+                {{ form.tariffa_oraria }}
+                {{ form.tariffa_oraria.errors }}
+            </div>
 
         </div>
-    </div>
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.descrizione.id_for_label }}">
+                Descrizione attività
+            </label>
+            {{ form.descrizione }}
+            {{ form.descrizione.errors }}
+        </div>
+
+        <div class="check-box">
+            {{ form.fatturabile }}
+
+            <div>
+                <label for="{{ form.fatturabile.id_for_label }}">
+                    Fatturabile
+                </label>
+
+                <div class="check-help">
+                    Se selezionato, questa voce rientra nel valore da fatturare della pratica.
+                </div>
+
+                {{ form.fatturabile.errors }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.note.id_for_label }}">
+                Note interne
+            </label>
+            {{ form.note }}
+            {{ form.note.errors }}
+        </div>
+
+        <div class="form-actions">
+
+            <a href="{% url 'lista_ore_pratica' pratica.id %}" class="btn btn-light">
+                <i class="fa-solid fa-arrow-left"></i>
+                Annulla
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-floppy-disk"></i>
+                Salva voce ore
+            </button>
+
+        </div>
+
+    </form>
 
 </div>
 
