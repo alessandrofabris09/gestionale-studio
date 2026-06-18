@@ -358,12 +358,41 @@
             font-size:14px;
             display:flex;
             justify-content:space-between;
-            gap:20px;
+            align-items:flex-start;
+            gap:24px;
             flex-wrap:wrap;
         }
 
         .footer strong{
             color:#111827;
+        }
+
+        .footer a{
+            color:#2563eb;
+            font-weight:600;
+        }
+
+        .footer a:hover{
+            color:#1d4ed8;
+            text-decoration:underline;
+        }
+
+        .footer-links{
+            display:flex;
+            flex-direction:column;
+            gap:6px;
+        }
+
+        .footer-links-row{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+        }
+
+        .footer-small{
+            color:#9ca3af;
+            font-size:13px;
+            margin-top:6px;
         }
 
         @media(max-width:1000px){
@@ -417,6 +446,10 @@
 
             .preview-grid{
                 grid-template-columns:1fr;
+            }
+
+            .footer{
+                flex-direction:column;
             }
         }
     </style>
@@ -722,26 +755,41 @@
 
     <footer class="footer">
 
-    <div>
-        <strong>Studio Tecnico Cloud</strong><br>
-        Gestionale online per studi tecnici.
-    </div>
+        <div>
+            <strong>Studio Tecnico Cloud</strong><br>
+            Gestionale online per studi tecnici.
+            <div class="footer-small">
+                Servizio fornito da Fabris Alessandro - P. IVA 05330970269
+            </div>
+        </div>
 
         <div>
-            Contatti:
+            <strong>Contatti</strong><br>
             <a href="mailto:info@studiotecnicocloud.it">
                 info@studiotecnicocloud.it
             </a>
         </div>
 
-        <div>
-            <a href="/privacy/">
-                Privacy Policy
-            </a>
-            ·
-            <a href="/termini/">
-                Termini di utilizzo
-            </a>
+        <div class="footer-links">
+            <strong>Informazioni legali</strong>
+
+            <div class="footer-links-row">
+                <a href="/privacy-policy/">
+                    Privacy Policy
+                </a>
+
+                <span>·</span>
+
+                <a href="/cookie-policy/">
+                    Cookie Policy
+                </a>
+
+                <span>·</span>
+
+                <a href="/termini/">
+                    Termini di utilizzo
+                </a>
+            </div>
         </div>
 
         <div>

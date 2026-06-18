@@ -497,7 +497,10 @@ def backup_manuale(request):
     )
 
 def privacy_policy(request):
-    return render(request, "dashboard/privacy.html")
+    return render(request, "landing/privacy.html")
 
 def cookie_policy(request):
-    return render(request, "dashboard/cookie.html")
+    return render(request, "landing/cookie.html")
+
+def termini(request):
+    return render(request, "landing/termini.html")

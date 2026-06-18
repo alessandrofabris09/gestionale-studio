@@ -9,8 +9,12 @@ def home(request):
 
 
 def privacy_policy(request):
-    return render(request, 'landing/privacy.html')
+    return render(request, "landing/privacy.html")
 
 
-def termini_utilizzo(request):
-    return render(request, 'landing/termini.html')
+def cookie_policy(request):
+    return render(request, "landing/cookie.html")
+
+
+def termini(request):
+    return render(request, "landing/termini.html")
