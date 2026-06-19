@@ -308,6 +308,7 @@ def genera_parcella_da_ore(request, pratica_id):
         )
 
         parcella = Parcella.objects.create(
+            studio=studio,
             pratica=pratica,
             tipo_documento='PARCELLA',
             descrizione=descrizione,
