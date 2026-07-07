@@ -8,7 +8,7 @@ from django.utils import timezone
 from .utils import get_studio_utente
 
 from .models import ProfiloUtente
-from .forms import StudioForm, ProfiloUtenteRuoloForm
+from .forms import StudioForm, ProfiloUtenteRuoloForm, NuovoUtenteStudioForm
 
 from studi.permessi import (
     puo_gestire_abbonamento,
@@ -198,6 +198,95 @@ def utenti_studio(request):
 
 
 @login_required
+def nuovo_utente_studio(request):
+    """
+    Crea un nuovo utente collegato allo studio corrente.
+
+    Consentito solo a:
+    - superuser
+    - TITOLARE
+
+    L'utente creato:
+    - non è staff
+    - non è superuser
+    - viene collegato allo stesso studio del titolare
+    """
+
+    studio = get_studio_utente(request)
+
+    if not studio:
+        logout(request)
+        return redirect('login')
+
+    if not puo_gestire_utenti(request):
+        return accesso_negato(request)
+
+    utenti_attuali = ProfiloUtente.objects.filter(
+        studio=studio
+    ).count()
+
+    limite_raggiunto = (
+        studio.limite_utenti and
+        utenti_attuali >= studio.limite_utenti
+    )
+
+    if limite_raggiunto and not request.user.is_superuser:
+
+        messages.error(
+            request,
+            (
+                'Hai raggiunto il limite massimo di utenti previsto '
+                'dal piano attuale dello studio.'
+            )
+        )
+
+        return redirect(
+            'utenti_studio'
+        )
+
+    if request.method == 'POST':
+
+        form = NuovoUtenteStudioForm(
+            request.POST
+        )
+
+        if form.is_valid():
+
+            profilo = form.save(
+                studio=studio
+            )
+
+            messages.success(
+                request,
+                (
+                    f'Utente {profilo.user.username} creato correttamente '
+                    f'e collegato allo studio {studio.nome}.'
+                )
+            )
+
+            return redirect(
+                'utenti_studio'
+            )
+
+    else:
+
+        form = NuovoUtenteStudioForm()
+
+    context = {
+        'form': form,
+        'studio': studio,
+        'utenti_attuali': utenti_attuali,
+        'limite_utenti': studio.limite_utenti,
+    }
+
+    return render(
+        request,
+        'studi/nuovo_utente_studio.html',
+        context
+    )
+
+
+@login_required
 def modifica_ruolo_utente(request, profilo_id):
     """
     Modifica i dati principali e il ruolo di un utente dello stesso studio.
@@ -227,9 +316,6 @@ def modifica_ruolo_utente(request, profilo_id):
         studio=studio
     )
 
-    # IMPORTANTE:
-    # salvo il ruolo originale PRIMA di creare/validare il form,
-    # perché ModelForm può modificare l'istanza in memoria durante is_valid().
     ruolo_originale = profilo.ruolo
     utente_originale_id = profilo.user.id
 
@@ -246,9 +332,6 @@ def modifica_ruolo_utente(request, profilo_id):
                 'ruolo'
             )
 
-            # BLOCCO 1:
-            # Nessun utente può cambiare il proprio ruolo.
-            # Può modificare nome, cognome ed email, ma NON il ruolo.
             if (
                 utente_originale_id == request.user.id and
                 nuovo_ruolo != ruolo_originale
@@ -263,8 +346,6 @@ def modifica_ruolo_utente(request, profilo_id):
                     'utenti_studio'
                 )
 
-            # BLOCCO 2:
-            # Non può mai restare uno studio senza almeno un TITOLARE.
             if (
                 ruolo_originale == 'TITOLARE' and
                 nuovo_ruolo != 'TITOLARE'
