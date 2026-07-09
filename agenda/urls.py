@@ -10,6 +10,8 @@ from .views import (
     invia_agenda_email,
     invia_agenda_email_cron,
     calendario_ics,
+    sincronizza_calendario,
+    rigenera_token_calendario,
 )
 
 urlpatterns = [
@@ -44,6 +46,18 @@ urlpatterns = [
         '<int:evento_id>/elimina/',
         elimina_evento,
         name='elimina_evento'
+    ),
+    
+    path(
+        'sincronizza/',
+        sincronizza_calendario,
+        name='sincronizza_calendario'
+    ),
+
+    path(
+        'sincronizza/rigenera-token/',
+        rigenera_token_calendario,
+        name='rigenera_token_calendario'
     ),
 
     path(

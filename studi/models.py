@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -78,6 +80,13 @@ class Studio(models.Model):
         blank=True
     )
 
+    calendario_ics_token = models.CharField(
+        max_length=64,
+        unique=True,
+        null=True,
+        blank=True
+    )
+
     limite_pratiche = models.PositiveIntegerField(
         default=20
     )
@@ -93,6 +102,34 @@ class Studio(models.Model):
     creato_il = models.DateTimeField(auto_now_add=True)
 
     aggiornato_il = models.DateTimeField(auto_now=True)
+
+    def genera_calendario_ics_token(self, commit=True):
+        """
+        Genera un nuovo token segreto per il calendario ICS dello studio.
+        """
+
+        self.calendario_ics_token = uuid.uuid4().hex + uuid.uuid4().hex
+
+        if commit:
+            self.save(
+                update_fields=[
+                    'calendario_ics_token',
+                    'aggiornato_il',
+                ]
+            )
+
+        return self.calendario_ics_token
+
+    def get_calendario_ics_token(self):
+        """
+        Restituisce il token ICS dello studio.
+        Se non esiste, lo genera.
+        """
+
+        if not self.calendario_ics_token:
+            return self.genera_calendario_ics_token()
+
+        return self.calendario_ics_token
 
     def __str__(self):
         return self.nome

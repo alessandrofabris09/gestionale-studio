@@ -1,0 +1,273 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Sincronizza calendario
+{% endblock %}
+
+{% block page_title %}
+Sincronizza calendario
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .sync-card{
+        background:white;
+        padding:35px;
+        border-radius:22px;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
+        max-width:1100px;
+    }
+
+    .sync-title{
+        font-size:28px;
+        font-weight:900;
+        color:#111827;
+        margin-bottom:10px;
+    }
+
+    .sync-subtitle{
+        color:#6b7280;
+        font-size:16px;
+        line-height:1.6;
+        margin-bottom:28px;
+    }
+
+    .url-box{
+        background:#f9fafb;
+        border:1px solid #d1d5db;
+        border-radius:16px;
+        padding:18px;
+        margin-bottom:25px;
+    }
+
+    .url-label{
+        font-weight:bold;
+        color:#374151;
+        margin-bottom:8px;
+    }
+
+    .url-input{
+        width:100%;
+        padding:14px 16px;
+        border:1px solid #d1d5db;
+        border-radius:12px;
+        font-size:15px;
+        color:#111827;
+        background:white;
+    }
+
+    .actions{
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;
+        margin-top:18px;
+        margin-bottom:30px;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:10px;
+        text-decoration:none;
+        border:0;
+        cursor:pointer;
+        font-weight:bold;
+        font-size:15px;
+    }
+
+    .btn:hover{
+        background:#374151;
+    }
+
+    .btn-secondary{
+        background:#374151;
+    }
+
+    .btn-danger{
+        background:#991b1b;
+    }
+
+    .btn-danger:hover{
+        background:#7f1d1d;
+    }
+
+    .instructions{
+        display:grid;
+        grid-template-columns:repeat(3,1fr);
+        gap:18px;
+        margin-top:25px;
+    }
+
+    .instruction{
+        background:#f9fafb;
+        border:1px solid #e5e7eb;
+        border-radius:18px;
+        padding:22px;
+    }
+
+    .instruction h3{
+        font-size:18px;
+        color:#111827;
+        margin-bottom:12px;
+    }
+
+    .instruction ol{
+        padding-left:20px;
+        color:#374151;
+        line-height:1.6;
+        font-size:15px;
+    }
+
+    .warning{
+        background:#fff7ed;
+        border:1px solid #fdba74;
+        color:#9a3412;
+        padding:18px 20px;
+        border-radius:16px;
+        line-height:1.6;
+        margin-top:25px;
+        font-size:15px;
+    }
+
+    @media(max-width:1000px){
+        .instructions{
+            grid-template-columns:1fr;
+        }
+    }
+</style>
+
+<div class="sync-card">
+
+    <div class="sync-title">
+        Sincronizzazione calendario esterno
+    </div>
+
+    <div class="sync-subtitle">
+        Usa questo link per visualizzare nel calendario esterno gli eventi agenda
+        e le scadenze aperte dello studio <strong>{{ studio.nome }}</strong>.
+        Il calendario è in sola lettura.
+    </div>
+
+    <div class="url-box">
+
+        <div class="url-label">
+            Link calendario ICS
+        </div>
+
+        <input
+            id="icsUrl"
+            class="url-input"
+            type="text"
+            value="{{ url_ics }}"
+            readonly
+        >
+
+        <div class="actions">
+
+            <button class="btn" type="button" onclick="copiaLinkCalendario()">
+                <i class="fa-solid fa-copy"></i>
+                Copia link
+            </button>
+
+            <a class="btn btn-secondary" href="{{ url_ics }}" target="_blank">
+                <i class="fa-solid fa-calendar"></i>
+                Apri file ICS
+            </a>
+
+            <a class="btn btn-secondary" href="/agenda/">
+                <i class="fa-solid fa-arrow-left"></i>
+                Torna agenda
+            </a>
+
+        </div>
+
+    </div>
+
+    <div class="instructions">
+
+        <div class="instruction">
+            <h3>
+                Google Calendar
+            </h3>
+
+            <ol>
+                <li>Apri Google Calendar da browser.</li>
+                <li>Vai su Altri calendari.</li>
+                <li>Clicca sul simbolo +.</li>
+                <li>Scegli Da URL.</li>
+                <li>Incolla il link ICS.</li>
+                <li>Aggiungi calendario.</li>
+            </ol>
+        </div>
+
+        <div class="instruction">
+            <h3>
+                iPhone / iPad
+            </h3>
+
+            <ol>
+                <li>Apri Impostazioni.</li>
+                <li>Vai su Calendario.</li>
+                <li>Apri Account.</li>
+                <li>Scegli Aggiungi account.</li>
+                <li>Scegli Altro.</li>
+                <li>Aggiungi calendario con iscrizione.</li>
+                <li>Incolla il link ICS.</li>
+            </ol>
+        </div>
+
+        <div class="instruction">
+            <h3>
+                Outlook
+            </h3>
+
+            <ol>
+                <li>Apri Outlook calendario.</li>
+                <li>Scegli Aggiungi calendario.</li>
+                <li>Scegli Da Internet o Da URL.</li>
+                <li>Incolla il link ICS.</li>
+                <li>Salva il calendario.</li>
+            </ol>
+        </div>
+
+    </div>
+
+    <div class="warning">
+        <strong>Attenzione:</strong>
+        chiunque possieda questo link può visualizzare il calendario dello studio.
+        Non pubblicarlo e non inviarlo a persone non autorizzate.
+        Se il link viene condiviso per errore, puoi rigenerarlo.
+    </div>
+
+    <form
+        method="post"
+        action="{% url 'rigenera_token_calendario' %}"
+        style="margin-top:20px;"
+        onsubmit="return confirm('Vuoi davvero rigenerare il link? Il vecchio calendario smetterà di funzionare.');"
+    >
+        {% csrf_token %}
+
+        <button class="btn btn-danger" type="submit">
+            <i class="fa-solid fa-rotate"></i>
+            Rigenera link calendario
+        </button>
+    </form>
+
+</div>
+
+<script>
+    function copiaLinkCalendario(){
+        const input = document.getElementById('icsUrl');
+        input.select();
+        input.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(input.value);
+        alert('Link calendario copiato.');
+    }
+</script>
+
+{% endblock %}
