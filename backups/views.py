@@ -12,6 +12,7 @@ from django.core.files.storage import default_storage
 from django.core.management import call_command
 from django.http import HttpResponse, Http404, FileResponse
 from django.shortcuts import render, redirect
+from django.core.files.storage import default_storage
 
 from documenti.models import Documento
 from studi.permessi import puo_gestire_backup
@@ -483,6 +484,20 @@ def scarica_backup(request, filename):
     )
 
 
+def info_storage_backup():
+    """
+    Restituisce informazioni tecniche sullo storage effettivamente usato.
+    Serve per capire se il backup sta andando su Backblaze o su filesystem locale.
+    """
+
+    return {
+        'use_backblaze_b2': getattr(settings, 'USE_BACKBLAZE_B2', False),
+        'storage_class': f'{default_storage.__class__.__module__}.{default_storage.__class__.__name__}',
+        'bucket': getattr(settings, 'AWS_STORAGE_BUCKET_NAME', ''),
+        'endpoint': getattr(settings, 'AWS_S3_ENDPOINT_URL', ''),
+    }
+
+
 def crea_backup_cron(request, codice):
     """
     Endpoint cron per backup tecnico.
@@ -509,14 +524,21 @@ def crea_backup_cron(request, codice):
     try:
 
         risultato = esegui_backup_database()
+        storage_info = info_storage_backup()
 
         messaggio = (
-            'Backup creato correttamente. '
-            f"Database: {risultato['database']} - "
-            f"Storage database: {risultato['storage_database']} - "
-            f"Documenti: {risultato['documenti']} - "
-            f"Storage documenti: {risultato['storage_documenti']} - "
-            f"Totale documenti: {risultato['totale_documenti']}"
+            'Backup creato correttamente.\n'
+            f"Database: {risultato['database']}\n"
+            f"Storage database: {risultato['storage_database']}\n"
+            f"Documenti: {risultato['documenti']}\n"
+            f"Storage documenti: {risultato['storage_documenti']}\n"
+            f"Totale documenti: {risultato['totale_documenti']}\n"
+            '\n'
+            'INFO STORAGE:\n'
+            f"USE_BACKBLAZE_B2: {storage_info['use_backblaze_b2']}\n"
+            f"STORAGE CLASS: {storage_info['storage_class']}\n"
+            f"BUCKET: {storage_info['bucket']}\n"
+            f"ENDPOINT: {storage_info['endpoint']}\n"
         )
 
     except Exception as e:
