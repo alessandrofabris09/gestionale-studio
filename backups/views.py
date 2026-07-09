@@ -328,6 +328,12 @@ def invia_email_backup(
 ):
     """
     Invia una email tecnica sull'esito del backup.
+
+    Layout grafico uniforme tipo "Sistema Backup":
+    - testata viola
+    - stato OK verde
+    - tabella dettagli
+    - messaggio tecnico finale
     """
 
     try:
@@ -353,105 +359,403 @@ def invia_email_backup(
             else 'FileSystem locale'
         )
 
-        righe = [
-            [
-                'Esito backup',
-                'Completato correttamente',
-            ],
-            [
-                'Backup database',
-                filename_db,
-            ],
-            [
-                'Percorso database',
-                storage_db.get('path', '-'),
-            ],
-            [
-                'Backup riferimenti documenti',
-                filename_documenti,
-            ],
-            [
-                'Percorso riferimenti documenti',
-                storage_documenti.get('path', '-'),
-            ],
-            [
-                'Documenti censiti',
-                totale_documenti,
-            ],
-            [
-                'Data esecuzione',
-                datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
-            ],
-            [
-                'Storage backup definitivo',
-                storage_provider,
-            ],
-            [
-                'Copia locale temporanea',
-                'Render / backups_files/',
-            ],
-        ]
+        data_esecuzione = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
 
-        tabella = tabella_email(
-            headers=[
-                'Voce',
-                'Dettaglio',
-            ],
-            rows=righe
+        percorso_database = storage_db.get(
+            'path',
+            '-'
+        )
+
+        percorso_documenti = storage_documenti.get(
+            'path',
+            '-'
         )
 
         contenuto_html = f"""
-        <p style="font-size:16px;line-height:1.6;margin:0;color:#374151;">
-            Il backup tecnico globale del gestionale è stato eseguito correttamente.
-        </p>
-
         <div style="
-            margin-top:24px;
-            background:#f9fafb;
-            border:1px solid #e5e7eb;
-            border-radius:14px;
-            padding:18px 20px;
+            background:#f3f4f6;
+            padding:0;
+            margin:0;
+            font-family:Arial, sans-serif;
+            color:#111827;
         ">
-            <div style="font-size:14px;color:#6b7280;font-weight:bold;text-transform:uppercase;letter-spacing:0.06em;">
-                Backup tecnico
+
+            <div style="
+                max-width:720px;
+                margin:0 auto;
+                background:white;
+                border-radius:0 0 18px 18px;
+                overflow:hidden;
+                box-shadow:0 8px 24px rgba(0,0,0,0.08);
+            ">
+
+                <div style="
+                    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                    color:white;
+                    padding:30px 34px;
+                ">
+
+                    <div style="
+                        font-size:12px;
+                        font-weight:bold;
+                        text-transform:uppercase;
+                        letter-spacing:0.08em;
+                        opacity:0.9;
+                        margin-bottom:8px;
+                    ">
+                        Studio Tecnico Cloud
+                    </div>
+
+                    <div style="
+                        font-size:28px;
+                        font-weight:900;
+                        line-height:1.2;
+                        margin-bottom:8px;
+                    ">
+                        Sistema Backup
+                    </div>
+
+                    <div style="
+                        font-size:14px;
+                        font-weight:bold;
+                        opacity:0.95;
+                    ">
+                        Notifica automatica di sicurezza e continuità operativa
+                    </div>
+
+                </div>
+
+                <div style="
+                    padding:34px;
+                ">
+
+                    <div style="
+                        display:flex;
+                        align-items:flex-start;
+                        gap:18px;
+                        margin-bottom:28px;
+                    ">
+
+                        <div style="
+                            width:42px;
+                            height:42px;
+                            border-radius:999px;
+                            background:#dcfce7;
+                            color:#166534;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            font-size:14px;
+                            font-weight:900;
+                            flex-shrink:0;
+                            text-align:center;
+                            line-height:42px;
+                        ">
+                            OK
+                        </div>
+
+                        <div>
+                            <div style="
+                                font-size:22px;
+                                font-weight:900;
+                                color:#111827;
+                                margin-bottom:8px;
+                            ">
+                                Backup completato correttamente
+                            </div>
+
+                            <div style="
+                                font-size:15px;
+                                color:#4b5563;
+                                line-height:1.6;
+                            ">
+                                Il backup automatico di Studio Tecnico Cloud è stato eseguito
+                                e archiviato correttamente.
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div style="
+                        border:1px solid #d1d5db;
+                        border-radius:16px;
+                        overflow:hidden;
+                        margin-top:22px;
+                        margin-bottom:28px;
+                    ">
+
+                        <div style="
+                            padding:18px 20px;
+                            background:#f9fafb;
+                            font-size:15px;
+                            font-weight:900;
+                            color:#111827;
+                            border-bottom:1px solid #e5e7eb;
+                        ">
+                            Dettagli del backup
+                        </div>
+
+                        <table style="
+                            width:100%;
+                            border-collapse:collapse;
+                            font-size:14px;
+                        ">
+
+                            <tr>
+                                <td style="
+                                    width:34%;
+                                    padding:14px 20px;
+                                    color:#6b7280;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                ">
+                                    Stato
+                                </td>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#111827;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                    font-weight:bold;
+                                ">
+                                    <span style="
+                                        display:inline-block;
+                                        background:#dcfce7;
+                                        color:#166534;
+                                        padding:6px 14px;
+                                        border-radius:999px;
+                                        font-size:12px;
+                                        font-weight:900;
+                                        letter-spacing:0.03em;
+                                    ">
+                                        COMPLETATO
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#6b7280;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                ">
+                                    Data e ora
+                                </td>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#111827;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                ">
+                                    {data_esecuzione}
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#6b7280;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                ">
+                                    Backup database
+                                </td>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#111827;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                    word-break:break-word;
+                                ">
+                                    {filename_db}
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#6b7280;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                ">
+                                    Backup riferimenti documenti
+                                </td>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#111827;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                    word-break:break-word;
+                                ">
+                                    {filename_documenti}
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#6b7280;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                ">
+                                    Documenti censiti
+                                </td>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#111827;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                ">
+                                    {totale_documenti}
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#6b7280;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                ">
+                                    Archivio definitivo
+                                </td>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#111827;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                ">
+                                    {storage_provider}
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#6b7280;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                ">
+                                    Percorso database
+                                </td>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#111827;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                    word-break:break-word;
+                                ">
+                                    {percorso_database}
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#6b7280;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                ">
+                                    Percorso riferimenti documenti
+                                </td>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#111827;
+                                    border-bottom:1px solid #e5e7eb;
+                                    vertical-align:top;
+                                    word-break:break-word;
+                                ">
+                                    {percorso_documenti}
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#6b7280;
+                                    vertical-align:top;
+                                ">
+                                    Copia temporanea
+                                </td>
+                                <td style="
+                                    padding:14px 20px;
+                                    color:#111827;
+                                    vertical-align:top;
+                                ">
+                                    Render / backups_files/
+                                </td>
+                            </tr>
+
+                        </table>
+
+                    </div>
+
+                    <div style="
+                        background:#eff6ff;
+                        border:1px solid #93c5fd;
+                        color:#1e3a8a;
+                        border-radius:16px;
+                        padding:20px 22px;
+                        margin-top:26px;
+                    ">
+
+                        <div style="
+                            font-size:15px;
+                            font-weight:900;
+                            margin-bottom:10px;
+                        ">
+                            Messaggio tecnico
+                        </div>
+
+                        <div style="
+                            font-size:14px;
+                            line-height:1.7;
+                        ">
+                            Backup completato correttamente.<br>
+                            Il file SQL/JSON del database è stato creato e archiviato
+                            su <strong>{storage_provider}</strong>.<br>
+                            È stata inoltre generata la copia dei riferimenti dei documenti
+                            presenti nello storage.<br>
+                            Operazione conclusa senza errori.
+                        </div>
+
+                    </div>
+
+                    <div style="
+                        margin-top:30px;
+                        padding-top:18px;
+                        border-top:1px solid #e5e7eb;
+                        color:#6b7280;
+                        font-size:12px;
+                        line-height:1.5;
+                    ">
+                        Questa email è stata generata automaticamente dal sistema di backup
+                        di <strong>Studio Tecnico Cloud</strong>.
+                    </div>
+
+                </div>
+
             </div>
 
-            <div style="font-size:28px;font-weight:bold;color:#111827;margin-top:6px;">
-                Completato
-            </div>
-
-            <div style="font-size:15px;color:#6b7280;margin-top:4px;">
-                Database + riferimenti documenti storage
-            </div>
         </div>
-
-        {tabella}
-
-        <p style="font-size:13px;line-height:1.5;margin-top:22px;color:#6b7280;">
-            Nota: il backup riferimenti documenti salva i metadati e i percorsi
-            dei file caricati, ma non duplica fisicamente i documenti già presenti
-            nello storage.
-        </p>
         """
-
-        messaggio_html = layout_email_base(
-            titolo='Backup tecnico completato',
-            sottotitolo='Riepilogo automatico del backup globale della piattaforma.',
-            contenuto_html=contenuto_html,
-        )
 
         resend.Emails.send({
             "from": settings.EMAIL_FROM_NOTIFICHE,
             "to": [settings.ALERT_EMAIL],
-            "subject": "Backup tecnico completato - Studio Tecnico Cloud",
-            "html": messaggio_html,
+            "subject": "Backup completato correttamente - Studio Tecnico Cloud",
+            "html": contenuto_html,
             "text": (
-                "Backup tecnico completato. "
-                f"Database: {filename_db}. "
-                f"Percorso database: {storage_db.get('path', '-')}. "
-                f"Documenti: {filename_documenti}. "
-                f"Percorso documenti: {storage_documenti.get('path', '-')}. "
-                f"Totale documenti censiti: {totale_documenti}."
+                "Sistema Backup - Studio Tecnico Cloud\n"
+                "Backup completato correttamente.\n"
+                f"Data e ora: {data_esecuzione}\n"
+                f"Database: {filename_db}\n"
+                f"Backup riferimenti documenti: {filename_documenti}\n"
+                f"Documenti censiti: {totale_documenti}\n"
+                f"Archivio definitivo: {storage_provider}\n"
+                f"Percorso database: {percorso_database}\n"
+                f"Percorso riferimenti documenti: {percorso_documenti}\n"
             ),
         })
 
@@ -459,7 +763,7 @@ def invia_email_backup(
 
         print(f'ERRORE INVIO EMAIL BACKUP: {e}')
 
-
+        
 @login_required
 def scarica_backup(request, filename):
     """
