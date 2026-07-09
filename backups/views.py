@@ -7,6 +7,8 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.core.files.base import File
+from django.core.files.storage import default_storage
 from django.core.management import call_command
 from django.http import HttpResponse, Http404, FileResponse
 from django.shortcuts import render, redirect
@@ -22,6 +24,7 @@ MAX_BACKUP_DAYS = int(
         30
     )
 )
+
 
 CODICE_CRON_BACKUP = os.environ.get(
     'CODICE_CRON_BACKUP',
@@ -43,11 +46,14 @@ def accesso_negato(request):
 
 def get_backup_dir():
     """
-    Cartella locale dei backup.
+    Cartella locale temporanea dei backup.
 
     Attenzione:
     su Render questa cartella non va considerata archivio definitivo,
     perché il filesystem può essere temporaneo se non hai un persistent disk.
+
+    L'archivio definitivo dei backup viene caricato su Backblaze B2
+    tramite default_storage.
     """
 
     backup_dir = Path(settings.BASE_DIR) / 'backups_files'
@@ -56,12 +62,52 @@ def get_backup_dir():
     return backup_dir
 
 
+def carica_backup_su_storage(filepath, filename, sottocartella):
+    """
+    Carica un file di backup nello storage Django configurato.
+
+    Se USE_BACKBLAZE_B2=True, viene caricato su Backblaze B2.
+    Se USE_BACKBLAZE_B2=False, viene salvato nello storage locale.
+
+    Struttura prevista:
+    backups/database/
+    backups/documenti_storage/
+    """
+
+    storage_path = f'backups/{sottocartella}/{filename}'
+
+    with open(filepath, 'rb') as file:
+
+        if default_storage.exists(storage_path):
+            default_storage.delete(storage_path)
+
+        saved_path = default_storage.save(
+            storage_path,
+            File(file)
+        )
+
+    try:
+        file_url = default_storage.url(saved_path)
+    except Exception:
+        file_url = ''
+
+    return {
+        'path': saved_path,
+        'url': file_url,
+    }
+
+
 def esegui_backup_database():
     """
     Esegue un backup tecnico globale del database e dei riferimenti documenti.
 
     Il backup documenti NON scarica fisicamente i file da Backblaze B2.
     Salva solo i metadati e i riferimenti storage dei documenti caricati.
+
+    Crea:
+    - copia locale temporanea su Render in backups_files/
+    - copia definitiva su Backblaze B2 in backups/database/
+    - copia definitiva su Backblaze B2 in backups/documenti_storage/
     """
 
     backup_dir = get_backup_dir()
@@ -149,7 +195,23 @@ def esegui_backup_database():
         )
 
     # =========================
-    # PULIZIA BACKUP VECCHI
+    # CARICAMENTO SU BACKBLAZE / STORAGE
+    # =========================
+
+    storage_db = carica_backup_su_storage(
+        filepath=filepath_db,
+        filename=filename_db,
+        sottocartella='database'
+    )
+
+    storage_documenti = carica_backup_su_storage(
+        filepath=filepath_documenti,
+        filename=filename_documenti,
+        sottocartella='documenti_storage'
+    )
+
+    # =========================
+    # PULIZIA BACKUP LOCALI VECCHI
     # =========================
 
     pulisci_backup_vecchi(backup_dir)
@@ -161,23 +223,26 @@ def esegui_backup_database():
     invia_email_backup(
         filename_db=filename_db,
         filename_documenti=filename_documenti,
-        totale_documenti=len(documenti_backup)
+        totale_documenti=len(documenti_backup),
+        storage_db=storage_db,
+        storage_documenti=storage_documenti,
     )
 
     return {
         'database': filename_db,
         'documenti': filename_documenti,
         'totale_documenti': len(documenti_backup),
+        'storage_database': storage_db.get('path', ''),
+        'storage_documenti': storage_documenti.get('path', ''),
     }
 
 
 @login_required
 def lista_backup(request):
     """
-    Lista backup tecnici.
+    Lista backup tecnici locali temporanei presenti su Render.
 
-    Deve essere accessibile solo a chi può gestire il backup.
-    Nel tuo caso deve essere solo il superuser.
+    La copia definitiva viene salvata su Backblaze B2.
     """
 
     if not puo_gestire_backup(request):
@@ -215,7 +280,10 @@ def crea_backup(request):
     """
     Crea backup manuale.
 
-    Deve essere utilizzabile solo dal superuser.
+    Usa la stessa procedura del cron:
+    - backup locale temporaneo su Render
+    - backup definitivo su Backblaze B2
+    - email tecnica di conferma
     """
 
     if not puo_gestire_backup(request):
@@ -228,7 +296,10 @@ def crea_backup(request):
 
 def pulisci_backup_vecchi(backup_dir):
     """
-    Elimina i backup locali più vecchi di MAX_BACKUP_DAYS.
+    Elimina i backup locali temporanei più vecchi di MAX_BACKUP_DAYS.
+
+    Questa pulizia riguarda solo la cartella backups_files su Render.
+    Non elimina i backup presenti su Backblaze B2.
     """
 
     limite = datetime.now() - timedelta(days=MAX_BACKUP_DAYS)
@@ -247,7 +318,13 @@ def pulisci_backup_vecchi(backup_dir):
                 pass
 
 
-def invia_email_backup(filename_db, filename_documenti, totale_documenti):
+def invia_email_backup(
+    filename_db,
+    filename_documenti,
+    totale_documenti,
+    storage_db=None,
+    storage_documenti=None
+):
     """
     Invia una email tecnica sull'esito del backup.
     """
@@ -266,14 +343,35 @@ def invia_email_backup(filename_db, filename_documenti, totale_documenti):
             print('ERRORE: ALERT_EMAIL non configurata')
             return
 
+        storage_db = storage_db or {}
+        storage_documenti = storage_documenti or {}
+
+        storage_provider = (
+            'Backblaze B2'
+            if getattr(settings, 'USE_BACKBLAZE_B2', False)
+            else 'FileSystem locale'
+        )
+
         righe = [
+            [
+                'Esito backup',
+                'Completato correttamente',
+            ],
             [
                 'Backup database',
                 filename_db,
             ],
             [
+                'Percorso database',
+                storage_db.get('path', '-'),
+            ],
+            [
                 'Backup riferimenti documenti',
                 filename_documenti,
+            ],
+            [
+                'Percorso riferimenti documenti',
+                storage_documenti.get('path', '-'),
             ],
             [
                 'Documenti censiti',
@@ -284,12 +382,12 @@ def invia_email_backup(filename_db, filename_documenti, totale_documenti):
                 datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
             ],
             [
-                'Storage documenti',
-                (
-                    'Backblaze B2'
-                    if getattr(settings, 'USE_BACKBLAZE_B2', False)
-                    else 'FileSystem locale'
-                ),
+                'Storage backup definitivo',
+                storage_provider,
+            ],
+            [
+                'Copia locale temporanea',
+                'Render / backups_files/',
             ],
         ]
 
@@ -329,8 +427,9 @@ def invia_email_backup(filename_db, filename_documenti, totale_documenti):
         {tabella}
 
         <p style="font-size:13px;line-height:1.5;margin-top:22px;color:#6b7280;">
-            Nota: il backup documenti salva i riferimenti e i metadati dei file,
-            non una copia fisica dei documenti presenti nello storage.
+            Nota: il backup riferimenti documenti salva i metadati e i percorsi
+            dei file caricati, ma non duplica fisicamente i documenti già presenti
+            nello storage.
         </p>
         """
 
@@ -348,7 +447,9 @@ def invia_email_backup(filename_db, filename_documenti, totale_documenti):
             "text": (
                 "Backup tecnico completato. "
                 f"Database: {filename_db}. "
+                f"Percorso database: {storage_db.get('path', '-')}. "
                 f"Documenti: {filename_documenti}. "
+                f"Percorso documenti: {storage_documenti.get('path', '-')}. "
                 f"Totale documenti censiti: {totale_documenti}."
             ),
         })
@@ -361,9 +462,9 @@ def invia_email_backup(filename_db, filename_documenti, totale_documenti):
 @login_required
 def scarica_backup(request, filename):
     """
-    Scarica un file di backup locale.
+    Scarica un file di backup locale temporaneo.
 
-    Solo superuser.
+    La funzione resta disponibile, anche se al momento non la usi.
     """
 
     if not puo_gestire_backup(request):
@@ -386,8 +487,7 @@ def crea_backup_cron(request, codice):
     """
     Endpoint cron per backup tecnico.
 
-    Da usare solo se strettamente necessario.
-    Meglio, in futuro, sostituirlo con management command o cron dedicato.
+    Usato da cron-job.org.
     """
 
     if not CODICE_CRON_BACKUP:
@@ -413,7 +513,9 @@ def crea_backup_cron(request, codice):
         messaggio = (
             'Backup creato correttamente. '
             f"Database: {risultato['database']} - "
+            f"Storage database: {risultato['storage_database']} - "
             f"Documenti: {risultato['documenti']} - "
+            f"Storage documenti: {risultato['storage_documenti']} - "
             f"Totale documenti: {risultato['totale_documenti']}"
         )
 
