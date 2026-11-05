@@ -1,4 +1,5 @@
 import os
+import secrets
 import resend
 
 from datetime import date, datetime, time, timedelta
@@ -12,6 +13,7 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from studi.models import Studio
 from studi.notifiche import get_email_notifiche_studio
@@ -28,15 +30,9 @@ from .models import EventoAgenda
 from .forms import EventoAgendaForm
 
 
-CODICE_CRON_AGENDA = os.environ.get(
-    'CODICE_CRON_AGENDA',
-    'AGENDA1234'
-)
+CODICE_CRON_AGENDA = os.environ.get('CODICE_CRON_AGENDA', '')
 
-CODICE_ICS_AGENDA = os.environ.get(
-    'CODICE_ICS_AGENDA',
-    'AGENDAICS1234'
-)
+CODICE_ICS_AGENDA = os.environ.get('CODICE_ICS_AGENDA', '')
 
 
 def accesso_negato(request):
@@ -331,6 +327,7 @@ def elimina_evento(request, evento_id):
 
 
 @login_required
+@require_POST
 def completa_evento(request, evento_id):
 
     if not puo_usare_agenda(request):
@@ -559,7 +556,7 @@ def invia_agenda_email(request):
 
 def invia_agenda_email_cron(request, codice):
 
-    if codice != CODICE_CRON_AGENDA:
+    if not CODICE_CRON_AGENDA or not secrets.compare_digest(codice, CODICE_CRON_AGENDA):
 
         return redirect('/')
 
