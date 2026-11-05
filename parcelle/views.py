@@ -100,8 +100,8 @@ def nuova_parcella(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not is_admin_piattaforma(request):
-        return redirect('login')
+    if not studio:
+        return accesso_negato(request)
 
     if request.method == 'POST':
 
