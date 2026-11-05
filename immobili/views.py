@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 
-from studi.utils import get_studio_utente
+from studi.utils import get_studio_utente, is_admin_piattaforma
 from studi.permessi import (
     is_titolare,
     is_tecnico,
@@ -40,7 +40,7 @@ def puo_accedere_immobili(request):
         return False
 
     return (
-        request.user.is_superuser or
+        is_admin_piattaforma(request) or
         is_titolare(request) or
         is_tecnico(request) or
         is_segreteria(request)
@@ -70,7 +70,7 @@ def puo_eliminare_immobili(request):
         return False
 
     return (
-        request.user.is_superuser or
+        is_admin_piattaforma(request) or
         is_titolare(request)
     )
 
@@ -83,10 +83,10 @@ def lista_immobili(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         return redirect('login')
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         immobili = Immobile.objects.all().order_by('comune', 'indirizzo')
     else:
         immobili = Immobile.objects.filter(
@@ -125,7 +125,7 @@ def nuovo_immobile(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         return redirect('login')
 
     if request.method == 'POST':
@@ -166,7 +166,7 @@ def dettaglio_immobile(request, immobile_id):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         immobile = get_object_or_404(
             Immobile,
             id=immobile_id
@@ -205,7 +205,7 @@ def modifica_immobile(request, immobile_id):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         immobile = get_object_or_404(
             Immobile,
             id=immobile_id
@@ -259,7 +259,7 @@ def elimina_immobile(request, immobile_id):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         immobile = get_object_or_404(
             Immobile,
             id=immobile_id
