@@ -1,0 +1,26 @@
+name: Test isolamento studi
+
+on:
+  pull_request:
+    paths:
+      - '**/*.py'
+      - '.github/workflows/test-isolamento-studi.yml'
+  workflow_dispatch:
+
+jobs:
+  django-tests:
+    runs-on: ubuntu-latest
+    env:
+      DEBUG: 'True'
+      SECRET_KEY: 'temporary-key-for-ci-only-not-production'
+      USE_BACKBLAZE_B2: 'False'
+      DATABASE_URL: ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - run: python manage.py check
+      - run: python manage.py test agenda clienti --verbosity 2
