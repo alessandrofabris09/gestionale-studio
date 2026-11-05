@@ -14,6 +14,7 @@ from workflow.models import FasePratica, ChecklistPratica
 
 from studi.utils import (
     get_studio_utente,
+    is_admin_piattaforma,
     studio_deve_upgrade,
 )
 
@@ -65,7 +66,7 @@ def puo_vedere_area_pratiche(request):
     """
 
     return (
-        request.user.is_superuser or
+        is_admin_piattaforma(request) or
         puo_creare_pratiche(request) or
         puo_gestire_documenti(request)
     )
@@ -76,14 +77,14 @@ def home(request):
 
     studio = get_studio_sicuro(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         logout(request)
         return redirect('login')
 
     if studio and studio_deve_upgrade(studio):
         return redirect('abbonamento')
 
-    if request.user.is_superuser and not studio:
+    if is_admin_piattaforma(request) and not studio:
         pratiche = Pratica.objects.all()
         scadenze = Scadenza.objects.all()
         parcelle = Parcella.objects.all()
@@ -335,7 +336,7 @@ def ricerca_globale(request):
 
     studio = get_studio_sicuro(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         logout(request)
         return redirect('login')
 
@@ -351,7 +352,7 @@ def ricerca_globale(request):
 
     if query:
 
-        if request.user.is_superuser and not studio:
+        if is_admin_piattaforma(request) and not studio:
 
             clienti_base = Cliente.objects.all()
             immobili_base = Immobile.objects.all()

@@ -18,7 +18,7 @@ from django.views.decorators.http import require_POST
 from studi.models import Studio
 from studi.notifiche import get_email_notifiche_studio
 from studi.email_templates import layout_email_base, tabella_email
-from studi.utils import get_studio_utente
+from studi.utils import get_studio_utente, is_admin_piattaforma
 from studi.permessi import (
     puo_usare_agenda,
     puo_gestire_alert,
@@ -60,7 +60,7 @@ def get_eventi_queryset(request):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         return EventoAgenda.objects.all()
 
     return EventoAgenda.objects.filter(
@@ -72,23 +72,13 @@ def get_studio_agenda(request):
     """
     Restituisce lo studio da usare per l'agenda.
 
-    Per utenti normali usa lo studio collegato al profilo.
-    Per superuser, se non trova uno studio collegato, usa il primo studio attivo.
+    Usa esclusivamente lo studio collegato al profilo dell'utente.
+    L'admin della piattaforma non eredita uno studio arbitrario.
     """
 
     studio = get_studio_utente(request)
 
-    if studio:
-        return studio
-
-    if request.user.is_superuser:
-        return Studio.objects.filter(
-            attivo=True
-        ).order_by(
-            'id'
-        ).first()
-
-    return None
+    return studio
 
 
 @login_required

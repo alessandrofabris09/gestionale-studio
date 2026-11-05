@@ -9,6 +9,7 @@ from django.utils import timezone
 from studi.models import Studio, ProfiloUtente
 from studi.utils import (
     get_studio_utente,
+    is_admin_piattaforma,
     studio_puo_aggiungere_utenti,
 )
 from studi.permessi import puo_gestire_utenti
@@ -39,10 +40,10 @@ def lista_utenti(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         return redirect('login')
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         profili = ProfiloUtente.objects.all().select_related(
             'user',
             'studio'
@@ -79,10 +80,10 @@ def nuovo_utente(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
-        return redirect('login')
+    if not studio:
+        return accesso_negato(request)
 
-    if not request.user.is_superuser:
+    if not is_admin_piattaforma(request):
 
         if not studio_puo_aggiungere_utenti(studio):
 

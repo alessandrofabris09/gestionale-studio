@@ -14,7 +14,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import mm
 
-from studi.utils import get_studio_utente, studio_puo_creare_pratiche
+from studi.utils import get_studio_utente, studio_puo_creare_pratiche, is_admin_piattaforma
 
 from studi.permessi import (
     puo_creare_pratiche,
@@ -135,10 +135,10 @@ def lista_pratiche(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         return redirect('login')
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         pratiche = Pratica.objects.all().order_by('-id')
     else:
         pratiche = Pratica.objects.filter(
@@ -192,7 +192,7 @@ def dettaglio_pratica(request, pratica_id):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         pratica = get_object_or_404(
             Pratica,
             id=pratica_id
@@ -238,10 +238,10 @@ def nuova_pratica(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
-        return redirect('login')
+    if not studio:
+        return accesso_negato(request)
 
-    if not request.user.is_superuser:
+    if not is_admin_piattaforma(request):
 
         if not studio_puo_creare_pratiche(studio):
 
@@ -319,7 +319,7 @@ def modifica_pratica(request, pratica_id):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         pratica = get_object_or_404(
             Pratica,
             id=pratica_id
@@ -380,7 +380,7 @@ def elimina_pratica(request, pratica_id):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         pratica = get_object_or_404(
             Pratica,
             id=pratica_id
@@ -505,7 +505,7 @@ def pdf_pratica(request, pratica_id):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         pratica = get_object_or_404(
             Pratica,
             id=pratica_id

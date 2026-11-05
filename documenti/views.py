@@ -6,6 +6,7 @@ from django.db.models import Q
 
 from studi.utils import (
     get_studio_utente,
+    is_admin_piattaforma,
     studio_puo_caricare_file,
 )
 
@@ -46,7 +47,7 @@ def get_documenti_queryset(request):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         return Documento.objects.all()
 
     return Documento.objects.filter(
@@ -61,7 +62,7 @@ def get_pratica_queryset(request):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         return Pratica.objects.all()
 
     return Pratica.objects.filter(
@@ -77,7 +78,7 @@ def lista_documenti(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         return redirect('login')
 
     documenti = get_documenti_queryset(request).order_by('-id')
@@ -113,7 +114,7 @@ def carica_documento(request, pratica_id):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         return redirect('login')
 
     pratica = get_object_or_404(
@@ -132,7 +133,7 @@ def carica_documento(request, pratica_id):
 
             file = request.FILES.get('file')
 
-            if file and not request.user.is_superuser:
+            if file and not is_admin_piattaforma(request):
 
                 if not studio_puo_caricare_file(
                     studio,
@@ -195,7 +196,7 @@ def carica_documenti_multipli(request, pratica_id):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         return redirect('login')
 
     pratica = get_object_or_404(
@@ -219,7 +220,7 @@ def carica_documenti_multipli(request, pratica_id):
             for file in files:
                 dimensione_totale += file.size
 
-            if not request.user.is_superuser:
+            if not is_admin_piattaforma(request):
 
                 if not studio_puo_caricare_file(
                     studio,

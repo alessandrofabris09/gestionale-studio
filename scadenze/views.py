@@ -17,7 +17,7 @@ from agenda.models import EventoAgenda
 from agenda.views import invia_email_agenda_giornaliera
 
 from studi.models import Studio
-from studi.utils import get_studio_utente
+from studi.utils import get_studio_utente, is_admin_piattaforma
 from studi.email_templates import layout_email_base, tabella_email
 from studi.notifiche import get_email_notifiche_studio
 from studi.permessi import (
@@ -57,7 +57,7 @@ def get_scadenze_queryset(request):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         return Scadenza.objects.all()
 
     return Scadenza.objects.filter(
@@ -72,7 +72,7 @@ def get_eventi_agenda_queryset(request):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         return EventoAgenda.objects.all()
 
     return EventoAgenda.objects.filter(

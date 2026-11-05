@@ -8,12 +8,8 @@ def get_studio_utente(request):
     Utente normale:
     - restituisce lo studio collegato al ProfiloUtente.
 
-    Superuser:
-    - se ha un ProfiloUtente, restituisce quello studio;
-    - se non ha un ProfiloUtente, restituisce il primo Studio attivo.
-
-    Questo evita errori 500 nelle viste operative quando l'admin tecnico
-    non è collegato direttamente a uno studio.
+    Superuser con profilo: restituisce il proprio studio.
+    Amministratore della piattaforma senza profilo: restituisce None.
     """
 
     if not request:
@@ -26,25 +22,28 @@ def get_studio_utente(request):
         return None
 
     try:
-        profilo = ProfiloUtente.objects.select_related(
-            'studio'
-        ).get(
+        profilo = ProfiloUtente.objects.select_related('studio').get(
             user=request.user
         )
-
         return profilo.studio
-
     except ProfiloUtente.DoesNotExist:
-
-        if request.user.is_superuser:
-
-            return Studio.objects.filter(
-                attivo=True
-            ).order_by(
-                'id'
-            ).first()
-
+        # Un amministratore della piattaforma non viene assegnato
+        # automaticamente allo studio di un altro professionista.
         return None
+
+
+def is_admin_piattaforma(request):
+    """
+    Amministratore Django senza profilo associato a uno studio.
+    Gli eventuali superuser con profilo restano confinati al proprio studio.
+    """
+    return bool(
+        request
+        and getattr(request, 'user', None)
+        and request.user.is_authenticated
+        and request.user.is_superuser
+        and not ProfiloUtente.objects.filter(user=request.user).exists()
+    )
 
 
 def studio_is_pro(studio):
