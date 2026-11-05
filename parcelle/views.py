@@ -12,7 +12,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import mm
 
-from studi.utils import get_studio_utente
+from studi.utils import get_studio_utente, is_admin_piattaforma
 from studi.permessi import (
     puo_vedere_parcelle,
     puo_modificare_parcelle,
@@ -50,7 +50,7 @@ def get_parcelle_queryset(request):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         return Parcella.objects.all()
 
     return Parcella.objects.filter(
@@ -66,7 +66,7 @@ def lista_parcelle(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         return redirect('login')
 
     parcelle = get_parcelle_queryset(request).order_by('-id')
@@ -100,7 +100,7 @@ def nuova_parcella(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         return redirect('login')
 
     if request.method == 'POST':
@@ -114,7 +114,7 @@ def nuova_parcella(request):
 
             parcella = form.save(commit=False)
 
-            if not request.user.is_superuser:
+            if not is_admin_piattaforma(request):
                 if parcella.pratica.studio != studio:
                     return accesso_negato(request)
 
@@ -176,7 +176,7 @@ def modifica_parcella(request, parcella_id):
 
             parcella = form.save(commit=False)
 
-            if not request.user.is_superuser:
+            if not is_admin_piattaforma(request):
                 if parcella.pratica.studio != studio:
                     return accesso_negato(request)
 
