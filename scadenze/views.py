@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 import os
+import secrets
 import resend
 
 from django.conf import settings
@@ -9,6 +10,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils.timezone import now
+from django.views.decorators.http import require_POST
 
 from attivita.models import Attivita
 from agenda.models import EventoAgenda
@@ -27,10 +29,7 @@ from .models import Scadenza
 from .forms import ScadenzaForm
 
 
-CODICE_CRON_ALERT = os.environ.get(
-    'CODICE_CRON_ALERT',
-    'ABCD1234'
-)
+CODICE_CRON_ALERT = os.environ.get('CODICE_CRON_ALERT', '')
 
 
 def accesso_negato(request):
@@ -288,6 +287,7 @@ def elimina_scadenza(request, scadenza_id):
 
 
 @login_required
+@require_POST
 def completa_scadenza(request, scadenza_id):
 
     if not puo_usare_agenda(request):
@@ -754,7 +754,7 @@ def invia_alert_email_cron(request, codice):
     con due job distinti.
     """
 
-    if codice != CODICE_CRON_ALERT:
+    if not CODICE_CRON_ALERT or not secrets.compare_digest(codice, CODICE_CRON_ALERT):
 
         return redirect('/')
 

@@ -25,8 +25,13 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get(
     'DEBUG',
-    'True'
+    'False' if os.environ.get('RENDER') else 'True'
 ) == 'True'
+
+# Sui servizi Render non utilizzare impostazioni di sviluppo.
+if os.environ.get('RENDER') and (DEBUG or SECRET_KEY == 'django-insecure-local-dev-key'):
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured('Configurare DEBUG=False e SECRET_KEY sicura su Render.')
 
 
 ALLOWED_HOSTS = [

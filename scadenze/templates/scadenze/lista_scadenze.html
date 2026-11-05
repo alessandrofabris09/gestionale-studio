@@ -290,10 +290,13 @@ Scadenze operative
                         <div class="actions">
 
                             {% if not scadenza.completata %}
-                                <a class="action-btn complete-btn" href="/scadenze/{{ scadenza.id }}/completa/">
-                                    <i class="fa-solid fa-check"></i>
-                                    Completa
-                                </a>
+                                <form method="post" action="{% url 'completa_scadenza' scadenza.id %}" style="display:inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="action-btn complete-btn">
+                                        <i class="fa-solid fa-check"></i>
+                                        Completa
+                                    </button>
+                                </form>
                             {% endif %}
 
                             <a class="action-btn edit-btn" href="/scadenze/{{ scadenza.id }}/modifica/">
