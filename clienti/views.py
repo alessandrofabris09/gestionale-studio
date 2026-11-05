@@ -5,7 +5,7 @@ from django.db.models import Q
 from .models import Cliente
 from .forms import ClienteForm
 
-from studi.utils import get_studio_utente
+from studi.utils import get_studio_utente, is_admin_piattaforma
 from studi.permessi import (
     is_titolare,
     is_tecnico,
@@ -41,7 +41,7 @@ def puo_accedere_clienti(request):
         return False
 
     return (
-        request.user.is_superuser or
+        is_admin_piattaforma(request) or
         is_titolare(request) or
         is_tecnico(request) or
         is_segreteria(request)
@@ -71,7 +71,7 @@ def puo_eliminare_clienti(request):
         return False
 
     return (
-        request.user.is_superuser or
+        is_admin_piattaforma(request) or
         is_titolare(request)
     )
 
@@ -84,7 +84,7 @@ def lista_clienti(request):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         clienti = Cliente.objects.all().order_by('nome')
     else:
         clienti = Cliente.objects.filter(
@@ -123,7 +123,7 @@ def nuovo_cliente(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         return redirect('login')
 
     if request.method == 'POST':
@@ -159,7 +159,7 @@ def dettaglio_cliente(request, cliente_id):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         cliente = get_object_or_404(
             Cliente,
             id=cliente_id
@@ -198,7 +198,7 @@ def modifica_cliente(request, cliente_id):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         cliente = get_object_or_404(
             Cliente,
             id=cliente_id
@@ -248,7 +248,7 @@ def elimina_cliente(request, cliente_id):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         cliente = get_object_or_404(
             Cliente,
             id=cliente_id
