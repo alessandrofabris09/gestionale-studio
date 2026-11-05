@@ -333,10 +333,13 @@ Agenda operativa
                     <td>
                         <div class="actions">
 
-                            <a class="action-btn complete-btn" href="/agenda/{{ evento.id }}/completa/">
-                                <i class="fa-solid fa-check"></i>
-                                Completa
-                            </a>
+                            <form method="post" action="{% url 'completa_evento' evento.id %}" style="display:inline">
+                                {% csrf_token %}
+                                <button type="submit" class="action-btn complete-btn">
+                                    <i class="fa-solid fa-check"></i>
+                                    Completa
+                                </button>
+                            </form>
 
                             <a class="action-btn edit-btn" href="/agenda/{{ evento.id }}/modifica/">
                                 <i class="fa-solid fa-pen"></i>
