@@ -187,6 +187,7 @@ class Command(BaseCommand):
 
             workflow, creato = TipoWorkflow.objects.get_or_create(
                 nome=item['nome'],
+                studio=None,
                 defaults={
                     'categoria': item['categoria'],
                     'descrizione': item['nome'],

@@ -1,0 +1,39 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Modifica variante{% endblock %}
+{% block page_title %}Modifica variante{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'modelli_workflow' %}">Torna ai modelli dello studio</a></p>
+<p>Il salvataggio rende la variante disponibile per le pratiche dello studio. Le fasi e le checklist già copiate nelle pratiche restano come sono.</p>
+<form method="post">
+    {% csrf_token %}
+    <section class="card">
+        <h2>Modello</h2>
+        {{ form.as_p }}
+    </section>
+    <section class="card">
+        <h2>Fasi</h2>
+        {{ fasi.management_form }}
+        {{ fasi.non_form_errors }}
+        {% for riga in fasi %}
+            <fieldset>
+                <legend>{% if riga.instance.pk %}{{ riga.instance.titolo }}{% else %}Aggiungi una fase{% endif %}</legend>
+                {{ riga.as_p }}
+            </fieldset>
+        {% endfor %}
+    </section>
+    <section class="card">
+        <h2>Checklist</h2>
+        {{ checklist.management_form }}
+        {{ checklist.non_form_errors }}
+        {% for riga in checklist %}
+            <fieldset>
+                <legend>{% if riga.instance.pk %}{{ riga.instance.voce }}{% else %}Aggiungi una voce{% endif %}</legend>
+                {{ riga.as_p }}
+            </fieldset>
+        {% endfor %}
+    </section>
+    <button class="btn" type="submit">Salva variante</button>
+</form>
+{% endblock %}

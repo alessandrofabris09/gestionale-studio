@@ -1,0 +1,31 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Modelli dello studio{% endblock %}
+{% block page_title %}Modelli dello studio{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'nuova_pratica' %}">Torna a Nuova pratica</a></p>
+<section class="card">
+    <h2>Crea una variante</h2>
+    <p>Parti da un modello standard e adatta fasi e controlli per il tuo studio.</p>
+    <p>Per le pratiche comunali, verifica il procedimento e la modulistica dello sportello competente.</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn" type="submit">Crea copia da personalizzare</button>
+    </form>
+</section>
+<section class="card">
+    <h2>Varianti dello studio</h2>
+    <ul>
+        {% for variante in varianti %}
+            <li>
+                <a href="{% url 'modifica_variante_workflow' variante.pk %}">{{ variante }}</a>
+                {% if not variante.attivo %}(bozza){% endif %}
+            </li>
+        {% empty %}
+            <li>Lo studio non ha ancora creato varianti.</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endblock %}

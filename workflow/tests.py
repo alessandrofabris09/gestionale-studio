@@ -1,10 +1,12 @@
 from unittest.mock import patch
 from django.contrib.auth.models import User
 from django.test import TestCase
+from django.urls import reverse
 from studi.models import Studio, ProfiloUtente
 from clienti.models import Cliente
 from immobili.models import Immobile
 from pratiche.models import Pratica
+from pratiche.forms import PraticaForm
 from scadenze.models import Scadenza
 from attivita.models import Attivita
 from .models import TipoWorkflow, FaseWorkflow, ChecklistWorkflow, WorkflowPratica, FasePratica, ChecklistPratica
@@ -29,6 +31,73 @@ class AttivazioneSicuraTests(TestCase):
         self.assertFalse(WorkflowPratica.objects.exists())
         self.assertEqual(self.client.post(self.path, {'workflow': '99999'}).status_code, 200)
         self.assertFalse(WorkflowPratica.objects.exists())
+
+    def test_catalogo_energia_disponibile_con_filtro_e_fasi_specifiche(self):
+        modello = TipoWorkflow.objects.get(studio=None, nome='ENEA - Bonus Casa')
+        risposta = self.client.get(reverse('nuova_pratica'))
+        self.assertContains(risposta, 'data-selettore-workflow')
+        self.assertContains(risposta, 'data-categoria="Energia"')
+        self.assertContains(risposta, modello.nome)
+        self.assertEqual(self.client.post(self.path, {'workflow': modello.pk}).status_code, 302)
+        workflow = WorkflowPratica.objects.get(pratica=self.pratica)
+        self.assertTrue(workflow.fasi_pratica.filter(titolo='Compilazione scheda Bonus Casa').exists())
+        self.assertTrue(workflow.checklist_pratica.filter(voce='Ricevuta ENEA').exists())
+
+    def test_variante_copiata_salvata_e_riutilizzata_senza_alterare_le_pratiche(self):
+        catalogo = reverse('modelli_workflow')
+        self.assertContains(self.client.get(catalogo), self.workflow.nome)
+        risposta = self.client.post(catalogo, {'modello': self.workflow.pk})
+        variante = TipoWorkflow.objects.get(studio=self.pratica.studio)
+        modifica = reverse('modifica_variante_workflow', args=[variante.pk])
+        self.assertRedirects(risposta, modifica)
+        self.assertFalse(variante.attivo)
+        self.assertEqual(variante.fasi.get().giorni_scadenza, 10)
+        self.assertEqual(variante.checklist.get().voce, 'Voce QA')
+        self.assertNotContains(self.client.get(self.path), f'value="{variante.pk}"')
+
+        dati = {
+            'nome': 'Variante QA',
+            'fasi-TOTAL_FORMS': 1, 'fasi-INITIAL_FORMS': 1,
+            'fasi-0-id': variante.fasi.get().pk, 'fasi-0-titolo': 'Fase personalizzata',
+            'fasi-0-ordine': 1, 'fasi-0-giorni_scadenza': 12,
+            'checklist-TOTAL_FORMS': 2, 'checklist-INITIAL_FORMS': 1,
+            'checklist-0-id': variante.checklist.get().pk, 'checklist-0-voce': 'Voce QA',
+            'checklist-0-ordine': 1, 'checklist-0-obbligatorio': 'on',
+            'checklist-1-voce': 'Nuovo controllo', 'checklist-1-ordine': 2,
+        }
+        self.assertRedirects(self.client.post(modifica, dati), catalogo)
+        self.assertEqual(self.workflow.fasi.get().titolo, 'Fase QA')
+        self.assertEqual(self.workflow.checklist.count(), 1)
+        risposta = self.client.post(reverse('nuova_pratica'), {
+            'tipo_pratica': f'variante:{variante.pk}', 'stato': 'IN_CORSO',
+            'oggetto': 'Pratica variante QA', 'comune': self.pratica.comune,
+            'cliente': self.pratica.cliente_id, 'immobile': self.pratica.immobile_id,
+        })
+        self.assertEqual(risposta.status_code, 302)
+        pratica = Pratica.objects.get(oggetto='Pratica variante QA')
+        self.assertEqual(pratica.tipo_pratica, 'Variante QA')
+        self.assertEqual(pratica.workflow_pratica.workflow, variante)
+        self.assertTrue(pratica.workflow_pratica.checklist_pratica.filter(voce='Nuovo controllo').exists())
+        variante.fasi.update(titolo='Nuova versione della fase')
+        self.assertEqual(pratica.workflow_pratica.fasi_pratica.get().titolo, 'Fase personalizzata')
+
+    def test_variante_altrui_esclusa_da_catalogo_e_attivazione(self):
+        altro = Studio.objects.create(nome='Altro studio', titolare=User.objects.create_user('altro_qa'))
+        variante = TipoWorkflow.objects.create(
+            studio=altro, nome='Modello privato', categoria='EDILIZIA',
+        )
+        catalogo = reverse('modelli_workflow')
+        self.assertNotContains(self.client.get(catalogo), variante.nome)
+        self.assertNotContains(self.client.get(self.path), variante.nome)
+        self.assertEqual(self.client.post(self.path, {'workflow': variante.pk}).status_code, 200)
+        self.assertFalse(WorkflowPratica.objects.exists())
+        self.assertEqual(self.client.post(catalogo, {'modello': variante.pk}).status_code, 200)
+        self.assertFalse(TipoWorkflow.objects.filter(studio=self.pratica.studio).exists())
+        modifica = reverse('modifica_variante_workflow', args=[variante.pk])
+        self.assertEqual(self.client.get(modifica).status_code, 404)
+        self.assertEqual(self.client.post(modifica, {}).status_code, 404)
+        scelte = dict(PraticaForm(studio=self.pratica.studio).fields['tipo_pratica'].choices)
+        self.assertNotIn(f'variante:{variante.pk}', scelte)
 
     def test_attivazione_e_ripetizione_preservano_stato(self):
         data = {'workflow': self.workflow.pk, 'note': 'Prima nota'}

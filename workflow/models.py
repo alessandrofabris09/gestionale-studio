@@ -5,10 +5,19 @@ from pratiche.models import Pratica
 
 CATEGORIE_WORKFLOW = [
     ('EDILIZIA', 'Edilizia'),
+    ('SUAP', 'Attività produttive e SUAP'),
+    ('URBANISTICA', 'Urbanistica e paesaggio'),
     ('CATASTO', 'Catasto'),
+    ('SUCCESSIONI', 'Successioni'),
+    ('STIME', 'Stime e perizie'),
+    ('RILIEVI', 'Rilievi e topografia'),
     ('ENERGIA', 'Energia'),
     ('PRATICHE_IMMOBILIARI_NOTARILI', 'Pratiche immobiliari e notarili'),
     ('STRUTTURE', 'Strutture'),
+    ('IMPIANTI', 'Impianti'),
+    ('ANTINCENDIO', 'Prevenzione incendi'),
+    ('ACUSTICA', 'Acustica'),
+    ('LAVORI_PUBBLICI', 'Lavori pubblici e direzione lavori'),
     ('AMBIENTE', 'Ambiente'),
     ('SICUREZZA_CANTIERI', 'Sicurezza cantieri'),
     ('CONTABILITA', 'Contabilità'),
@@ -16,7 +25,22 @@ CATEGORIE_WORKFLOW = [
 ]
 
 
+class TipoWorkflowQuerySet(models.QuerySet):
+    def disponibili_per(self, studio):
+        return self.filter(
+            models.Q(studio__isnull=True) | models.Q(studio=studio),
+            attivo=True,
+        ).order_by('categoria', 'ordine', 'nome', 'pk')
+
+
 class TipoWorkflow(models.Model):
+
+    studio = models.ForeignKey(
+        'studi.Studio', null=True, blank=True, on_delete=models.CASCADE,
+        related_name='varianti_workflow',
+    )
+
+    objects = TipoWorkflowQuerySet.as_manager()
 
     categoria = models.CharField(
         max_length=50,

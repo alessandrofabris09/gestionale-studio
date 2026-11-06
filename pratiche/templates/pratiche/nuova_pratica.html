@@ -182,6 +182,9 @@ Nuova pratica
 </style>
 
 <div class="page-actions">
+    {% if request.user.profilo_studio.ruolo == 'TITOLARE' %}
+        <a class="btn" href="{% url 'modelli_workflow' %}">Modelli dello studio</a>
+    {% endif %}
 
     <a class="btn" href="/pratiche/">
         <i class="fa-solid fa-arrow-left"></i>

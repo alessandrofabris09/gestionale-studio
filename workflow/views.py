@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
@@ -7,19 +7,24 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now
 
 from studi.utils import get_studio_utente
-from studi.permessi import puo_modificare_pratiche
+from studi.permessi import is_titolare, puo_modificare_pratiche
 
 from pratiche.models import Pratica
 from scadenze.models import Scadenza
 from attivita.models import Attivita
 
 from .models import (
+    TipoWorkflow,
+    FaseWorkflow,
+    ChecklistWorkflow,
     WorkflowPratica,
     FasePratica,
     ChecklistPratica,
 )
 
-from .forms import WorkflowPraticaForm
+from .forms import (
+    ChecklistVariante, CopiaModelloForm, FasiVariante, VarianteWorkflowForm, WorkflowPraticaForm,
+)
 
 
 def accesso_negato(request):
@@ -32,6 +37,71 @@ def accesso_negato(request):
         'errors/accesso_negato.html',
         status=403
     )
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+@transaction.atomic
+def modelli_workflow(request):
+    studio = get_studio_utente(request)
+    if not studio or not is_titolare(request):
+        return accesso_negato(request)
+
+    disponibili = TipoWorkflow.objects.disponibili_per(studio)
+    standard = disponibili.filter(studio__isnull=True)
+    form = CopiaModelloForm(request.POST if request.method == 'POST' else None, standard=standard)
+    if request.method == 'POST' and form.is_valid():
+        base = form.cleaned_data['modello']
+        variante = TipoWorkflow.objects.create(
+            studio=studio, categoria=base.categoria, nome=base.nome,
+            descrizione=base.descrizione, ordine=base.ordine, attivo=False,
+        )
+        FaseWorkflow.objects.bulk_create([
+            FaseWorkflow(workflow=variante, **valori)
+            for valori in base.fasi.values('titolo', 'descrizione', 'ordine', 'giorni_scadenza')
+        ])
+        ChecklistWorkflow.objects.bulk_create([
+            ChecklistWorkflow(workflow=variante, **valori)
+            for valori in base.checklist.values('voce', 'descrizione', 'ordine', 'obbligatorio')
+        ])
+        return redirect('modifica_variante_workflow', variante_id=variante.pk)
+
+    return render(request, 'workflow/modelli.html', {
+        'form': form,
+        'varianti': TipoWorkflow.objects.filter(studio=studio).order_by('nome', 'pk'),
+    })
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+@transaction.atomic
+def modifica_variante_workflow(request, variante_id):
+    studio = get_studio_utente(request)
+    if not studio or not is_titolare(request):
+        return accesso_negato(request)
+
+    varianti = TipoWorkflow.objects.filter(studio=studio)
+    if request.method == 'POST':
+        varianti = varianti.select_for_update()
+    variante = get_object_or_404(varianti, pk=variante_id)
+    dati = request.POST if request.method == 'POST' else None
+    form = VarianteWorkflowForm(dati, instance=variante)
+    fasi = FasiVariante(dati, instance=variante, queryset=variante.fasi.order_by('ordine', 'pk'))
+    checklist = ChecklistVariante(
+        dati, instance=variante, queryset=variante.checklist.order_by('ordine', 'pk'),
+    )
+    if request.method == 'POST':
+        validi = [form.is_valid(), fasi.is_valid(), checklist.is_valid()]
+        if all(validi):
+            variante.attivo = True
+            form.save()
+            fasi.save()
+            checklist.save()
+            return redirect('modelli_workflow')
+
+    return render(request, 'workflow/variante.html', {
+        'form': form, 'fasi': fasi, 'checklist': checklist,
+    })
 
 
 @login_required
@@ -65,7 +135,8 @@ def attiva_workflow_pratica(request, pratica_id):
 
         form = WorkflowPraticaForm(
             request.POST,
-            instance=workflow_pratica
+            instance=workflow_pratica,
+            studio=studio,
         )
 
         if form.is_valid():
@@ -152,7 +223,8 @@ def attiva_workflow_pratica(request, pratica_id):
     else:
 
         form = WorkflowPraticaForm(
-            instance=workflow_pratica
+            instance=workflow_pratica,
+            studio=studio,
         )
 
     return render(
@@ -161,6 +233,7 @@ def attiva_workflow_pratica(request, pratica_id):
         {
             'form': form,
             'pratica': pratica,
+            'gestisce_modelli': is_titolare(request),
         }
     )
 

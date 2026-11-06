@@ -190,3 +190,22 @@ body.studio-ui {
 .studio-admin :is(input, button, select, textarea) {
     font-family: var(--studio-font);
 }
+.selettore-workflow-filtri:not([hidden]) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    gap: .75rem;
+    margin-bottom: .75rem;
+}
+
+.selettore-workflow :is(input, select) {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.selettore-workflow select[size] option {
+    padding: .4rem .55rem;
+}
+
+.selettore-workflow select[size] option[hidden] {
+    display: none;
+}

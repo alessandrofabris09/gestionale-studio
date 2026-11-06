@@ -78,11 +78,12 @@ def puo_vedere_area_pratiche(request):
 
 
 @transaction.atomic
-def attiva_workflow_automatico(pratica):
+def attiva_workflow_automatico(pratica, variante=None):
 
-    workflow = TipoWorkflow.objects.filter(
+    workflow = variante or TipoWorkflow.objects.filter(
         nome=pratica.tipo_pratica,
-        attivo=True
+        attivo=True,
+        studio__isnull=True,
     ).first()
 
     if not workflow:
@@ -313,7 +314,7 @@ def nuova_pratica(request):
             pratica.studio = studio
             pratica.save()
 
-            workflow_pratica = attiva_workflow_automatico(pratica)
+            workflow_pratica = attiva_workflow_automatico(pratica, form.variante_workflow)
 
             Attivita.objects.create(
                 pratica=pratica,
