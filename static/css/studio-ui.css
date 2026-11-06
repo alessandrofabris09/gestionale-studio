@@ -210,14 +210,37 @@ body.studio-ui {
     width: 100%;
 }
 
-.selettore-workflow select[size] {
-    padding: .35rem;
-    background: var(--studio-surface);
+.selettore-modelli {
+    max-height: 16rem;
+    overflow: auto;
+    border: 1px solid var(--studio-line);
+    border-radius: var(--studio-radius);
 }
 
-.selettore-workflow select[size] option {
-    padding: .55rem .7rem;
-    border-radius: .4rem;
+.studio-ui .selettore-modelli button,
+.studio-ui .selettore-modello-scelto {
+    width: 100%;
+    padding: .65rem .8rem;
+    border: 0;
+    background: var(--studio-surface);
+    color: var(--studio-text);
+    text-align: start;
+    cursor: pointer;
+}
+
+.studio-ui .selettore-modelli button + button {
+    border-top: 1px solid var(--studio-line);
+}
+
+.studio-ui .selettore-modelli button:is(:hover, [aria-pressed="true"]),
+.studio-ui .selettore-modello-scelto {
+    background: #eff6ff;
+    color: var(--studio-primary-hover);
+}
+
+.studio-ui .selettore-modello-scelto {
+    margin-top: .5rem;
+    border-radius: var(--studio-radius);
 }
 
 .studio-ui .selettore-categorie [data-apri-categorie] {

@@ -11,6 +11,8 @@
         const categoriaAttiva = contenitore.querySelector('[data-categoria-attiva]');
         const categorieElenco = contenitore.querySelector('[data-categorie]');
         const risultati = contenitore.querySelector('[data-risultati]');
+        const modelli = contenitore.querySelector('[data-modelli]');
+        const modelloScelto = contenitore.querySelector('[data-modello-scelto]');
         const opzioni = Array.from(elenco.options);
         const categorie = new Set(opzioni.map((opzione) => opzione.dataset.categoria).filter(Boolean));
         let categoria = '';
@@ -28,19 +30,43 @@
         });
 
         const aggiorna = () => {
-            const selezione = elenco.value;
             const parole = normalizza(ricerca.value.trim()).split(/\s+/);
             const filtrate = opzioni.filter((opzione) => opzione.value
                 && (!categoria || opzione.dataset.categoria === categoria)
                 && parole.every((parola) => normalizza(opzione.textContent).includes(parola)));
-            const visibili = new Set(filtrate);
-            elenco.replaceChildren(...opzioni.filter((opzione) => !opzione.value
-                || opzione.value === selezione || visibili.has(opzione)));
-            elenco.value = selezione;
+            modelli.replaceChildren(...filtrate.map((opzione) => {
+                const pulsante = document.createElement('button');
+                pulsante.type = 'button';
+                pulsante.textContent = opzione.textContent;
+                pulsante.setAttribute('aria-pressed', String(opzione.selected));
+                pulsante.addEventListener('click', () => {
+                    elenco.value = opzione.value;
+                    elenco.dispatchEvent(new Event('change', {bubbles: true}));
+                    confermaModello();
+                    modelloScelto.focus();
+                });
+                return pulsante;
+            }));
+            modelli.hidden = filtrate.length === 0;
             const corrispondenze = filtrate.length;
             risultati.textContent = corrispondenze === 0 ? 'Nessun modello corrispondente.'
                 : corrispondenze === 1 ? '1 modello trovato.' : `${corrispondenze} modelli trovati.`;
         };
+        const confermaModello = () => {
+            modelli.hidden = true;
+            modelloScelto.hidden = false;
+            modelloScelto.textContent = `Modello selezionato: ${elenco.selectedOptions[0].textContent.trim()} · Cambia`;
+            risultati.textContent = '';
+        };
+        modelloScelto.addEventListener('click', () => {
+            aggiorna();
+            ricerca.focus();
+        });
+        elenco.addEventListener('invalid', (evento) => {
+            evento.preventDefault();
+            ricerca.focus();
+            risultati.textContent = 'Seleziona un modello prima di continuare.';
+        });
         const nomi = ['', ...[...categorie].sort((a, b) => a.localeCompare(b, 'it'))];
         for (const nome of nomi) {
             const pulsante = document.createElement('button');
@@ -58,11 +84,11 @@
             });
             categorieElenco.append(pulsante);
         }
-        elenco.size = 7;
+        elenco.hidden = true;
         filtri.hidden = false;
         risultati.hidden = false;
         ricerca.addEventListener('input', aggiorna);
-        elenco.addEventListener('change', aggiorna);
-        aggiorna();
+        if (elenco.value) confermaModello();
+        else aggiorna();
     }
 })();

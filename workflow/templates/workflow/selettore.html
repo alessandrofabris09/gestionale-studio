@@ -10,6 +10,8 @@
         </label>
     </div>
     {% include 'django/forms/widgets/select.html' %}
+    <div class="selettore-modelli" data-modelli hidden role="group" aria-label="Modelli disponibili"></div>
+    <button type="button" class="selettore-modello-scelto" data-modello-scelto hidden></button>
     <p data-risultati role="status" hidden></p>
 </div>
 <script src="{% static 'js/selettore-workflow.js' %}" defer></script>
