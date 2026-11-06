@@ -65,6 +65,15 @@ def aggiorna_stato_abbonamento(studio, stato):
     studio.save()
 
 
+def abbonamento_da_fattura(invoice):
+    parent = invoice.get('parent') or {}
+    details = parent.get('subscription_details') or {}
+    subscription = details.get('subscription') or invoice.get('subscription')
+    if isinstance(subscription, dict):
+        return subscription.get('id')
+    return subscription
+
+
 @csrf_exempt
 def stripe_webhook(request):
     """
@@ -170,9 +179,7 @@ def stripe_webhook(request):
 
         invoice = event['data']['object']
 
-        subscription_id = invoice.get(
-            'subscription'
-        )
+        subscription_id = abbonamento_da_fattura(invoice)
 
         customer_id = invoice.get(
             'customer'
@@ -204,9 +211,7 @@ def stripe_webhook(request):
 
         invoice = event['data']['object']
 
-        subscription_id = invoice.get(
-            'subscription'
-        )
+        subscription_id = abbonamento_da_fattura(invoice)
 
         if subscription_id:
 
