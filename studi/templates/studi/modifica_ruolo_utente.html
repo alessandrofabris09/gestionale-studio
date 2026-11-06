@@ -1,0 +1,44 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Modifica utente</h1>
+        <p>Aggiorna i dati dell’account e il ruolo nello studio.</p>
+    </div>
+</div>
+
+<div class="card">
+
+    <div class="detail-grid">
+        <div>
+            <strong>Username</strong>
+            <p>{{ profilo.user.username }}</p>
+        </div>
+
+        <div>
+            <strong>Studio</strong>
+            <p>{{ studio.nome }}</p>
+        </div>
+    </div>
+
+    <form method="post" style="margin-top: 24px;">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <div style="margin-top: 20px;">
+            <button type="submit" class="btn btn-primary">
+                Salva modifiche
+            </button>
+
+            <a href="{% url 'utenti_studio' %}" class="btn btn-secondary">
+                Annulla
+            </a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

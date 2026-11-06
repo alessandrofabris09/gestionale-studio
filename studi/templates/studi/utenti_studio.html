@@ -1,0 +1,111 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Gestione utenti studio
+{% endblock %}
+
+{% block page_title %}
+Gestione utenti
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Utenti dello studio</h1>
+        <p>
+            Gestione degli utenti collegati allo studio
+            <strong>{{ studio.nome }}</strong>.
+        </p>
+    </div>
+
+    <div>
+        <a href="{% url 'nuovo_utente_studio' %}" class="btn btn-primary">
+            Nuovo collaboratore
+        </a>
+
+        <a href="{% url 'profilo_studio' %}" class="btn btn-secondary">
+            Dati studio
+        </a>
+    </div>
+</div>
+
+<div class="card">
+
+    {% if profili %}
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Utente</th>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Ruolo</th>
+                    <th>Stato</th>
+                    <th>Permessi Django</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for profilo in profili %}
+
+                    <tr>
+                        <td>
+                            <strong>{{ profilo.user.username }}</strong>
+                        </td>
+
+                        <td>
+                            {{ profilo.user.first_name }} {{ profilo.user.last_name }}
+                        </td>
+
+                        <td>
+                            {{ profilo.user.email|default:"-" }}
+                        </td>
+
+                        <td>
+                            <strong>{{ profilo.get_ruolo_display }}</strong>
+                        </td>
+
+                        <td>
+                            {% if profilo.user.is_active %}
+                                Attivo
+                            {% else %}
+                                Disattivato
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if profilo.user.is_superuser %}
+                                Superuser
+                            {% elif profilo.user.is_staff %}
+                                Staff
+                            {% else %}
+                                Gestionale
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <a href="{% url 'modifica_ruolo_utente' profilo.id %}" class="btn btn-secondary btn-sm">
+                                Modifica
+                            </a>
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+        </table>
+
+    {% else %}
+
+        <p>
+            Nessun utente collegato allo studio.
+        </p>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

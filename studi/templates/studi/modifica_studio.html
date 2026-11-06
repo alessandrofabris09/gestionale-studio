@@ -1,0 +1,32 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Modifica dati studio</h1>
+        <p>Aggiorna i dati anagrafici e di contatto dello studio.</p>
+    </div>
+</div>
+
+<div class="card">
+
+    <form method="post">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <div style="margin-top: 20px;">
+            <button type="submit" class="btn btn-primary">
+                Salva modifiche
+            </button>
+
+            <a href="{% url 'profilo_studio' %}" class="btn btn-secondary">
+                Annulla
+            </a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

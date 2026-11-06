@@ -1,0 +1,177 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Nuovo utente
+{% endblock %}
+
+{% block page_title %}
+Nuovo utente
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .form-card{
+        max-width:760px;
+        background:white;
+        border-radius:24px;
+        padding:35px;
+        box-shadow:0 10px 28px rgba(0,0,0,0.08);
+    }
+
+    .form-grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:20px;
+    }
+
+    .full{
+        grid-column:1 / -1;
+    }
+
+    label{
+        display:block;
+        font-weight:800;
+        margin-bottom:8px;
+        color:#374151;
+        font-size:14px;
+    }
+
+    input, select{
+        width:100%;
+        padding:14px 16px;
+        border:1px solid #d1d5db;
+        border-radius:14px;
+        font-size:15px;
+        background:#f9fafb;
+    }
+
+    input:focus, select:focus{
+        outline:none;
+        border-color:#2563eb;
+        background:white;
+        box-shadow:0 0 0 4px rgba(37,99,235,0.12);
+    }
+
+    .field-error input,
+    .field-error select{
+        border-color:#dc2626;
+        background:#fff7f7;
+    }
+
+    .error-text{
+        color:#991b1b;
+        font-size:13px;
+        font-weight:800;
+        margin-top:8px;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:14px 22px;
+        border-radius:14px;
+        border:0;
+        font-weight:800;
+        cursor:pointer;
+        margin-top:30px;
+    }
+
+    .btn-secondary{
+        background:#f3f4f6;
+        color:#111827;
+        text-decoration:none;
+        margin-left:8px;
+    }
+
+    @media(max-width:800px){
+        .form-grid{
+            grid-template-columns:1fr;
+        }
+    }
+</style>
+
+<div class="form-card">
+
+    <h2>
+        <i class="fa-solid fa-user-plus"></i>
+        Aggiungi utente
+    </h2>
+
+    <p style="color:#6b7280;margin:10px 0 28px 0;line-height:1.6;">
+        Crea un nuovo accesso per tecnico, segreteria o collaboratore.
+    </p>
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        <div class="form-grid">
+
+            <div class="{% if form.first_name.errors %}field-error{% endif %}">
+                <label>Nome</label>
+                {{ form.first_name }}
+                {% for error in form.first_name.errors %}
+                    <div class="error-text">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="{% if form.last_name.errors %}field-error{% endif %}">
+                <label>Cognome</label>
+                {{ form.last_name }}
+                {% for error in form.last_name.errors %}
+                    <div class="error-text">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="{% if form.email.errors %}field-error{% endif %}">
+                <label>Email</label>
+                {{ form.email }}
+                {% for error in form.email.errors %}
+                    <div class="error-text">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="{% if form.username.errors %}field-error{% endif %}">
+                <label>Username</label>
+                {{ form.username }}
+                {% for error in form.username.errors %}
+                    <div class="error-text">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="{% if form.password.errors %}field-error{% endif %}">
+                <label>Password</label>
+                {{ form.password }}
+                {% for error in form.password.errors %}
+                    <div class="error-text">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="{% if form.ruolo.errors %}field-error{% endif %}">
+                <label>Ruolo</label>
+                {{ form.ruolo }}
+                {% for error in form.ruolo.errors %}
+                    <div class="error-text">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+        </div>
+
+        <button class="btn" type="submit">
+            <i class="fa-solid fa-circle-check"></i>
+            Crea utente
+        </button>
+
+        <a class="btn btn-secondary" href="/utenti/">
+            Annulla
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

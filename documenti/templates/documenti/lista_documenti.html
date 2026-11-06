@@ -1,0 +1,251 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Documenti
+{% endblock %}
+
+{% block page_title %}
+Archivio documenti
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .top-actions{
+        display:flex;
+        align-items:center;
+        gap:16px;
+        margin-bottom:25px;
+        flex-wrap:wrap;
+    }
+
+    .search{
+        flex:1;
+        min-width:280px;
+    }
+
+    .search input{
+        width:100%;
+        padding:13px 15px;
+        border:1px solid #d1d5db;
+        border-radius:10px;
+        font-size:15px;
+        background:white;
+    }
+
+    .table-card{
+        background:white;
+        border-radius:18px;
+        overflow:hidden;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
+    }
+
+    table{
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    th{
+        background:#111827;
+        color:white;
+        padding:18px 20px;
+        text-align:left;
+        font-size:16px;
+    }
+
+    td{
+        padding:18px 20px;
+        border-bottom:1px solid #e5e7eb;
+        vertical-align:middle;
+        font-size:16px;
+    }
+
+    tr:last-child td{
+        border-bottom:none;
+    }
+
+    tr:hover{
+        background:#f9fafb;
+    }
+
+    .document-title{
+        font-weight:bold;
+        color:#111827;
+    }
+
+    .type-badge{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:7px 12px;
+        border-radius:999px;
+        background:#eef2ff;
+        color:#3730a3;
+        font-size:14px;
+        font-weight:bold;
+        white-space:nowrap;
+    }
+
+    .practice-link{
+        color:#2563eb;
+        font-weight:bold;
+        text-decoration:none;
+    }
+
+    .practice-link:hover{
+        text-decoration:underline;
+    }
+
+    .actions{
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+    }
+
+    .action-btn{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:8px 12px;
+        border-radius:8px;
+        text-decoration:none;
+        font-size:14px;
+        font-weight:bold;
+        color:white;
+        white-space:nowrap;
+    }
+
+    .open-btn{
+        background:#2563eb;
+    }
+
+    .open-btn:hover{
+        background:#1d4ed8;
+    }
+
+    .delete-btn{
+        background:#dc2626;
+    }
+
+    .delete-btn:hover{
+        background:#b91c1c;
+    }
+
+    .empty-row{
+        text-align:center;
+        color:#6b7280;
+        padding:35px;
+        font-size:17px;
+    }
+
+    @media(max-width:900px){
+        .table-card{
+            overflow-x:auto;
+        }
+
+        table{
+            min-width:850px;
+        }
+    }
+</style>
+
+<div class="top-actions">
+
+    <form class="search" method="get">
+
+        <input
+            type="text"
+            name="ricerca"
+            value="{{ ricerca|default:'' }}"
+            placeholder="Cerca documenti per titolo, tipo, pratica o cliente..."
+        >
+
+    </form>
+
+</div>
+
+<div class="table-card">
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Titolo</th>
+                <th>Tipo</th>
+                <th>Pratica</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for documento in documenti %}
+
+                <tr>
+
+                    <td>
+                        <div class="document-title">
+                            <i class="fa-solid fa-file-lines"></i>
+                            {{ documento.titolo }}
+                        </div>
+                    </td>
+
+                    <td>
+                        <span class="type-badge">
+                            <i class="fa-solid fa-tag"></i>
+                            {{ documento.tipo_documento }}
+                        </span>
+                    </td>
+
+                    <td>
+                        {% if documento.pratica %}
+                            <a class="practice-link" href="/pratiche/{{ documento.pratica.id }}/">
+                                {{ documento.pratica }}
+                            </a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <div class="actions">
+
+                            <a
+                                class="action-btn open-btn"
+                                href="{{ documento.file.url }}"
+                                target="_blank"
+                            >
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                Apri
+                            </a>
+
+                            <a
+                                class="action-btn delete-btn"
+                                href="/documenti/{{ documento.id }}/elimina/"
+                            >
+                                <i class="fa-solid fa-trash"></i>
+                                Elimina
+                            </a>
+
+                        </div>
+                    </td>
+
+                </tr>
+
+            {% empty %}
+
+                <tr>
+                    <td colspan="4" class="empty-row">
+                        Nessun documento presente.
+                    </td>
+                </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Alert scadenze
+{% endblock %}
+
+{% block page_title %}
+Alert scadenze
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:25px;
+    }
+
+    .card{
+        background:white;
+        padding:30px;
+        border-radius:14px;
+        box-shadow:0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .card h2{
+        margin-bottom:20px;
+    }
+
+    .item{
+        padding:15px;
+        border-radius:10px;
+        margin-bottom:12px;
+    }
+
+    .scaduta{
+        background:#fee2e2;
+        color:#991b1b;
+    }
+
+    .imminente{
+        background:#fef3c7;
+        color:#92400e;
+    }
+
+    .item a{
+        color:inherit;
+        font-weight:bold;
+        text-decoration:none;
+    }
+
+    .empty{
+        color:#6b7280;
+    }
+</style>
+
+<div class="grid">
+
+    <div class="card">
+        <h2>Scadenze scadute</h2>
+
+        {% for scadenza in scadute %}
+
+            <div class="item scaduta">
+                <a href="/pratiche/{{ scadenza.pratica.id }}/">
+                    {{ scadenza.titolo }}
+                </a>
+                <br>
+                Data: {{ scadenza.data_scadenza }}
+                <br>
+                Pratica: {{ scadenza.pratica }}
+            </div>
+
+        {% empty %}
+
+            <p class="empty">Nessuna scadenza scaduta.</p>
+
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <h2>Scadenze entro 7 giorni</h2>
+
+        {% for scadenza in imminenti %}
+
+            <div class="item imminente">
+                <a href="/pratiche/{{ scadenza.pratica.id }}/">
+                    {{ scadenza.titolo }}
+                </a>
+                <br>
+                Data: {{ scadenza.data_scadenza }}
+                <br>
+                Pratica: {{ scadenza.pratica }}
+            </div>
+
+        {% empty %}
+
+            <p class="empty">Nessuna scadenza imminente.</p>
+
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}

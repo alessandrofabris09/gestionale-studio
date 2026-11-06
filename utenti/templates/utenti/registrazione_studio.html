@@ -1,0 +1,289 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Registrazione studio
+{% endblock %}
+
+{% block page_title %}
+Crea il tuo studio
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .register-wrapper{
+        display:flex;
+        justify-content:center;
+        padding:30px 0;
+    }
+
+    .register-card{
+        width:100%;
+        max-width:760px;
+        background:white;
+        border-radius:28px;
+        padding:40px;
+        box-shadow:0 12px 30px rgba(0,0,0,0.10);
+    }
+
+    .register-card h2{
+        font-size:34px;
+        margin-bottom:10px;
+        color:#111827;
+    }
+
+    .subtitle{
+        color:#6b7280;
+        margin-bottom:30px;
+        line-height:1.6;
+    }
+
+    .form-grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:20px;
+    }
+
+    .full{
+        grid-column:1 / -1;
+    }
+
+    label{
+        display:block;
+        font-weight:800;
+        margin-bottom:8px;
+        color:#374151;
+        font-size:14px;
+    }
+
+    input{
+        width:100%;
+        padding:14px 16px;
+        border:1px solid #d1d5db;
+        border-radius:14px;
+        font-size:15px;
+        background:#f9fafb;
+    }
+
+    input:focus{
+        outline:none;
+        border-color:#2563eb;
+        background:white;
+        box-shadow:0 0 0 4px rgba(37,99,235,0.12);
+    }
+
+    .field-error input{
+        border-color:#dc2626;
+        background:#fff7f7;
+    }
+
+    .errors{
+        background:#fee2e2;
+        color:#991b1b;
+        padding:16px;
+        border-radius:16px;
+        margin-bottom:24px;
+        font-weight:800;
+        display:flex;
+        gap:10px;
+        align-items:flex-start;
+        line-height:1.5;
+    }
+
+    .error-text{
+        color:#991b1b;
+        font-size:13px;
+        font-weight:800;
+        margin-top:8px;
+        line-height:1.5;
+    }
+
+    .help-text{
+        color:#6b7280;
+        font-size:13px;
+        margin-top:8px;
+        line-height:1.5;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:14px 22px;
+        border-radius:14px;
+        border:0;
+        font-weight:800;
+        font-size:15px;
+        cursor:pointer;
+        margin-top:30px;
+    }
+
+    .btn:hover{
+        background:#1f2937;
+    }
+
+    .login-link{
+        margin-top:24px;
+        color:#6b7280;
+        font-size:14px;
+    }
+
+    .login-link a{
+        color:#2563eb;
+        font-weight:800;
+        text-decoration:none;
+    }
+
+    @media(max-width:800px){
+        .form-grid{
+            grid-template-columns:1fr;
+        }
+
+        .register-card{
+            padding:28px;
+        }
+    }
+</style>
+
+<div class="register-wrapper">
+
+    <div class="register-card">
+
+        <h2>
+            <i class="fa-solid fa-building-user"></i>
+            Crea il tuo studio
+        </h2>
+
+        <div class="subtitle">
+            Registra il tuo studio tecnico e accedi subito al gestionale. La prova gratuita viene attivata automaticamente.
+        </div>
+
+        {% if form.errors %}
+            <div class="errors">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <div>
+                    Alcuni dati non sono corretti. Controlla i messaggi sotto i campi evidenziati.
+                </div>
+            </div>
+        {% endif %}
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <div class="form-grid">
+
+                <div class="full {% if form.nome_studio.errors %}field-error{% endif %}">
+                    <label>Nome studio</label>
+                    {{ form.nome_studio }}
+                    {% for error in form.nome_studio.errors %}
+                        <div class="error-text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="{% if form.email.errors %}field-error{% endif %}">
+                    <label>Email</label>
+                    {{ form.email }}
+                    {% for error in form.email.errors %}
+                        <div class="error-text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                    {% if form.email.errors %}
+                        <div class="help-text">
+                            Se hai già un account, puoi accedere dalla pagina di login.
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="{% if form.telefono.errors %}field-error{% endif %}">
+                    <label>Telefono</label>
+                    {{ form.telefono }}
+                    {% for error in form.telefono.errors %}
+                        <div class="error-text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="{% if form.username.errors %}field-error{% endif %}">
+                    <label>Username</label>
+                    {{ form.username }}
+                    {% for error in form.username.errors %}
+                        <div class="error-text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="{% if form.partita_iva.errors %}field-error{% endif %}">
+                    <label>Partita IVA</label>
+                    {{ form.partita_iva }}
+                    {% for error in form.partita_iva.errors %}
+                        <div class="error-text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="{% if form.password.errors %}field-error{% endif %}">
+                    <label>Password</label>
+                    {{ form.password }}
+                    {% for error in form.password.errors %}
+                        <div class="error-text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="{% if form.conferma_password.errors %}field-error{% endif %}">
+                    <label>Conferma password</label>
+                    {{ form.conferma_password }}
+                    {% for error in form.conferma_password.errors %}
+                        <div class="error-text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="errors" style="margin-top:22px;">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <div>
+                        {% for error in form.non_field_errors %}
+                            {{ error }}<br>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <button class="btn" type="submit">
+                <i class="fa-solid fa-circle-check"></i>
+                Crea studio e accedi
+            </button>
+
+            <div class="login-link">
+                Hai già un account?
+                <a href="/login/">Accedi al gestionale</a>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,285 @@
+{% extends 'base/base.html' %}
+{% load permessi_tags %}
+
+{% block title %}
+Upgrade richiesto
+{% endblock %}
+
+{% block page_title %}
+Passa al piano PRO
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .upgrade-wrapper{
+        display:flex;
+        justify-content:center;
+        padding:35px 0;
+    }
+
+    .upgrade-card{
+        width:100%;
+        max-width:980px;
+        background:white;
+        border-radius:30px;
+        padding:46px;
+        box-shadow:0 16px 38px rgba(0,0,0,0.12);
+    }
+
+    .upgrade-header{
+        text-align:center;
+        margin-bottom:35px;
+    }
+
+    .icon-box{
+        width:92px;
+        height:92px;
+        border-radius:26px;
+        background:#fef3c7;
+        color:#ca8a04;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:40px;
+        margin:0 auto 24px auto;
+    }
+
+    .upgrade-header h2{
+        font-size:36px;
+        color:#111827;
+        margin-bottom:14px;
+    }
+
+    .message{
+        color:#6b7280;
+        font-size:17px;
+        line-height:1.7;
+        max-width:720px;
+        margin:0 auto;
+    }
+
+    .comparison{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:24px;
+        margin:36px 0;
+    }
+
+    .plan{
+        border:1px solid #e5e7eb;
+        border-radius:24px;
+        padding:28px;
+        background:#f9fafb;
+    }
+
+    .plan.pro{
+        background:#111827;
+        color:white;
+        border-color:#111827;
+        transform:scale(1.02);
+    }
+
+    .plan h3{
+        font-size:24px;
+        margin-bottom:10px;
+    }
+
+    .price{
+        font-size:32px;
+        font-weight:900;
+        margin-bottom:22px;
+    }
+
+    .price small{
+        font-size:14px;
+        font-weight:600;
+        color:#9ca3af;
+    }
+
+    .feature{
+        display:flex;
+        gap:10px;
+        align-items:flex-start;
+        padding:10px 0;
+        font-weight:700;
+    }
+
+    .feature i{
+        margin-top:3px;
+    }
+
+    .pro .feature i{
+        color:#22c55e;
+    }
+
+    .free .feature i{
+        color:#6b7280;
+    }
+
+    .actions{
+        display:flex;
+        justify-content:center;
+        gap:12px;
+        flex-wrap:wrap;
+        margin-top:30px;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:9px;
+        background:#2563eb;
+        color:white;
+        padding:15px 24px;
+        border-radius:14px;
+        text-decoration:none;
+        font-weight:900;
+        font-size:15px;
+    }
+
+    .btn:hover{
+        background:#1d4ed8;
+    }
+
+    .btn-secondary{
+        background:#f3f4f6;
+        color:#111827;
+        border:1px solid #d1d5db;
+    }
+
+    .btn-secondary:hover{
+        background:#e5e7eb;
+    }
+
+    .note{
+        text-align:center;
+        color:#6b7280;
+        font-size:14px;
+        margin-top:22px;
+    }
+
+    @media(max-width:850px){
+        .comparison{
+            grid-template-columns:1fr;
+        }
+
+        .plan.pro{
+            transform:none;
+        }
+    }
+</style>
+
+<div class="upgrade-wrapper">
+
+    <div class="upgrade-card">
+
+        <div class="upgrade-header">
+
+            <div class="icon-box">
+                <i class="fa-solid fa-crown"></i>
+            </div>
+
+            <h2>
+                {{ titolo }}
+            </h2>
+
+            <div class="message">
+                {{ messaggio }}
+            </div>
+
+        </div>
+
+        <div class="comparison">
+
+            <div class="plan free">
+
+                <h3>Piano attuale</h3>
+
+                <div class="price">
+                    {{ studio.get_piano_display }}
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <span>Massimo {{ studio.limite_pratiche }} pratiche</span>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Massimo {{ studio.limite_utenti }} utente</span>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-database"></i>
+                    <span>{{ studio.limite_storage_mb }} MB di storage</span>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>Funzionalità limitate</span>
+                </div>
+
+            </div>
+
+            <div class="plan pro">
+
+                <h3>Piano PRO</h3>
+
+                <div class="price">
+                    Completo
+                    <small>/ mese</small>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Pratiche illimitate</span>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Utenti e collaboratori</span>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Storage aumentato</span>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Workflow, agenda, parcelle e documenti</span>
+                </div>
+
+                <div class="feature">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Accesso completo al gestionale</span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="actions">
+
+            {% if request.user|can_manage_subscription %}<form method="post" action="/billing/checkout/pro/">{% csrf_token %}<button type="submit" class="btn" style="border:0; cursor:pointer; font:inherit;">
+                <i class="fa-solid fa-arrow-up"></i>
+                {{ azione }}
+            </button></form>{% else %}<p>Chiedi al titolare dello studio di gestire il piano.</p>{% endif %}
+
+            <a href="/dashboard/" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i>
+                Torna alla dashboard
+            </a>
+
+        </div>
+
+        <div class="note">
+            Puoi passare al piano PRO in qualsiasi momento. Dopo il pagamento il gestionale viene aggiornato automaticamente.
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,387 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Scadenze
+{% endblock %}
+
+{% block page_title %}
+{% if stato == 'archivio' %}Archivio scadenze{% else %}Scadenze operative{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .page-actions{
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;
+        margin-bottom:25px;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:10px;
+        text-decoration:none;
+        font-weight:bold;
+        font-size:15px;
+    }
+
+    .btn:hover{
+        background:#374151;
+    }
+
+    .table-card{
+        background:white;
+        border-radius:18px;
+        overflow:hidden;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
+    }
+
+    table{
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    th{
+        background:#111827;
+        color:white;
+        padding:18px 20px;
+        text-align:left;
+        font-size:16px;
+    }
+
+    td{
+        padding:18px 20px;
+        border-bottom:1px solid #e5e7eb;
+        vertical-align:middle;
+        font-size:16px;
+    }
+
+    tr:last-child td{
+        border-bottom:none;
+    }
+
+    tr:hover{
+        background:#f9fafb;
+    }
+
+    .date-box{
+        font-weight:bold;
+        color:#111827;
+        line-height:1.3;
+    }
+
+    .title{
+        font-weight:bold;
+        color:#111827;
+    }
+
+    .practice-link{
+        color:#2563eb;
+        font-weight:bold;
+        text-decoration:none;
+    }
+
+    .practice-link:hover{
+        text-decoration:underline;
+    }
+
+    .badge{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:7px 12px;
+        border-radius:999px;
+        font-size:14px;
+        font-weight:bold;
+        white-space:nowrap;
+    }
+
+    .alta{
+        background:#fee2e2;
+        color:#991b1b;
+    }
+
+    .media{
+        background:#fef3c7;
+        color:#92400e;
+    }
+
+    .bassa{
+        background:#dcfce7;
+        color:#166534;
+    }
+
+    .done{
+        background:#dcfce7;
+        color:#166534;
+    }
+
+    .todo{
+        background:#fef3c7;
+        color:#92400e;
+    }
+
+    .expired{
+        background:#fee2e2;
+        color:#991b1b;
+    }
+
+    .actions{
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+    }
+
+    .action-btn{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:8px 12px;
+        border-radius:8px;
+        text-decoration:none;
+        font-size:14px;
+        font-weight:bold;
+        color:white;
+        white-space:nowrap;
+    }
+
+    .complete-btn{
+        background:#059669;
+    }
+
+    .complete-btn:hover{
+        background:#047857;
+    }
+
+    .edit-btn{
+        background:#2563eb;
+    }
+
+    .edit-btn:hover{
+        background:#1d4ed8;
+    }
+
+    .delete-btn{
+        background:#dc2626;
+    }
+
+    .delete-btn:hover{
+        background:#b91c1c;
+    }
+
+    .empty-row{
+        text-align:center;
+        color:#6b7280;
+        padding:35px;
+        font-size:17px;
+    }
+
+    @media(max-width:900px){
+        .table-card{
+            overflow-x:auto;
+        }
+
+        table{
+            min-width:900px;
+        }
+    }
+    .date-box { white-space:nowrap; }
+    .action-btn { border:0; cursor:pointer; font-family:inherit; }
+    .scadenze-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+    .scadenze-tabs a { padding:10px 14px; border-radius:10px; color:#374151; background:#e5e7eb; text-decoration:none; font-weight:bold; }
+    .scadenze-tabs a[aria-current="page"] { color:white; background:#111827; }
+    .scadenze-filtri { display:flex; gap:14px; align-items:end; flex-wrap:wrap; padding:20px; background:white; border-radius:14px; margin-bottom:16px; }
+    .scadenze-filtri label { display:flex; flex-direction:column; gap:7px; font-size:14px; font-weight:bold; color:#374151; }
+    .scadenze-filtri .ricerca { flex:1; min-width:220px; }
+    .scadenze-filtri input, .scadenze-filtri select { padding:11px 12px; border:1px solid #cbd5e1; border-radius:8px; font:inherit; min-height:44px; }
+    .scadenze-filtri button { border:0; cursor:pointer; min-height:44px; }
+    .scadenze-meta { color:#6b7280; margin-bottom:14px; }
+    .scadenze-nota { padding:16px 20px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; margin-bottom:18px; }
+    .archiviata { background:#e5e7eb; color:#374151; }
+    .scadenze-pagine { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-top:20px; }
+    .scadenze-pagine a { color:#1d4ed8; font-weight:bold; }
+</style>
+
+<div class="page-actions">
+
+    <a class="btn" href="/scadenze/nuova/">
+        <i class="fa-solid fa-plus"></i>
+        Nuova scadenza
+    </a>
+
+    <a class="btn" href="/scadenze/calendario/">
+        <i class="fa-solid fa-calendar-days"></i>
+        Calendario
+    </a>
+
+</div>
+
+<nav class="scadenze-tabs" aria-label="Stato delle scadenze">
+    <a href="?{{ url_aperte }}" {% if stato == 'aperte' %}aria-current="page"{% endif %}>Aperte · {{ conteggi.aperte }}</a>
+    <a href="?{{ url_scadute }}" {% if stato == 'scadute' %}aria-current="page"{% endif %}>Scadute · {{ conteggi.scadute }}</a>
+    <a href="?{{ url_completate }}" {% if stato == 'completate' %}aria-current="page"{% endif %}>Completate · {{ conteggi.completate }}</a>
+    <a href="?{{ url_archivio }}" {% if stato == 'archivio' %}aria-current="page"{% endif %}>Archivio · {{ conteggi.archivio }}</a>
+</nav>
+{% if stato == 'archivio' %}
+<p class="scadenze-nota">Scadenze conservate dopo il cambio di workflow. Sono consultabili e non generano avvisi.</p>
+{% endif %}
+<form method="get" class="scadenze-filtri" role="search" aria-label="Filtra scadenze">
+    <input type="hidden" name="stato" value="{{ stato }}">
+    <label class="ricerca">Cerca scadenze
+        <input type="search" name="q" value="{{ ricerca }}" maxlength="200" placeholder="Titolo, descrizione, pratica o cliente">
+    </label>
+    <label>Priorità
+        <select name="priorita">
+            <option value="">Tutte le priorità</option>
+            <option value="ALTA" {% if priorita == 'ALTA' %}selected{% endif %}>Alta</option>
+            <option value="MEDIA" {% if priorita == 'MEDIA' %}selected{% endif %}>Media</option>
+            <option value="BASSA" {% if priorita == 'BASSA' %}selected{% endif %}>Bassa</option>
+        </select>
+    </label>
+    <button type="submit" class="btn">Filtra</button>
+    {% if ricerca or priorita %}<a href="?stato={{ stato }}">Azzera filtri</a>{% endif %}
+</form>
+<p class="scadenze-meta" role="status">{{ page_obj.paginator.count }} risultat{{ page_obj.paginator.count|pluralize:"o,i" }}{% if page_obj.paginator.count %} · {{ page_obj.start_index }}–{{ page_obj.end_index }} visualizzati{% endif %}</p>
+
+<div class="table-card">
+
+    <table>
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Titolo</th>
+                <th>Pratica</th>
+                <th>Priorità</th>
+                <th>Stato</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for scadenza in scadenze %}
+
+                <tr>
+
+                    <td>
+                        <div class="date-box">
+                            {{ scadenza.data_scadenza|date:"d/m/Y" }}
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="title">
+                            {{ scadenza.titolo }}
+                        </div>
+                    </td>
+
+                    <td>
+                        {% if scadenza.pratica %}
+                            <a class="practice-link" href="/pratiche/{{ scadenza.pratica.id }}/">
+                                {{ scadenza.pratica }}
+                            </a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if scadenza.priorita == 'ALTA' %}
+                            <span class="badge alta">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                Alta
+                            </span>
+                        {% elif scadenza.priorita == 'MEDIA' %}
+                            <span class="badge media">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                                Media
+                            </span>
+                        {% else %}
+                            <span class="badge bassa">
+                                <i class="fa-solid fa-circle-check"></i>
+                                Bassa
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if scadenza.archiviata %}
+                            <span class="badge archiviata">Archiviata</span>
+                        {% elif scadenza.completata %}
+                            <span class="badge done">
+                                <i class="fa-solid fa-circle-check"></i>
+                                Completata
+                            </span>
+                        {% elif scadenza.data_scadenza < oggi %}
+                            <span class="badge expired">
+                                <i class="fa-solid fa-clock"></i>
+                                Scaduta
+                            </span>
+                        {% else %}
+                            <span class="badge todo">
+                                <i class="fa-solid fa-list-check"></i>
+                                Da fare
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if stato == 'archivio' %}
+                        <span class="scadenze-meta">Solo consultazione</span>
+                        {% else %}
+                        <div class="actions">
+
+                            {% if not scadenza.completata %}
+                                <form method="post" action="{% url 'completa_scadenza' scadenza.id %}" style="display:inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="action-btn complete-btn">
+                                        <i class="fa-solid fa-check"></i>
+                                        Completa
+                                    </button>
+                                </form>
+                            {% endif %}
+
+                            <a class="action-btn edit-btn" href="/scadenze/{{ scadenza.id }}/modifica/">
+                                <i class="fa-solid fa-pen"></i>
+                                Modifica
+                            </a>
+
+                            <a class="action-btn delete-btn" href="/scadenze/{{ scadenza.id }}/elimina/">
+                                <i class="fa-solid fa-trash"></i>
+                                Elimina
+                            </a>
+
+                        </div>
+                        {% endif %}
+                    </td>
+
+                </tr>
+
+            {% empty %}
+
+                <tr>
+                    <td colspan="6" class="empty-row">
+                        {% if ricerca or priorita %}Nessuna scadenza corrisponde ai filtri.{% elif stato == 'archivio' %}Nessuna scadenza archiviata.{% elif stato == 'completate' %}Nessuna scadenza completata.{% elif stato == 'scadute' %}Nessuna scadenza scaduta.{% else %}Nessuna scadenza aperta.{% endif %}
+                    </td>
+                </tr>
+
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+
+{% if page_obj.has_other_pages %}
+<nav class="scadenze-pagine" aria-label="Paginazione delle scadenze">
+    {% if page_obj.has_previous %}<a href="?{{ query_pagine }}&amp;page={{ page_obj.previous_page_number }}">← Precedente</a>{% endif %}
+    <span>Pagina {{ page_obj.number }} di {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?{{ query_pagine }}&amp;page={{ page_obj.next_page_number }}">Successiva →</a>{% endif %}
+</nav>
+{% endif %}
+
+{% endblock %}

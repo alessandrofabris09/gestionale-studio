@@ -1,0 +1,79 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Nessuna ora da fatturare
+{% endblock %}
+
+{% block page_title %}
+Nessuna ora da fatturare
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .card{
+        background:white;
+        padding:32px;
+        border-radius:18px;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
+        max-width:850px;
+        text-align:center;
+    }
+
+    .card i{
+        font-size:46px;
+        color:#d1d5db;
+        margin-bottom:18px;
+    }
+
+    .card h1{
+        color:#111827;
+        margin-bottom:12px;
+    }
+
+    .muted{
+        color:#6b7280;
+        font-size:16px;
+        line-height:1.6;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:10px;
+        text-decoration:none;
+        font-weight:bold;
+        font-size:15px;
+        margin-top:18px;
+    }
+
+    .btn:hover{
+        background:#374151;
+        color:white;
+    }
+</style>
+
+<div class="card">
+
+    <i class="fa-regular fa-clock"></i>
+
+    <h1>Nessuna ora da fatturare</h1>
+
+    <p class="muted">
+        Per questa pratica non ci sono ore fatturabili non ancora inserite in parcella.
+        Verifica che le voci ore siano segnate come <strong>fatturabili</strong>
+        e non risultino già inserite in parcella.
+    </p>
+
+    <a href="{% url 'lista_ore_pratica' pratica.id %}" class="btn">
+        <i class="fa-solid fa-arrow-left"></i>
+        Torna alle ore lavorate
+    </a>
+
+</div>
+
+{% endblock %}

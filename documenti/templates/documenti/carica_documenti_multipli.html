@@ -1,0 +1,540 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Carica documenti multipli
+{% endblock %}
+
+{% block page_title %}
+Carica documenti multipli
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .page-actions{
+        margin-bottom:25px;
+    }
+
+    .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:12px;
+        text-decoration:none;
+        font-weight:bold;
+        font-size:15px;
+        border:0;
+        cursor:pointer;
+        transition:0.2s;
+    }
+
+    .btn:hover{
+        transform:translateY(-1px);
+        background:#1f2937;
+    }
+
+    .save-btn{
+        background:#059669;
+    }
+
+    .save-btn:hover{
+        background:#047857;
+    }
+
+    .cancel-btn{
+        background:#374151;
+    }
+
+    .cancel-btn:hover{
+        background:#1f2937;
+    }
+
+    .upload-card{
+        background:white;
+        padding:40px;
+        border-radius:24px;
+        box-shadow:0 10px 30px rgba(0,0,0,0.08);
+        max-width:1100px;
+    }
+
+    .header{
+        margin-bottom:30px;
+    }
+
+    .header h2{
+        font-size:30px;
+        color:#111827;
+        margin-bottom:10px;
+    }
+
+    .subtitle{
+        color:#6b7280;
+        font-size:15px;
+        line-height:1.6;
+    }
+
+    .info{
+        background:#eef2ff;
+        color:#3730a3;
+        padding:16px 18px;
+        border-radius:16px;
+        margin-bottom:25px;
+        font-weight:bold;
+        display:flex;
+        align-items:center;
+        gap:10px;
+    }
+
+    .form-grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:22px;
+        margin-bottom:25px;
+    }
+
+    .full{
+        grid-column:1 / -1;
+    }
+
+    .field label{
+        display:block;
+        font-weight:bold;
+        margin-bottom:8px;
+        color:#374151;
+        font-size:14px;
+    }
+
+    .field input,
+    .field select,
+    .field textarea{
+        width:100%;
+        padding:14px 16px;
+        border:1px solid #d1d5db;
+        border-radius:14px;
+        font-size:15px;
+        transition:0.2s;
+        background:#f9fafb;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus{
+        outline:none;
+        border-color:#2563eb;
+        background:white;
+        box-shadow:0 0 0 4px rgba(37,99,235,0.12);
+    }
+
+    textarea{
+        min-height:120px;
+        resize:vertical;
+    }
+
+    .drop-zone{
+        border:2px dashed #9ca3af;
+        border-radius:22px;
+        padding:45px 30px;
+        text-align:center;
+        background:#f9fafb;
+        margin-bottom:25px;
+        cursor:pointer;
+        transition:0.25s;
+    }
+
+    .drop-zone:hover{
+        background:#f3f4f6;
+        border-color:#2563eb;
+    }
+
+    .drop-zone.dragover{
+        background:#eff6ff;
+        border-color:#2563eb;
+        transform:scale(1.01);
+    }
+
+    .drop-icon{
+        width:80px;
+        height:80px;
+        border-radius:22px;
+        background:#dbeafe;
+        color:#1d4ed8;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        margin:0 auto 18px auto;
+        font-size:34px;
+    }
+
+    .drop-zone-title{
+        font-size:22px;
+        font-weight:900;
+        color:#111827;
+        margin-bottom:8px;
+    }
+
+    .drop-zone-subtitle{
+        color:#6b7280;
+        font-size:15px;
+        margin-bottom:15px;
+    }
+
+    .accepted{
+        display:flex;
+        justify-content:center;
+        gap:8px;
+        flex-wrap:wrap;
+        margin-top:15px;
+    }
+
+    .badge{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:7px 11px;
+        border-radius:999px;
+        font-size:13px;
+        font-weight:bold;
+        background:#eef2ff;
+        color:#3730a3;
+    }
+
+    .file-list{
+        margin-top:20px;
+        text-align:left;
+        display:none;
+        background:white;
+        border:1px solid #e5e7eb;
+        border-radius:18px;
+        padding:18px;
+    }
+
+    .file-list-title{
+        font-weight:bold;
+        margin-bottom:12px;
+        color:#111827;
+    }
+
+    .file-item{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:10px 0;
+        border-bottom:1px solid #e5e7eb;
+        color:#374151;
+        font-size:15px;
+    }
+
+    .file-item:last-child{
+        border-bottom:none;
+    }
+
+    .file-icon{
+        width:34px;
+        height:34px;
+        border-radius:10px;
+        background:#f3f4f6;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:#111827;
+    }
+
+    .file-size{
+        margin-left:auto;
+        color:#6b7280;
+        font-size:13px;
+    }
+
+    .actions{
+        display:flex;
+        gap:14px;
+        flex-wrap:wrap;
+        margin-top:30px;
+    }
+
+    @media(max-width:900px){
+        .form-grid{
+            grid-template-columns:1fr;
+        }
+
+        .upload-card{
+            padding:25px;
+        }
+    }
+</style>
+
+<div class="page-actions">
+
+    <a class="btn" href="/pratiche/{{ pratica.id }}/">
+        <i class="fa-solid fa-arrow-left"></i>
+        Torna alla pratica
+    </a>
+
+</div>
+
+<div class="upload-card">
+
+    <div class="header">
+
+        <h2>
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            Carica documenti multipli
+        </h2>
+
+        <div class="subtitle">
+            Carica più documenti collegati alla pratica. Sono supportati anche file firmati digitalmente in formato .p7m.
+        </div>
+
+    </div>
+
+    <div class="info">
+        <i class="fa-solid fa-circle-info"></i>
+        Puoi trascinare i file nell'area di caricamento oppure cliccare per selezionarli dal computer.
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        <div class="form-grid">
+
+            <div class="field">
+                <label for="id_titolo_base">Titolo base</label>
+                {{ form.titolo_base }}
+            </div>
+
+            <div class="field">
+                <label for="id_tipo_documento">Tipo documento</label>
+                {{ form.tipo_documento }}
+            </div>
+
+        </div>
+
+        <div class="drop-zone" id="drop-zone">
+
+            <div class="drop-icon">
+                <i class="fa-solid fa-file-arrow-up"></i>
+            </div>
+
+            <div class="drop-zone-title">
+                Trascina qui i documenti
+            </div>
+
+            <div class="drop-zone-subtitle">
+                oppure clicca per selezionare più file
+            </div>
+
+            <div class="accepted">
+                <span class="badge">PDF</span>
+                <span class="badge">P7M</span>
+                <span class="badge">DOC/DOCX</span>
+                <span class="badge">DWG/DXF</span>
+                <span class="badge">JPG/PNG</span>
+                <span class="badge">ZIP</span>
+            </div>
+
+            <div class="file-list" id="file-list"></div>
+
+        </div>
+
+        <div style="display:none;">
+            {{ form.files }}
+        </div>
+
+        <div class="form-grid">
+
+            <div class="field full">
+                <label for="id_note">Note</label>
+                {{ form.note }}
+            </div>
+
+        </div>
+
+        <div class="actions">
+
+            <button class="btn save-btn" type="submit">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                Carica documenti
+            </button>
+
+            <a class="btn cancel-btn" href="/pratiche/{{ pratica.id }}/">
+                <i class="fa-solid fa-xmark"></i>
+                Annulla
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('id_files');
+    const fileList = document.getElementById('file-list');
+
+    const allowedExtensions = [
+        'pdf',
+        'p7m',
+        'doc',
+        'docx',
+        'xls',
+        'xlsx',
+        'dwg',
+        'dxf',
+        'jpg',
+        'jpeg',
+        'png',
+        'zip'
+    ];
+
+    fileInput.setAttribute(
+        'accept',
+        '.pdf,.p7m,.doc,.docx,.xls,.xlsx,.dwg,.dxf,.jpg,.jpeg,.png,.zip'
+    );
+
+    fileInput.setAttribute(
+        'multiple',
+        'multiple'
+    );
+
+    dropZone.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    dropZone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropZone.classList.remove('dragover');
+
+        const files = event.dataTransfer.files;
+
+        if(!validateFiles(files)){
+            alert('Uno o più file non sono supportati. Sono ammessi: PDF, P7M, DOC, DOCX, XLS, XLSX, DWG, DXF, JPG, PNG, ZIP.');
+            return;
+        }
+
+        fileInput.files = files;
+        updateFileList();
+    });
+
+    fileInput.addEventListener('change', () => {
+        if(!validateFiles(fileInput.files)){
+            alert('Uno o più file non sono supportati. Sono ammessi: PDF, P7M, DOC, DOCX, XLS, XLSX, DWG, DXF, JPG, PNG, ZIP.');
+            fileInput.value = '';
+            fileList.innerHTML = '';
+            fileList.style.display = 'none';
+            return;
+        }
+
+        updateFileList();
+    });
+
+    function validateFiles(files){
+
+        for(let i = 0; i < files.length; i++){
+
+            const name = files[i].name.toLowerCase();
+            const extension = name.split('.').pop();
+
+            if(!allowedExtensions.includes(extension)){
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function formatSize(bytes){
+
+        if(bytes < 1024){
+            return bytes + ' B';
+        }
+
+        if(bytes < 1024 * 1024){
+            return (bytes / 1024).toFixed(1) + ' KB';
+        }
+
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function getIcon(fileName){
+
+        const extension = fileName.toLowerCase().split('.').pop();
+
+        if(extension === 'pdf' || extension === 'p7m'){
+            return 'fa-file-pdf';
+        }
+
+        if(extension === 'dwg' || extension === 'dxf'){
+            return 'fa-drafting-compass';
+        }
+
+        if(extension === 'jpg' || extension === 'jpeg' || extension === 'png'){
+            return 'fa-file-image';
+        }
+
+        if(extension === 'zip'){
+            return 'fa-file-zipper';
+        }
+
+        if(extension === 'doc' || extension === 'docx'){
+            return 'fa-file-word';
+        }
+
+        if(extension === 'xls' || extension === 'xlsx'){
+            return 'fa-file-excel';
+        }
+
+        return 'fa-file';
+    }
+
+    function updateFileList(){
+
+        fileList.innerHTML = '';
+
+        if(fileInput.files.length === 0){
+            fileList.style.display = 'none';
+            return;
+        }
+
+        let html = '<div class="file-list-title">File selezionati:</div>';
+
+        for(let i = 0; i < fileInput.files.length; i++){
+
+            const file = fileInput.files[i];
+
+            html += `
+                <div class="file-item">
+                    <div class="file-icon">
+                        <i class="fa-solid ${getIcon(file.name)}"></i>
+                    </div>
+
+                    <div>
+                        ${file.name}
+                    </div>
+
+                    <div class="file-size">
+                        ${formatSize(file.size)}
+                    </div>
+                </div>
+            `;
+        }
+
+        fileList.innerHTML = html;
+        fileList.style.display = 'block';
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>
+        Studio Tecnico Cloud | Gestionale per studi tecnici
+    </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="description" content="Gestionale online per geometri, architetti e studi tecnici. Pratiche, clienti, immobili, documenti, scadenze, agenda e parcelle in un unico ambiente cloud.">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            font-family:Arial, sans-serif;
+            color:#111827;
+            background:#f9fafb;
+            line-height:1.6;
+        }
+
+        a{
+            text-decoration:none;
+        }
+
+        .navbar{
+            width:100%;
+            padding:22px 8%;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            background:white;
+            border-bottom:1px solid #e5e7eb;
+            position:sticky;
+            top:0;
+            z-index:10;
+        }
+
+        .logo{
+            font-size:22px;
+            font-weight:bold;
+            color:#111827;
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+
+        .logo i{
+            color:#2563eb;
+        }
+
+        .nav-actions{
+            display:flex;
+            align-items:center;
+            gap:12px;
+        }
+
+        .btn{
+            display:inline-block;
+            padding:12px 18px;
+            border-radius:10px;
+            font-weight:bold;
+            font-size:15px;
+            transition:0.2s;
+        }
+
+        .btn-primary{
+            background:#2563eb;
+            color:white;
+        }
+
+        .btn-primary:hover{
+            background:#1d4ed8;
+        }
+
+        .btn-secondary{
+            background:#e5e7eb;
+            color:#111827;
+        }
+
+        .btn-secondary:hover{
+            background:#d1d5db;
+        }
+
+        .hero{
+            padding:90px 8% 70px;
+            display:grid;
+            grid-template-columns:1.1fr 0.9fr;
+            gap:55px;
+            align-items:center;
+            background:linear-gradient(135deg,#ffffff 0%,#eff6ff 100%);
+        }
+
+        .badge{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            padding:8px 12px;
+            border-radius:999px;
+            background:#dbeafe;
+            color:#1d4ed8;
+            font-size:14px;
+            font-weight:bold;
+            margin-bottom:22px;
+        }
+
+        .hero h1{
+            font-size:52px;
+            line-height:1.08;
+            margin-bottom:22px;
+            color:#111827;
+        }
+
+        .hero p{
+            font-size:19px;
+            color:#4b5563;
+            margin-bottom:30px;
+            max-width:680px;
+        }
+
+        .hero-actions{
+            display:flex;
+            gap:14px;
+            flex-wrap:wrap;
+            margin-bottom:28px;
+        }
+
+        .hero-note{
+            font-size:14px;
+            color:#6b7280;
+        }
+
+        .dashboard-preview{
+            background:#111827;
+            border-radius:24px;
+            padding:22px;
+            box-shadow:0 25px 55px rgba(15,23,42,0.25);
+            color:white;
+        }
+
+        .preview-top{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:20px;
+            color:#d1d5db;
+            font-size:14px;
+        }
+
+        .preview-grid{
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+            gap:14px;
+        }
+
+        .preview-card{
+            background:#1f2937;
+            padding:20px;
+            border-radius:16px;
+            border:1px solid #374151;
+        }
+
+        .preview-card i{
+            color:#60a5fa;
+            font-size:22px;
+            margin-bottom:12px;
+        }
+
+        .preview-card strong{
+            display:block;
+            font-size:24px;
+            margin-bottom:4px;
+        }
+
+        .preview-card span{
+            color:#d1d5db;
+            font-size:14px;
+        }
+
+        .section{
+            padding:80px 8%;
+        }
+
+        .section-title{
+            text-align:center;
+            max-width:760px;
+            margin:0 auto 50px;
+        }
+
+        .section-title h2{
+            font-size:38px;
+            margin-bottom:14px;
+        }
+
+        .section-title p{
+            color:#6b7280;
+            font-size:18px;
+        }
+
+        .features{
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:24px;
+        }
+
+        .feature{
+            background:white;
+            border:1px solid #e5e7eb;
+            border-radius:18px;
+            padding:28px;
+            box-shadow:0 2px 12px rgba(0,0,0,0.04);
+        }
+
+        .feature i{
+            width:48px;
+            height:48px;
+            border-radius:12px;
+            background:#eff6ff;
+            color:#2563eb;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:22px;
+            margin-bottom:18px;
+        }
+
+        .feature h3{
+            font-size:20px;
+            margin-bottom:10px;
+        }
+
+        .feature p{
+            color:#6b7280;
+            font-size:15px;
+        }
+
+        .security{
+            background:#111827;
+            color:white;
+        }
+
+        .security .section-title p{
+            color:#d1d5db;
+        }
+
+        .security-grid{
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:24px;
+        }
+
+        .security-card{
+            background:#1f2937;
+            border:1px solid #374151;
+            border-radius:18px;
+            padding:28px;
+        }
+
+        .security-card i{
+            color:#60a5fa;
+            font-size:24px;
+            margin-bottom:16px;
+        }
+
+        .security-card h3{
+            margin-bottom:10px;
+            font-size:20px;
+        }
+
+        .security-card p{
+            color:#d1d5db;
+            font-size:15px;
+        }
+
+        .pricing{
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+            gap:28px;
+            max-width:980px;
+            margin:0 auto;
+        }
+
+        .price-card{
+            background:white;
+            border:1px solid #e5e7eb;
+            border-radius:22px;
+            padding:34px;
+            box-shadow:0 2px 12px rgba(0,0,0,0.04);
+        }
+
+        .price-card.highlight{
+            border:2px solid #2563eb;
+            box-shadow:0 18px 45px rgba(37,99,235,0.14);
+        }
+
+        .price-card h3{
+            font-size:26px;
+            margin-bottom:10px;
+        }
+
+        .price{
+            font-size:42px;
+            font-weight:bold;
+            margin:16px 0;
+        }
+
+        .price span{
+            font-size:15px;
+            color:#6b7280;
+            font-weight:normal;
+        }
+
+        .price-card ul{
+            list-style:none;
+            margin:24px 0;
+        }
+
+        .price-card li{
+            margin-bottom:12px;
+            color:#374151;
+        }
+
+        .price-card li i{
+            color:#16a34a;
+            margin-right:8px;
+        }
+
+        .cta{
+            background:#eff6ff;
+            text-align:center;
+        }
+
+        .cta h2{
+            font-size:40px;
+            margin-bottom:14px;
+        }
+
+        .cta p{
+            color:#4b5563;
+            font-size:18px;
+            margin-bottom:28px;
+        }
+
+        .footer{
+            padding:34px 8%;
+            background:white;
+            border-top:1px solid #e5e7eb;
+            color:#6b7280;
+            font-size:14px;
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-start;
+            gap:24px;
+            flex-wrap:wrap;
+        }
+
+        .footer strong{
+            color:#111827;
+        }
+
+        .footer a{
+            color:#2563eb;
+            font-weight:600;
+        }
+
+        .footer a:hover{
+            color:#1d4ed8;
+            text-decoration:underline;
+        }
+
+        .footer-links{
+            display:flex;
+            flex-direction:column;
+            gap:6px;
+        }
+
+        .footer-links-row{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+        }
+
+        .footer-small{
+            color:#9ca3af;
+            font-size:13px;
+            margin-top:6px;
+        }
+
+        @media(max-width:1000px){
+            .hero{
+                grid-template-columns:1fr;
+            }
+
+            .features,
+            .security-grid{
+                grid-template-columns:repeat(2,1fr);
+            }
+
+            .pricing{
+                grid-template-columns:1fr;
+            }
+        }
+
+        @media(max-width:700px){
+            .navbar{
+                flex-direction:column;
+                gap:16px;
+                align-items:flex-start;
+            }
+
+            .nav-actions{
+                width:100%;
+                flex-direction:column;
+                align-items:stretch;
+            }
+
+            .btn{
+                text-align:center;
+            }
+
+            .hero{
+                padding:60px 6%;
+            }
+
+            .hero h1{
+                font-size:38px;
+            }
+
+            .section{
+                padding:60px 6%;
+            }
+
+            .features,
+            .security-grid{
+                grid-template-columns:1fr;
+            }
+
+            .preview-grid{
+                grid-template-columns:1fr;
+            }
+
+            .footer{
+                flex-direction:column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="navbar">
+
+        <div class="logo">
+            <i class="fa-solid fa-cloud"></i>
+            Studio Tecnico Cloud
+        </div>
+
+        <div class="nav-actions">
+            <a href="https://app.studiotecnicocloud.it/login/" class="btn btn-secondary">
+                Accedi
+            </a>
+
+            <a href="https://app.studiotecnicocloud.it/accounts/registrazione/" class="btn btn-primary">
+                Prova gratis
+            </a>
+        </div>
+
+    </header>
+
+
+    <section class="hero">
+
+        <div>
+            <div class="badge">
+                <i class="fa-solid fa-circle-check"></i>
+                Gestionale cloud per studi tecnici
+            </div>
+
+            <h1>
+                Organizza pratiche, scadenze, documenti e parcelle in un unico gestionale.
+            </h1>
+
+            <p>
+                Studio Tecnico Cloud è pensato per geometri, architetti e professionisti tecnici
+                che vogliono gestire clienti, immobili, pratiche, documenti, agenda operativa,
+                scadenze e parcelle da un ambiente semplice e sicuro.
+            </p>
+
+            <div class="hero-actions">
+                <a href="https://app.studiotecnicocloud.it/accounts/registrazione/" class="btn btn-primary">
+                    Prova gratis 14 giorni
+                </a>
+
+                <a href="https://app.studiotecnicocloud.it/login/" class="btn btn-secondary">
+                    Accedi al gestionale
+                </a>
+            </div>
+
+            <div class="hero-note">
+                Nessuna installazione sul computer. Accesso online da browser.
+            </div>
+        </div>
+
+        <div class="dashboard-preview">
+
+            <div class="preview-top">
+                <span>Dashboard studio</span>
+                <span>Online</span>
+            </div>
+
+            <div class="preview-grid">
+                <div class="preview-card">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <strong>Pratiche</strong>
+                    <span>Archivio operativo dello studio</span>
+                </div>
+
+                <div class="preview-card">
+                    <i class="fa-solid fa-clock"></i>
+                    <strong>Scadenze</strong>
+                    <span>Promemoria automatici via email</span>
+                </div>
+
+                <div class="preview-card">
+                    <i class="fa-solid fa-file-lines"></i>
+                    <strong>Documenti</strong>
+                    <span>File collegati a pratiche e immobili</span>
+                </div>
+
+                <div class="preview-card">
+                    <i class="fa-solid fa-euro-sign"></i>
+                    <strong>Parcelle</strong>
+                    <span>PDF e riepiloghi economici</span>
+                </div>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="section">
+
+        <div class="section-title">
+            <h2>
+                Tutto quello che serve per gestire uno studio tecnico.
+            </h2>
+
+            <p>
+                Le funzioni principali sono pensate per il lavoro quotidiano di uno studio:
+                pratiche, documenti, agenda, scadenze, parcelle e utenti.
+            </p>
+        </div>
+
+        <div class="features">
+
+            <div class="feature">
+                <i class="fa-solid fa-users"></i>
+                <h3>Clienti e immobili</h3>
+                <p>
+                    Gestisci l’anagrafica dei clienti e collega ogni immobile alle pratiche dello studio.
+                </p>
+            </div>
+
+            <div class="feature">
+                <i class="fa-solid fa-folder-open"></i>
+                <h3>Pratiche tecniche</h3>
+                <p>
+                    Organizza pratiche edilizie, catastali, relazioni, incarichi e attività operative.
+                </p>
+            </div>
+
+            <div class="feature">
+                <i class="fa-solid fa-file-arrow-up"></i>
+                <h3>Documenti cloud</h3>
+                <p>
+                    Carica documenti e allegati collegandoli direttamente alla pratica di riferimento.
+                </p>
+            </div>
+
+            <div class="feature">
+                <i class="fa-solid fa-calendar-days"></i>
+                <h3>Agenda operativa</h3>
+                <p>
+                    Tieni sotto controllo appuntamenti, attività e impegni giornalieri dello studio.
+                </p>
+            </div>
+
+            <div class="feature">
+                <i class="fa-solid fa-bell"></i>
+                <h3>Alert scadenze</h3>
+                <p>
+                    Ricevi riepiloghi email per scadenze imminenti e attività da verificare.
+                </p>
+            </div>
+
+            <div class="feature">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                <h3>Parcelle e PDF</h3>
+                <p>
+                    Crea parcelle, preventivi e riepiloghi PDF con una grafica chiara e professionale.
+                </p>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="section security">
+
+        <div class="section-title">
+            <h2>
+                Documenti e dati organizzati in cloud.
+            </h2>
+
+            <p>
+                Il gestionale separa gli studi e conserva i documenti in uno storage cloud dedicato,
+                con accesso controllato dagli utenti dello studio.
+            </p>
+        </div>
+
+        <div class="security-grid">
+
+            <div class="security-card">
+                <i class="fa-solid fa-lock"></i>
+                <h3>Accesso riservato</h3>
+                <p>
+                    Ogni studio accede solo ai propri clienti, immobili, pratiche, documenti e utenti.
+                </p>
+            </div>
+
+            <div class="security-card">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <h3>Storage documenti</h3>
+                <p>
+                    I documenti caricati vengono archiviati su Backblaze B2, servizio cloud adatto alla conservazione file.
+                </p>
+            </div>
+
+            <div class="security-card">
+                <i class="fa-solid fa-user-gear"></i>
+                <h3>Ruoli utenti</h3>
+                <p>
+                    Il titolare può gestire gli utenti dello studio, assegnare ruoli e controllare le autorizzazioni.
+                </p>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="section">
+
+        <div class="section-title">
+            <h2>
+                Piani semplici per partire subito.
+            </h2>
+
+            <p>
+                Puoi iniziare con il piano gratuito e passare al piano Pro quando lo studio cresce.
+            </p>
+        </div>
+
+        <div class="pricing">
+
+            <div class="price-card">
+                <h3>Free</h3>
+
+                <div class="price">
+                    € 0
+                    <span>/ mese</span>
+                </div>
+
+                <p>
+                    Ideale per provare il gestionale e gestire un numero limitato di pratiche.
+                </p>
+
+                <ul>
+                    <li><i class="fa-solid fa-check"></i>Gestione clienti e immobili</li>
+                    <li><i class="fa-solid fa-check"></i>Pratiche limitate</li>
+                    <li><i class="fa-solid fa-check"></i>Documenti base</li>
+                    <li><i class="fa-solid fa-check"></i>Agenda e scadenze</li>
+                </ul>
+
+                <a href="https://app.studiotecnicocloud.it/accounts/registrazione/" class="btn btn-secondary">
+                    Inizia gratis
+                </a>
+            </div>
+
+            <div class="price-card highlight">
+                <h3>Pro</h3>
+
+                <div class="price">
+                    € 19
+                    <span>/ mese + IVA</span>
+                </div>
+
+                <p>
+                    Prezzo di lancio per il primo anno. Dal secondo anno il piano Pro passa a € 29/mese + IVA.
+                </p>
+
+                <p>
+                    Pensato per studi tecnici che vogliono lavorare in modo continuativo e professionale.
+                </p>
+
+                <ul>
+                    <li><i class="fa-solid fa-check"></i>Prezzo bloccato a € 19/mese per il primo anno</li>
+                    <li><i class="fa-solid fa-check"></i>Pratiche estese</li>
+                    <li><i class="fa-solid fa-check"></i>Più utenti dello studio</li>
+                    <li><i class="fa-solid fa-check"></i>Maggiore spazio documenti</li>
+                    <li><i class="fa-solid fa-check"></i>Alert email e gestione completa</li>
+                </ul>
+
+                <a href="https://app.studiotecnicocloud.it/accounts/registrazione/" class="btn btn-primary">
+                    Prova gratis 14 giorni
+                </a>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="section cta">
+
+        <h2>
+            Porta il tuo studio tecnico in cloud.
+        </h2>
+
+        <p>
+            Prova Studio Tecnico Cloud e organizza il lavoro quotidiano in un unico ambiente.
+        </p>
+
+        <a href="https://app.studiotecnicocloud.it/accounts/registrazione/" class="btn btn-primary">
+            Crea il tuo studio
+        </a>
+
+        <a href="https://app.studiotecnicocloud.it/login/" class="btn btn-secondary">
+            Accedi
+        </a>
+
+    </section>
+
+
+    <footer class="footer">
+
+        <div>
+            <strong>Studio Tecnico Cloud</strong><br>
+            Gestionale online per studi tecnici.
+            <div class="footer-small">
+                Servizio fornito da Fabris Alessandro - P. IVA 05330970269
+            </div>
+        </div>
+
+        <div>
+            <strong>Contatti</strong><br>
+            <a href="mailto:info@studiotecnicocloud.it">
+                info@studiotecnicocloud.it
+            </a>
+        </div>
+
+        <div class="footer-links">
+            <strong>Informazioni legali</strong>
+
+            <div class="footer-links-row">
+                <a href="/privacy-policy/">
+                    Privacy Policy
+                </a>
+
+                <span>·</span>
+
+                <a href="/cookie-policy/">
+                    Cookie Policy
+                </a>
+
+                <span>·</span>
+
+                <a href="/termini/">
+                    Termini di utilizzo
+                </a>
+            </div>
+        </div>
+
+        <div>
+            © 2026 Studio Tecnico Cloud
+        </div>
+
+    </footer>
+
+</body>
+
+</html>

@@ -1,0 +1,128 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Agenda di oggi
+{% endblock %}
+
+{% block page_title %}
+Agenda di oggi
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .btn{
+        display:inline-block;
+        background:#111827;
+        color:white;
+        padding:12px 18px;
+        border-radius:8px;
+        text-decoration:none;
+        margin-right:10px;
+        margin-bottom:20px;
+    }
+
+    .timeline{
+        background:white;
+        padding:30px;
+        border-radius:18px;
+        box-shadow:0 8px 22px rgba(0,0,0,0.08);
+        max-width:1000px;
+    }
+
+    .evento{
+        border-left:5px solid #2563eb;
+        padding-left:18px;
+        margin-bottom:25px;
+    }
+
+    .ora{
+        font-weight:bold;
+        color:#2563eb;
+        margin-bottom:5px;
+    }
+
+    .titolo{
+        font-size:20px;
+        font-weight:bold;
+        color:#111827;
+    }
+
+    .meta{
+        margin-top:6px;
+        color:#6b7280;
+    }
+</style>
+
+<a class="btn" href="/agenda/">
+    Tutta l'agenda
+</a>
+
+<a class="btn" href="/agenda/nuovo/">
+    + Nuovo evento
+</a>
+
+<div class="timeline">
+
+    <h2>
+        Eventi del {{ oggi }}
+    </h2>
+
+    <br>
+
+    {% for evento in eventi %}
+
+        <div class="evento">
+
+            <div class="ora">
+                {% if evento.ora_inizio %}
+                    {{ evento.ora_inizio }}
+                {% else %}
+                    Orario non indicato
+                {% endif %}
+            </div>
+
+            <div class="titolo">
+                {{ evento.titolo }}
+            </div>
+
+            <div class="meta">
+                {{ evento.get_tipo_display }}
+                -
+                Priorità {{ evento.get_priorita_display }}
+
+                {% if evento.cliente %}
+                    -
+                    {{ evento.cliente }}
+                {% endif %}
+            </div>
+
+            {% if evento.descrizione %}
+                <p>
+                    {{ evento.descrizione }}
+                </p>
+            {% endif %}
+
+            <div style="margin-top:10px;">
+                <a href="/agenda/{{ evento.id }}/modifica/">
+                    Modifica
+                </a>
+                |
+                <a href="/agenda/{{ evento.id }}/elimina/" style="color:#991b1b;">
+                    Elimina
+                </a>
+            </div>
+
+        </div>
+
+    {% empty %}
+
+        <p>
+            Nessun evento previsto per oggi.
+        </p>
+
+    {% endfor %}
+
+</div>
+
+{% endblock %}

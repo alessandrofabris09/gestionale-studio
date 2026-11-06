@@ -1,0 +1,104 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Dati studio</h1>
+        <p>Riepilogo delle informazioni principali dello studio.</p>
+    </div>
+</div>
+
+<div class="card">
+    <h2>{{ studio.nome }}</h2>
+
+    <div class="detail-grid">
+        <div>
+            <strong>Email notifiche studio</strong>
+            <p>{{ studio.email|default:"-" }}</p>
+        </div>
+
+        <div>
+            <strong>Telefono</strong>
+            <p>{{ studio.telefono|default:"-" }}</p>
+        </div>
+
+        <div>
+            <strong>Indirizzo</strong>
+            <p>{{ studio.indirizzo|default:"-" }}</p>
+        </div>
+
+        <div>
+            <strong>Partita IVA / Codice fiscale</strong>
+            <p>{{ studio.partita_iva|default:"-" }}</p>
+        </div>
+
+        <div>
+            <strong>Piano</strong>
+            <p>{{ studio.get_piano_display }}</p>
+        </div>
+
+        <div>
+            <strong>Stato abbonamento</strong>
+            <p>{{ studio.get_stato_abbonamento_display }}</p>
+        </div>
+
+        <div>
+            <strong>Limite pratiche</strong>
+            <p>{{ studio.limite_pratiche }}</p>
+        </div>
+
+        <div>
+            <strong>Limite utenti</strong>
+            <p>{{ studio.limite_utenti }}</p>
+        </div>
+
+        <div>
+            <strong>Limite storage</strong>
+            <p>{{ studio.limite_storage_mb }} MB</p>
+        </div>
+
+        <div>
+            <strong>Studio attivo</strong>
+            <p>
+                {% if studio.attivo %}
+                    Sì
+                {% else %}
+                    No
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 24px;">
+    <h2>Utenti collegati</h2>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Utente</th>
+                <th>Email</th>
+                <th>Ruolo</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for profilo in utenti_studio %}
+                <tr>
+                    <td>{{ profilo.user.username }}</td>
+                    <td>{{ profilo.user.email|default:"-" }}</td>
+                    <td>{{ profilo.get_ruolo_display }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3">
+                        Nessun utente collegato allo studio.
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

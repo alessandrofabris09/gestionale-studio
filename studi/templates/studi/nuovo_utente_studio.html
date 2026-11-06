@@ -1,0 +1,135 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Nuovo utente studio
+{% endblock %}
+
+{% block page_title %}
+Nuovo collaboratore
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Nuovo collaboratore</h1>
+        <p>
+            Crea un nuovo utente e collegalo allo studio
+            <strong>{{ studio.nome }}</strong>.
+        </p>
+    </div>
+
+    <div>
+        <a href="{% url 'utenti_studio' %}" class="btn btn-secondary">
+            Torna agli utenti
+        </a>
+    </div>
+</div>
+
+<div class="card">
+
+    <p style="margin-bottom:20px; color:#6b7280;">
+        Utenti attuali dello studio:
+        <strong>{{ utenti_attuali }}</strong>
+
+        {% if limite_utenti %}
+            / limite piano:
+            <strong>{{ limite_utenti }}</strong>
+        {% endif %}
+    </p>
+
+    {% if form.errors %}
+
+        <div class="message message-error">
+            <strong>Errore nella creazione dell’utente.</strong>
+            <br>
+            Controlla i campi evidenziati e riprova.
+            <br><br>
+            {{ form.errors }}
+        </div>
+
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="detail-grid">
+
+            <div>
+                <label for="{{ form.username.id_for_label }}">
+                    {{ form.username.label }}
+                </label>
+                {{ form.username }}
+            </div>
+
+            <div>
+                <label for="{{ form.email.id_for_label }}">
+                    {{ form.email.label }}
+                </label>
+                {{ form.email }}
+            </div>
+
+            <div>
+                <label for="{{ form.first_name.id_for_label }}">
+                    {{ form.first_name.label }}
+                </label>
+                {{ form.first_name }}
+            </div>
+
+            <div>
+                <label for="{{ form.last_name.id_for_label }}">
+                    {{ form.last_name.label }}
+                </label>
+                {{ form.last_name }}
+            </div>
+
+            <div>
+                <label for="{{ form.ruolo.id_for_label }}">
+                    {{ form.ruolo.label }}
+                </label>
+                {{ form.ruolo }}
+            </div>
+
+        </div>
+
+        <hr style="margin:25px 0; border:0; border-top:1px solid #e5e7eb;">
+
+        <div class="detail-grid">
+
+            <div>
+                <label for="{{ form.password1.id_for_label }}">
+                    {{ form.password1.label }}
+                </label>
+                {{ form.password1 }}
+            </div>
+
+            <div>
+                <label for="{{ form.password2.id_for_label }}">
+                    {{ form.password2.label }}
+                </label>
+                {{ form.password2 }}
+            </div>
+
+        </div>
+
+        <div style="margin-top:25px; background:#f9fafb; padding:16px; border-radius:12px; color:#374151;">
+            <strong>Nota:</strong>
+            il nuovo utente non avrà accesso all’amministrazione Django.
+            Potrà accedere solo alle funzioni del gestionale previste dal suo ruolo.
+        </div>
+
+        <div style="margin-top:25px;">
+            <button type="submit" class="btn btn-primary">
+                Crea utente
+            </button>
+
+            <a href="{% url 'utenti_studio' %}" class="btn btn-secondary">
+                Annulla
+            </a>
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}
