@@ -6,6 +6,8 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 from types import SimpleNamespace
 
+from stripe import Event
+
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings, Client
@@ -304,7 +306,8 @@ class OperazioniQA(BaseQA):
 
 class WebhookQA(BaseQA):
     def send(self,event):
-        with patch('billing.views.stripe.Webhook.construct_event',return_value=event):
+        stripe_event = Event.construct_from(event, None)
+        with patch('billing.views.stripe.Webhook.construct_event', return_value=stripe_event):
             response=self.client.post('/billing/webhook/','{}',content_type='application/json')
             self.assertEqual(response.status_code,200)
 

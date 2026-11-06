@@ -1,3 +1,7 @@
+import hashlib
+import hmac
+import json
+import time
 from types import SimpleNamespace
 from unittest.mock import patch
 from django.contrib.auth.models import User
@@ -66,10 +70,30 @@ class CheckoutProtezioneTests(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertNotContains(response, 'Dettaglio tecnico fittizio')
 
+    @override_settings(STRIPE_WEBHOOK_SECRET='whsec_fittizio')
     def test_webhook_verificato_attiva_piano(self):
-        event = {'type': 'checkout.session.completed', 'data': {'object': {'metadata': {'studio_id': str(self.studio.pk)}, 'mode': 'subscription', 'payment_status': 'paid', 'subscription': 'sub_fittizia', 'customer': 'cus_fittizio'}}}
-        with patch('billing.views.stripe.Webhook.construct_event', return_value=event):
-            self.assertEqual(self.client.post('/billing/webhook/', '{}', content_type='application/json').status_code, 200)
+        event = {
+            'id': 'evt_fittizio',
+            'object': 'event',
+            'type': 'checkout.session.completed',
+            'data': {'object': {
+                'metadata': {'studio_id': str(self.studio.pk)},
+                'mode': 'subscription',
+                'payment_status': 'paid',
+                'subscription': 'sub_fittizia',
+                'customer': 'cus_fittizio',
+            }},
+        }
+        payload = json.dumps(event)
+        timestamp = int(time.time())
+        signature = hmac.new(
+            b'whsec_fittizio', f'{timestamp}.{payload}'.encode(), hashlib.sha256
+        ).hexdigest()
+        response = self.client.post(
+            '/billing/webhook/', payload, content_type='application/json',
+            HTTP_STRIPE_SIGNATURE=f't={timestamp},v1={signature}',
+        )
+        self.assertEqual(response.status_code, 200)
         self.studio.refresh_from_db()
         self.assertEqual(self.studio.piano, 'PRO')
         self.assertEqual(self.studio.stato_abbonamento, 'ATTIVO')

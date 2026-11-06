@@ -88,7 +88,7 @@ def stripe_webhook(request):
             payload,
             sig_header,
             endpoint_secret
-        )
+        ).to_dict()
 
     except ValueError:
 
