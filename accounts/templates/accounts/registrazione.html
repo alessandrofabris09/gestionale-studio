@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="it">
 
@@ -18,7 +19,7 @@
         }
 
         body{
-            font-family:Arial, sans-serif;
+            font-family:var(--studio-font);
             background:#f3f4f6;
             color:#111827;
             min-height:100vh;
@@ -207,9 +208,10 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="{% static 'css/studio-ui.css' %}">
 </head>
 
-<body>
+<body class="studio-ui">
 
     <div class="container">
 

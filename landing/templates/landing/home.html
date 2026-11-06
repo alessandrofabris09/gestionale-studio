@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="it">
 
@@ -22,7 +23,7 @@
         }
 
         body{
-            font-family:Arial, sans-serif;
+            font-family:var(--studio-font);
             color:#111827;
             background:#f9fafb;
             line-height:1.6;
@@ -453,9 +454,10 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="{% static 'css/studio-ui.css' %}">
 </head>
 
-<body>
+<body class="studio-ui">
 
     <header class="navbar">
 

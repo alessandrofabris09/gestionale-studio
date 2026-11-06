@@ -1,0 +1,192 @@
+:root {
+    --studio-font: Arial, sans-serif;
+    --studio-text: #111827;
+    --studio-muted: #6b7280;
+    --studio-surface: #fff;
+    --studio-background: #f3f4f6;
+    --studio-field: #f9fafb;
+    --studio-border: #d1d5db;
+    --studio-line: #e5e7eb;
+    --studio-primary: #2563eb;
+    --studio-primary-hover: #1d4ed8;
+    --studio-success: #047857;
+    --studio-danger: #b91c1c;
+    --studio-radius: 12px;
+    --studio-card-radius: 24px;
+    --studio-shadow: 0 10px 28px rgba(0, 0, 0, .08);
+    --studio-focus: 0 0 0 3px rgba(37, 99, 235, .18);
+}
+
+body.studio-ui {
+    color: var(--studio-text);
+    font-family: var(--studio-font);
+    color-scheme: light;
+}
+
+.studio-ui :is(button, input, select, textarea, option, optgroup) {
+    font-family: inherit;
+}
+
+.studio-ui :is(
+    input:not([type=checkbox], [type=radio], [type=hidden], [type=submit], [type=button], [type=reset], [type=image], [type=range], [type=color]),
+    select,
+    textarea
+) {
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid var(--studio-border);
+    border-radius: var(--studio-radius);
+    background-color: var(--studio-field);
+    color: var(--studio-text);
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.studio-ui select:not([multiple]):is(:not([size]), [size="1"]) {
+    appearance: none;
+    padding-inline-end: 36px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='%23374151' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.7' d='m5 8 5 5 5-5'/%3E%3C/svg%3E");
+    background-position: right 10px center;
+    background-repeat: no-repeat;
+    background-size: 18px;
+}
+
+.studio-ui :is(option, optgroup) {
+    background: var(--studio-surface);
+    color: var(--studio-text);
+}
+
+.studio-ui :is(input[type=checkbox], input[type=radio]) {
+    width: auto;
+    accent-color: var(--studio-primary);
+}
+
+.studio-ui input::file-selector-button {
+    margin-inline-end: 10px;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--studio-line);
+    color: var(--studio-text);
+    font: inherit;
+    cursor: pointer;
+}
+
+.studio-ui :is(input, select, textarea):focus {
+    border-color: var(--studio-primary);
+    box-shadow: var(--studio-focus);
+}
+
+.studio-ui :is(a, button, input, select, textarea, summary):focus-visible {
+    outline: 2px solid var(--studio-primary);
+    outline-offset: 2px;
+}
+
+.studio-ui :is(input, select, textarea, button):disabled {
+    cursor: not-allowed;
+    opacity: .65;
+}
+
+.studio-ui :is(.btn, .action-btn, .btn-home, .login-btn, .register-btn) {
+    border-radius: var(--studio-radius);
+    font-family: inherit;
+    font-weight: 700;
+}
+
+.studio-ui :is(.btn-primary, .login-btn, .register-btn) {
+    background: var(--studio-primary);
+    color: var(--studio-surface);
+}
+
+.studio-ui :is(.btn-primary, .login-btn, .register-btn):hover {
+    background: var(--studio-primary-hover);
+}
+
+.studio-ui :is(.btn-secondary, .btn-light, .btn-outline-secondary, .cancel-btn) {
+    background: var(--studio-line);
+    color: var(--studio-text);
+}
+
+.studio-ui :is(.btn-secondary, .btn-light, .btn-outline-secondary, .cancel-btn):hover {
+    background: var(--studio-border);
+    color: var(--studio-text);
+}
+
+.studio-ui :is(.save-btn, .btn-success) {
+    background: var(--studio-success);
+    color: var(--studio-surface);
+}
+
+.studio-ui :is(.save-btn, .btn-success):hover {
+    background: #065f46;
+}
+
+.studio-ui :is(.danger-btn, .btn-danger, .btn-delete, .delete-btn, .delete-small) {
+    background: var(--studio-danger);
+    color: var(--studio-surface);
+}
+
+.studio-ui :is(.danger-btn, .btn-danger, .btn-delete, .delete-btn, .delete-small):hover {
+    background: #991b1b;
+}
+
+.studio-ui :is(.topbar, .card, .form-card, .table-card, .page-card, .search-card,
+    .delete-card, .billing-card, .upgrade-card, .upload-card, .summary-card,
+    .preview-card, .sync-card, .security-card, .help-card, .register-card,
+    .login-wrapper, .legal-box, .access-denied-box, .price-card, dialog) {
+    border-radius: var(--studio-card-radius);
+    box-shadow: var(--studio-shadow);
+}
+
+.studio-ui :is(.content, dialog) :is(.muted, .subtitle, .helptext) {
+    color: var(--studio-muted);
+}
+
+.studio-ui :is(.content, dialog) :is(.errorlist, .errori-creazione) {
+    color: var(--studio-danger);
+}
+
+.studio-ui dialog {
+    max-width: calc(100% - 32px);
+    max-height: calc(100% - 32px);
+    margin: auto;
+    overflow: auto;
+    background: var(--studio-surface);
+    color: var(--studio-text);
+}
+
+.studio-ui dialog::backdrop {
+    background: rgba(17, 24, 39, .58);
+}
+
+@media (forced-colors: active) {
+    .studio-ui select:not([multiple]):is(:not([size]), [size="1"]) {
+        appearance: auto;
+        background-image: none;
+    }
+}
+
+.studio-ui :is(input, select, textarea)[aria-invalid="true"] {
+    border-color: var(--studio-danger);
+}
+
+.studio-ui .content table thead th {
+    background: var(--studio-text);
+    color: var(--studio-surface);
+}
+
+.studio-admin {
+    --font-family-primary: var(--studio-font);
+    --header-bg: var(--studio-text);
+    --header-color: var(--studio-surface);
+    --header-branding-color: var(--studio-surface);
+    --breadcrumbs-bg: #1f2937;
+    --breadcrumbs-fg: var(--studio-line);
+    --default-button-bg: var(--studio-primary);
+    --default-button-hover-bg: var(--studio-primary-hover);
+    --delete-button-bg: var(--studio-danger);
+}
+
+.studio-admin :is(input, button, select, textarea) {
+    font-family: var(--studio-font);
+}
