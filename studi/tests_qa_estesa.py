@@ -93,6 +93,52 @@ for path,allowed in ROUTES.items():
 
 
 class ElencoPraticheQA(BaseQA):
+    def test_scadenza_operativa_segue_la_pratica_in_agenda(self):
+        pratica, estranea = self.practices
+        oggi = localdate()
+        for elemento in (pratica, estranea):
+            elemento.scadenza = oggi
+            elemento.save(update_fields=['scadenza'])
+        promemoria = pratica.scadenze.get(da_pratica=True)
+        self.assertEqual(promemoria.data_scadenza, oggi)
+        self.assertEqual(
+            list(self.client.get(reverse('agenda_oggi')).context['scadenze_pratiche']),
+            [promemoria],
+        )
+        pratica.scadenza = oggi + timedelta(days=2)
+        pratica.save(update_fields=['scadenza'])
+        promemoria.refresh_from_db()
+        self.assertEqual(promemoria.data_scadenza, pratica.scadenza)
+        self.assertEqual(pratica.scadenze.filter(da_pratica=True).count(), 1)
+        pratica.stato = 'CONCLUSA'
+        pratica.save(update_fields=['stato'])
+        promemoria.refresh_from_db()
+        self.assertTrue(promemoria.completata)
+        pratica.scadenza = None
+        pratica.save(update_fields=['scadenza'])
+        promemoria.refresh_from_db()
+        self.assertTrue(promemoria.archiviata)
+        self.assertTrue(pratica.scadenze.filter(pk=self.deadlines[0].pk, archiviata=False).exists())
+
+    def test_prima_parcella_precompilata_senza_toccare_i_documenti_esistenti(self):
+        pratica = Pratica.objects.create(
+            studio=self.studio, cliente=self.practices[0].cliente,
+            immobile=self.practices[0].immobile, tipo_pratica='CILA', oggetto='Pratica con compenso',
+            comune='QA', compenso=Decimal('850.00'), scadenza_compenso=localdate(),
+        )
+        url = reverse('nuova_parcella')
+        form = self.client.get(url, {'pratica': pratica.pk}).context['form']
+        self.assertEqual(form.initial['importo'], Decimal('850.00'))
+        self.assertEqual(form.initial['data_scadenza'], pratica.scadenza_compenso)
+        self.assertFalse(pratica.parcelle.exists())
+        documento = pratica.parcelle.create(descrizione='Prima parcella', importo=Decimal('800.00'))
+        pratica.compenso = Decimal('950.00')
+        pratica.save(update_fields=['compenso'])
+        documento.refresh_from_db()
+        self.assertEqual(documento.importo, Decimal('800.00'))
+        form = self.client.get(url, {'pratica': pratica.pk}).context['form']
+        self.assertNotIn('importo', form.initial)
+
     def test_scadenze_dalla_scheda_pratica(self):
         pratica = self.practices[0]
         self.deadlines[0].archiviata = True

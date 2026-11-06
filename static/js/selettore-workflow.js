@@ -5,34 +5,51 @@
     for (const contenitore of document.querySelectorAll('[data-selettore-workflow]')) {
         const filtri = contenitore.querySelector('.selettore-workflow-filtri');
         if (!filtri.hidden) continue;
-        const elenco = contenitore.querySelector('select:not([data-categoria])');
+        const elenco = contenitore.querySelector('select');
         const ricerca = contenitore.querySelector('[data-ricerca]');
-        const categoria = contenitore.querySelector('[data-categoria]');
+        const pannello = contenitore.querySelector('details');
+        const categoriaAttiva = contenitore.querySelector('[data-categoria-attiva]');
+        const categorieElenco = contenitore.querySelector('[data-categorie]');
         const risultati = contenitore.querySelector('[data-risultati]');
-        const opzioni = Array.from(elenco.options).filter((opzione) => opzione.value);
+        const opzioni = Array.from(elenco.options);
         const categorie = new Set(opzioni.map((opzione) => opzione.dataset.categoria).filter(Boolean));
-        for (const nome of [...categorie].sort((a, b) => a.localeCompare(b, 'it'))) {
-            categoria.add(new Option(nome, nome));
-        }
+        let categoria = '';
 
         const aggiorna = () => {
             const selezione = elenco.value;
             const parole = normalizza(ricerca.value.trim()).split(/\s+/);
-            let corrispondenze = 0;
-            for (const opzione of opzioni) {
-                const coincide = (!categoria.value || opzione.dataset.categoria === categoria.value)
-                    && parole.every((parola) => normalizza(opzione.textContent).includes(parola));
-                opzione.hidden = !coincide && opzione.value !== selezione;
-                if (coincide) corrispondenze += 1;
-            }
+            const filtrate = opzioni.filter((opzione) => opzione.value
+                && (!categoria || opzione.dataset.categoria === categoria)
+                && parole.every((parola) => normalizza(opzione.textContent).includes(parola)));
+            const visibili = new Set(filtrate);
+            elenco.replaceChildren(...opzioni.filter((opzione) => !opzione.value
+                || opzione.value === selezione || visibili.has(opzione)));
+            elenco.value = selezione;
+            const corrispondenze = filtrate.length;
             risultati.textContent = corrispondenze === 0 ? 'Nessun modello corrispondente.'
                 : corrispondenze === 1 ? '1 modello trovato.' : `${corrispondenze} modelli trovati.`;
         };
+        const nomi = ['', ...[...categorie].sort((a, b) => a.localeCompare(b, 'it'))];
+        for (const nome of nomi) {
+            const pulsante = document.createElement('button');
+            pulsante.type = 'button';
+            pulsante.textContent = nome || 'Tutte le categorie';
+            pulsante.setAttribute('aria-pressed', String(nome === categoria));
+            pulsante.addEventListener('click', () => {
+                categoria = nome;
+                categoriaAttiva.textContent = pulsante.textContent;
+                categorieElenco.querySelector('[aria-pressed="true"]').setAttribute('aria-pressed', 'false');
+                pulsante.setAttribute('aria-pressed', 'true');
+                pannello.open = false;
+                pannello.querySelector('summary').focus();
+                aggiorna();
+            });
+            categorieElenco.append(pulsante);
+        }
         elenco.size = 7;
         filtri.hidden = false;
         risultati.hidden = false;
         ricerca.addEventListener('input', aggiorna);
-        categoria.addEventListener('change', aggiorna);
         elenco.addEventListener('change', aggiorna);
         aggiorna();
     }

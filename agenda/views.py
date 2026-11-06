@@ -25,6 +25,7 @@ from studi.permessi import (
 )
 
 from attivita.models import Attivita
+from scadenze.models import Scadenza
 
 from .models import EventoAgenda
 from .forms import EventoAgendaForm
@@ -81,6 +82,15 @@ def get_studio_agenda(request):
     return studio
 
 
+def scadenze_pratiche_agenda(request, studio):
+    scadenze = Scadenza.objects.filter(
+        da_pratica=True, archiviata=False, completata=False,
+    ).select_related('pratica').order_by('data_scadenza', 'pk')
+    if is_admin_piattaforma(request):
+        return scadenze
+    return scadenze.filter(pratica__studio=studio)
+
+
 @login_required
 def lista_agenda(request):
 
@@ -103,7 +113,8 @@ def lista_agenda(request):
         request,
         'agenda/lista_agenda.html',
         {
-            'eventi': eventi
+            'eventi': eventi,
+            'scadenze_pratiche': scadenze_pratiche_agenda(request, studio),
         }
     )
 
@@ -134,6 +145,7 @@ def agenda_oggi(request):
         {
             'eventi': eventi,
             'oggi': oggi,
+            'scadenze_pratiche': scadenze_pratiche_agenda(request, studio).filter(data_scadenza=oggi),
         }
     )
 
@@ -858,8 +870,6 @@ def calendario_ics(request, codice):
     # =========================
     # SCADENZE
     # =========================
-
-    from scadenze.models import Scadenza
 
     scadenze = Scadenza.objects.filter(
         archiviata=False,

@@ -213,7 +213,7 @@ Nuova pratica
 
     </div>
 
-    <form method="post" id="form-pratica">
+    <form method="post" class="scheda-pratica-form" id="form-pratica">
 
         {% csrf_token %}
         {{ form.errors }}
@@ -246,8 +246,8 @@ Nuova pratica
                     {% endif %}
                 </div>
 
-                <div class="field">
-                    <label>Tipo pratica</label>
+                <div class="field full">
+                    <label for="{{ form.tipo_pratica.id_for_label }}">Tipo pratica</label>
                     {{ form.tipo_pratica }}
                 </div>
 
@@ -294,13 +294,21 @@ Nuova pratica
                 </div>
 
                 <div class="field">
-                    <label>Scadenza</label>
+                    <label for="{{ form.scadenza.id_for_label }}">Scadenza operativa</label>
                     {{ form.scadenza }}
+                    <small>Compare in Agenda e Scadenze.</small>
                 </div>
 
                 <div class="field">
-                    <label>Compenso</label>
+                    <label for="{{ form.compenso.id_for_label }}">Compenso concordato (€)</label>
                     {{ form.compenso }}
+                    <small>Importo base proposto per la prima parcella.</small>
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.scadenza_compenso.id_for_label }}">Scadenza prevista del pagamento</label>
+                    {{ form.scadenza_compenso }}
+                    <small>Proposta nel modulo della prima parcella.</small>
                 </div>
 
             </div>

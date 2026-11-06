@@ -26,6 +26,7 @@ class Scadenza(models.Model):
         editable=False,
     )
     archiviata = models.BooleanField(default=False, editable=False)
+    da_pratica = models.BooleanField(default=False, editable=False)
 
     titolo = models.CharField(max_length=255)
 
@@ -42,6 +43,14 @@ class Scadenza(models.Model):
     completata = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['pratica'], condition=models.Q(da_pratica=True),
+                name='scadenza_automatica_unica_per_pratica',
+            ),
+        ]
 
     def __str__(self):
         return self.titolo

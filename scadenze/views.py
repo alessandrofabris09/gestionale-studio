@@ -243,6 +243,8 @@ def modifica_scadenza(request, scadenza_id):
         get_scadenze_queryset(request),
         id=scadenza_id
     )
+    if scadenza.da_pratica:
+        return redirect('dettaglio_pratica', pratica_id=scadenza.pratica_id)
 
     if request.method == 'POST':
 
@@ -304,6 +306,8 @@ def elimina_scadenza(request, scadenza_id):
         get_scadenze_queryset(request),
         id=scadenza_id
     )
+    if scadenza.da_pratica:
+        return redirect('dettaglio_pratica', pratica_id=scadenza.pratica_id)
 
     if request.method == 'POST':
 
@@ -350,6 +354,8 @@ def completa_scadenza(request, scadenza_id):
         get_scadenze_queryset(request),
         id=scadenza_id
     )
+    if scadenza.da_pratica:
+        return redirect('dettaglio_pratica', pratica_id=scadenza.pratica_id)
 
     if scadenza.pratica:
 

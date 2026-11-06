@@ -333,6 +333,8 @@ Scadenze
                     <td>
                         {% if stato == 'archivio' %}
                         <span class="scadenze-meta">Solo consultazione</span>
+                        {% elif scadenza.da_pratica %}
+                        <a class="action-btn" href="{% url 'dettaglio_pratica' scadenza.pratica_id %}">Apri pratica</a>
                         {% else %}
                         <div class="actions">
 

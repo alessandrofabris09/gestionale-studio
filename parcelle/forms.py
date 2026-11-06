@@ -47,6 +47,7 @@ class ParcellaForm(forms.ModelForm):
                 }
             ),
             'data_scadenza': forms.DateInput(
+                format='%Y-%m-%d',
                 attrs={
                     'type': 'date'
                 }

@@ -150,6 +150,12 @@ def nuova_parcella(request):
                 pass
             else:
                 form.initial['pratica'] = pratica.pk
+                if not pratica.parcelle.exclude(tipo_documento='PREVENTIVO').exists():
+                    form.initial.update({
+                        'importo': pratica.compenso,
+                        'data_scadenza': pratica.scadenza_compenso,
+                        'descrizione': pratica.oggetto,
+                    })
 
     return render(
         request,

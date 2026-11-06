@@ -190,11 +190,19 @@ body.studio-ui {
 .studio-admin :is(input, button, select, textarea) {
     font-family: var(--studio-font);
 }
+.selettore-workflow {
+    padding: 1rem;
+    border: 1px solid var(--studio-line);
+    border-radius: var(--studio-radius);
+    background: var(--studio-surface);
+}
+
 .selettore-workflow-filtri:not([hidden]) {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
     gap: .75rem;
     margin-bottom: .75rem;
+    align-items: start;
 }
 
 .selettore-workflow :is(input, select) {
@@ -202,10 +210,86 @@ body.studio-ui {
     width: 100%;
 }
 
-.selettore-workflow select[size] option {
-    padding: .4rem .55rem;
+.selettore-workflow select[size] {
+    padding: .35rem;
+    background: var(--studio-surface);
 }
 
-.selettore-workflow select[size] option[hidden] {
-    display: none;
+.selettore-workflow select[size] option {
+    padding: .55rem .7rem;
+    border-radius: .4rem;
+}
+
+.selettore-categorie summary {
+    padding: .65rem .8rem;
+    border: 1px solid var(--studio-border);
+    border-radius: var(--studio-radius);
+    background: var(--studio-field);
+    color: var(--studio-text);
+    cursor: pointer;
+}
+
+.selettore-categorie summary strong {
+    display: block;
+    margin-top: .2rem;
+    color: var(--studio-primary-hover);
+}
+
+.selettore-categorie-opzioni {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    gap: .35rem;
+    padding-top: .55rem;
+}
+
+.studio-ui .selettore-categorie-opzioni button {
+    min-height: 40px;
+    padding: .4rem .55rem;
+    border: 1px solid var(--studio-line);
+    border-radius: .55rem;
+    background: var(--studio-field);
+    color: var(--studio-text);
+    text-align: start;
+    cursor: pointer;
+}
+
+.studio-ui .selettore-categorie-opzioni button:is(:hover, [aria-pressed="true"]) {
+    border-color: var(--studio-primary);
+    background: #eff6ff;
+    color: var(--studio-primary-hover);
+}
+
+.selettore-workflow [data-risultati], .scheda-pratica-form .field small {
+    color: var(--studio-muted);
+    font-size: .85rem;
+}
+
+.scheda-pratica-form .section {
+    padding: clamp(.85rem, 2vw, 1.4rem);
+    border: 1px solid var(--studio-line);
+    border-radius: var(--studio-radius);
+    background: var(--studio-field);
+}
+
+.scheda-pratica-form .field {
+    min-width: 0;
+}
+
+.scheda-pratica-form .field :is(input, select, textarea) {
+    box-sizing: border-box;
+    background-color: var(--studio-surface);
+}
+
+.scheda-pratica-form .field small {
+    display: block;
+    margin-top: .35rem;
+}
+
+.studio-ui .scheda-pratica-riepilogo .row {
+    min-width: 0;
+    padding: .8rem .95rem;
+    border: 1px solid var(--studio-line);
+    border-radius: var(--studio-radius);
+    background: var(--studio-field);
+    overflow-wrap: anywhere;
 }

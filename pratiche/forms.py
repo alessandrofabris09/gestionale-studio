@@ -22,9 +22,10 @@ class PraticaForm(forms.ModelForm):
         ]
 
         widgets = {
-            'data_incarico': forms.DateInput(attrs={'type': 'date'}),
-            'data_deposito': forms.DateInput(attrs={'type': 'date'}),
-            'scadenza': forms.DateInput(attrs={'type': 'date'}),
+            'data_incarico': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'data_deposito': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'scadenza': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'scadenza_compenso': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'note': forms.Textarea(attrs={'rows': 4}),
         }
 

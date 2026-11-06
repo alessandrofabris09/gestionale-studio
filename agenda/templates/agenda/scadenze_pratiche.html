@@ -1,0 +1,13 @@
+{% if scadenze_pratiche %}
+    <section class="card">
+        <h2>Scadenze delle pratiche</h2>
+        <ul>
+            {% for scadenza in scadenze_pratiche %}
+                <li>
+                    <time datetime="{{ scadenza.data_scadenza|date:'Y-m-d' }}">{{ scadenza.data_scadenza|date:'d/m/Y' }}</time>
+                    <a href="{% url 'dettaglio_pratica' scadenza.pratica_id %}">{{ scadenza.pratica.oggetto }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endif %}

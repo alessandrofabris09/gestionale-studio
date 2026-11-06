@@ -234,7 +234,7 @@ Scheda pratica
         Dati pratica
     </h2>
 
-    <div class="grid">
+    <div class="grid scheda-pratica-riepilogo">
 
         <div class="row">
             <div class="label">Tipo pratica</div>
@@ -277,11 +277,11 @@ Scheda pratica
         </div>
 
         <div class="row">
-            <div class="label">Compenso</div>
+            <div class="label">Compenso concordato</div>
             <div class="value">
                 <span class="badge money">
                     <i class="fa-solid fa-euro-sign"></i>
-                    {{ pratica.compenso|default:"-" }}
+                    {{ pratica.compenso|default_if_none:"-" }}
                 </span>
             </div>
         </div>
@@ -297,9 +297,16 @@ Scheda pratica
         </div>
 
         <div class="row">
-            <div class="label">Scadenza</div>
+            <div class="label">Scadenza operativa</div>
             <div class="value">{{ pratica.scadenza|default:"-" }}</div>
         </div>
+
+        {% if puo_vedere_economia %}
+            <div class="row">
+                <div class="label">Scadenza prevista del pagamento</div>
+                <div class="value">{{ pratica.scadenza_compenso|default:"-" }}</div>
+            </div>
+        {% endif %}
 
         <div class="row">
             <div class="label">Note</div>
@@ -497,9 +504,13 @@ Scheda pratica
     </div>
     {% for scadenza in scadenze_aperte %}
         <div class="item">
-            <a class="action-btn" href="{% url 'modifica_scadenza' scadenza.pk %}">
-                {{ scadenza.titolo }}
-            </a>
+            {% if scadenza.da_pratica %}
+                <span>{{ scadenza.titolo }} · collegata alla pratica</span>
+            {% else %}
+                <a class="action-btn" href="{% url 'modifica_scadenza' scadenza.pk %}">
+                    {{ scadenza.titolo }}
+                </a>
+            {% endif %}
             <span class="badge">{{ scadenza.data_scadenza|date:"d/m/Y" }}</span>
             <span class="badge">{{ scadenza.get_priorita_display }}</span>
         </div>

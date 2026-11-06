@@ -1,9 +1,10 @@
 {% load static %}
 <div class="selettore-workflow" data-selettore-workflow>
     <div class="selettore-workflow-filtri" hidden>
-        <label>Categoria
-            <select data-categoria><option value="">Tutte le categorie</option></select>
-        </label>
+        <details class="selettore-categorie">
+            <summary>Categoria <strong data-categoria-attiva>Tutte le categorie</strong></summary>
+            <div class="selettore-categorie-opzioni" data-categorie role="group" aria-label="Filtra per categoria"></div>
+        </details>
         <label>Cerca per nome o sigla
             <input type="search" data-ricerca placeholder="Es. CILA, DOCFA, ENEA">
         </label>
