@@ -572,6 +572,12 @@ Scheda pratica
         Parcelle / Preventivi / Fatture
     </h2>
 
+    {% if puo_creare_parcella %}
+    <div class="page-actions">
+        <a class="btn" href="{% url 'nuova_parcella' %}?pratica={{ pratica.pk }}">Nuova parcella</a>
+    </div>
+    {% endif %}
+
     {% for parcella in parcelle %}
 
         <div class="item">

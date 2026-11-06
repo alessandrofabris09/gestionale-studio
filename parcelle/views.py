@@ -3,6 +3,7 @@ from datetime import date
 from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.http import FileResponse
@@ -140,10 +141,15 @@ def nuova_parcella(request):
             print(form.errors)
 
     else:
-
-        form = ParcellaForm(
-            studio=studio
-        )
+        form = ParcellaForm(studio=studio)
+        pratica_id = request.GET.get('pratica')
+        if pratica_id:
+            try:
+                pratica = form.fields['pratica'].clean(pratica_id)
+            except ValidationError:
+                pass
+            else:
+                form.initial['pratica'] = pratica.pk
 
     return render(
         request,

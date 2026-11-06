@@ -26,6 +26,7 @@ from studi.permessi import (
     puo_eliminare_pratiche,
     puo_gestire_documenti,
     puo_vedere_parcelle,
+    puo_modificare_parcelle,
 )
 
 from workflow.models import (
@@ -249,6 +250,10 @@ def dettaglio_pratica(request, pratica_id):
         'scadenze_aperte': scadenze_aperte,
         'parcelle': parcelle,
         'puo_vedere_economia': puo_vedere_economia,
+        'puo_creare_parcella': (
+            studio is not None and pratica.studio_id == studio.pk
+            and puo_modificare_parcelle(request)
+        ),
         'attivita': attivita,
         'workflow_pratica': workflow_pratica,
     }
