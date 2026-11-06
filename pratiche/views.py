@@ -36,6 +36,10 @@ from workflow.models import (
     ChecklistPratica,
 )
 
+from clienti.forms import ClienteForm
+from clienti.views import puo_modificare_clienti
+from immobili.forms import ImmobileForm
+from immobili.views import puo_modificare_immobili
 from scadenze.models import Scadenza
 from attivita.models import Attivita
 
@@ -342,7 +346,15 @@ def nuova_pratica(request):
         request,
         'pratiche/nuova_pratica.html',
         {
-            'form': form
+            'form': form,
+            'cliente_rapido': (
+                ClienteForm(auto_id='rapido_cliente_%s')
+                if puo_modificare_clienti(request) else None
+            ),
+            'immobile_rapido': (
+                ImmobileForm(studio=studio, auto_id='rapido_immobile_%s')
+                if puo_modificare_immobili(request) else None
+            ),
         }
     )
 

@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
+from django.http import JsonResponse
 
 from .models import Cliente
 from .forms import ClienteForm
@@ -127,6 +128,7 @@ def nuovo_cliente(request):
         return accesso_negato(request)
 
     if request.method == 'POST':
+        risposta_json = request.headers.get('Accept') == 'application/json'
 
         form = ClienteForm(request.POST)
 
@@ -136,7 +138,15 @@ def nuovo_cliente(request):
             cliente.studio = studio
             cliente.save()
 
+            if risposta_json:
+                return JsonResponse({
+                    'id': cliente.pk,
+                    'label': str(cliente),
+                }, status=201)
             return redirect('lista_clienti')
+
+        if risposta_json:
+            return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
 
     else:
 

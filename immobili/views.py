@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
+from django.http import JsonResponse
 
 from studi.utils import get_studio_utente, is_admin_piattaforma
 from studi.permessi import (
@@ -129,6 +130,7 @@ def nuovo_immobile(request):
         return accesso_negato(request)
 
     if request.method == 'POST':
+        risposta_json = request.headers.get('Accept') == 'application/json'
 
         form = ImmobileForm(
             request.POST,
@@ -141,7 +143,17 @@ def nuovo_immobile(request):
             immobile.studio = studio
             immobile.save()
 
+            if risposta_json:
+                return JsonResponse({
+                    'id': immobile.pk,
+                    'label': str(immobile),
+                    'cliente_id': immobile.cliente_id,
+                    'cliente_label': str(immobile.cliente),
+                }, status=201)
             return redirect('lista_immobili')
+
+        if risposta_json:
+            return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
 
     else:
 
