@@ -7,13 +7,25 @@
         if (!filtri.hidden) continue;
         const elenco = contenitore.querySelector('select');
         const ricerca = contenitore.querySelector('[data-ricerca]');
-        const pannello = contenitore.querySelector('details');
+        const apriCategorie = contenitore.querySelector('[data-apri-categorie]');
         const categoriaAttiva = contenitore.querySelector('[data-categoria-attiva]');
         const categorieElenco = contenitore.querySelector('[data-categorie]');
         const risultati = contenitore.querySelector('[data-risultati]');
         const opzioni = Array.from(elenco.options);
         const categorie = new Set(opzioni.map((opzione) => opzione.dataset.categoria).filter(Boolean));
         let categoria = '';
+
+        const mostraCategorie = (aperte) => {
+            categorieElenco.hidden = !aperte;
+            apriCategorie.setAttribute('aria-expanded', String(aperte));
+        };
+        apriCategorie.addEventListener('click', () => mostraCategorie(categorieElenco.hidden));
+        apriCategorie.parentElement.addEventListener('keydown', (evento) => {
+            if (evento.key === 'Escape' && !categorieElenco.hidden) {
+                mostraCategorie(false);
+                apriCategorie.focus();
+            }
+        });
 
         const aggiorna = () => {
             const selezione = elenco.value;
@@ -40,8 +52,8 @@
                 categoriaAttiva.textContent = pulsante.textContent;
                 categorieElenco.querySelector('[aria-pressed="true"]').setAttribute('aria-pressed', 'false');
                 pulsante.setAttribute('aria-pressed', 'true');
-                pannello.open = false;
-                pannello.querySelector('summary').focus();
+                mostraCategorie(false);
+                apriCategorie.focus();
                 aggiorna();
             });
             categorieElenco.append(pulsante);
