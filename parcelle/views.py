@@ -1,5 +1,5 @@
 from io import BytesIO
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
@@ -9,6 +9,7 @@ from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.http import FileResponse
+from django.utils.timezone import localdate
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
@@ -73,6 +74,8 @@ def lista_parcelle(request):
         return redirect('login')
 
     parcelle = get_parcelle_queryset(request).order_by('-id')
+    oggi = localdate()
+    scadenze_incasso = scadenze_incasso_aperte(request, entro=oggi + timedelta(days=7))
 
     ricerca = request.GET.get('ricerca')
 
@@ -91,6 +94,8 @@ def lista_parcelle(request):
         {
             'parcelle': parcelle,
             'ricerca': ricerca,
+            'scadenze_incasso': scadenze_incasso,
+            'oggi': oggi,
         }
     )
 
@@ -313,6 +318,17 @@ def storico_incassi(request, parcella_id):
         'saldo_storico': parcella.importo_pagato - sum(incasso.importo for incasso in incassi),
         'form': form if puo_registrare and parcella.saldo_residuo > 0 else None,
     })
+
+
+def scadenze_incasso_aperte(request, *, entro=None):
+    if not puo_vedere_parcelle(request):
+        return []
+    parcelle = get_parcelle_queryset(request).filter(
+        tipo_documento__in=('PARCELLA', 'FATTURA'), data_scadenza__isnull=False,
+    ).order_by('data_scadenza', 'pk')
+    if entro is not None:
+        parcelle = parcelle.filter(data_scadenza__lte=entro)
+    return [parcella for parcella in parcelle if parcella.saldo_residuo > 0]
 
 
 def euro(value):

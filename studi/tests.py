@@ -203,6 +203,34 @@ class VerificaWorkflowEOre(TestCase):
         strict.force_login(self.admin)
         self.assertEqual(strict.post('/backups/crea/').status_code, 403)
 
+    def test_promemoria_incasso_visibile_solo_nello_studio_e_finche_aperto(self):
+        from uuid import uuid4
+        from django.urls import reverse
+        from django.utils.timezone import localdate
+        from parcelle.models import Parcella
+
+        oggi = localdate()
+        dati = dict(importo=100, data_scadenza=oggi, applica_cassa=False, applica_iva=False)
+        parcella = Parcella.objects.create(pratica=self.pa, descrizione='Da incassare', **dati)
+        Parcella.objects.create(pratica=self.pa, descrizione='Offerta', tipo_documento='PREVENTIVO', **dati)
+        Parcella.objects.create(pratica=self.pb, descrizione='Altra pratica', **dati)
+        calendario = reverse('eventi_calendario')
+        incassi = reverse('storico_incassi', args=[parcella.pk])
+        self.client.force_login(self.a)
+        self.assertEqual(self.client.get(reverse('lista_parcelle')).context['scadenze_incasso'], [parcella])
+        eventi = self.client.get(calendario).json()
+        self.assertEqual([e['url'] for e in eventi if e['title'].startswith('Incasso ·')], [incassi])
+        tecnico = User.objects.create_user('tecnico_promemoria')
+        ProfiloUtente.objects.create(user=tecnico, studio=self.sa, ruolo='TECNICO')
+        self.client.force_login(tecnico)
+        self.assertFalse(any(e['title'].startswith('Incasso ·') for e in self.client.get(calendario).json()))
+        self.client.force_login(self.a)
+        self.assertEqual(self.client.post(incassi, {
+            'chiave': uuid4(), 'data': oggi.isoformat(), 'importo': '100.00',
+        }).status_code, 302)
+        self.assertEqual(self.client.get(reverse('lista_parcelle')).context['scadenze_incasso'], [])
+        self.assertFalse(any(e['title'].startswith('Incasso ·') for e in self.client.get(calendario).json()))
+
     def test_incassi_multipli_con_importo_storico_e_reinvio(self):
         from decimal import Decimal
         from uuid import uuid4

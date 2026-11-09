@@ -20,6 +20,7 @@ from django.views.decorators.http import require_POST
 from attivita.models import Attivita
 from agenda.models import EventoAgenda
 from agenda.views import invia_email_agenda_giornaliera
+from parcelle.views import scadenze_incasso_aperte
 
 from studi.models import Studio
 from studi.utils import get_studio_utente, is_admin_piattaforma
@@ -489,6 +490,16 @@ def eventi_calendario(request):
             'start': scadenza.data_scadenza.isoformat(),
             'color': colore,
             'url': url,
+        })
+
+    oggi = localdate()
+    for parcella in scadenze_incasso_aperte(request):
+        eventi.append({
+            'title': f'Incasso · {parcella.numero_documento}',
+            'start': parcella.data_scadenza.isoformat(),
+            'allDay': True,
+            'color': '#b91c1c' if parcella.data_scadenza < oggi else '#047857',
+            'url': reverse('storico_incassi', args=[parcella.pk]),
         })
 
     eventi_agenda = get_eventi_agenda_queryset(request)
