@@ -351,6 +351,9 @@ def checkout_pro(request):
             'login'
         )
 
+    if studio.is_pro() or studio.stripe_subscription_id:
+        return redirect('abbonamento')
+
     if not settings.STRIPE_SECRET_KEY or not settings.STRIPE_PRICE_PRO_MONTHLY:
 
         return render(

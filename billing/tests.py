@@ -50,6 +50,22 @@ class CheckoutProtezioneTests(TestCase):
         self.assertContains(response, 'action="/billing/checkout/pro/"')
         self.assertContains(response, 'csrfmiddlewaretoken')
 
+    def test_abbonamento_esistente_blocca_nuovo_checkout(self):
+        for stato, subscription_id in [('ATTIVO', ''), ('SCADUTO', 'sub_fittizia')]:
+            with self.subTest(stato=stato):
+                self.studio.piano = 'PRO'
+                self.studio.stato_abbonamento = stato
+                self.studio.stripe_subscription_id = subscription_id
+                self.studio.save()
+                with patch('billing.views.stripe.checkout.Session.create') as create:
+                    response = self.client.post('/billing/checkout/pro/')
+                    self.assertRedirects(response, '/studi/abbonamento/')
+                    create.assert_not_called()
+                self.assertNotContains(
+                    self.client.get('/studi/abbonamento/'),
+                    'action="/billing/checkout/pro/"',
+                )
+
     def test_ritorno_checkout_non_riattiva_abbonamento_annullato(self):
         self.studio.piano = 'FREE'
         self.studio.stato_abbonamento = 'ANNULLATO'

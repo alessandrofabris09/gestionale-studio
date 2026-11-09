@@ -252,11 +252,15 @@
                 <li>✓ PDF pratiche e parcelle</li>
             </ul>
 
-            {% if studio.piano == 'PRO' and studio.stato_abbonamento == 'ATTIVO' %}
+            {% if studio.is_pro %}
 
                 <span class="btn btn-secondary">
                     Piano PRO attivo
                 </span>
+
+            {% elif studio.stripe_subscription_id %}
+
+                <p>Hai già un abbonamento Stripe. Se il pagamento non è riuscito, contatta il supporto per riattivarlo.</p>
 
             {% else %}
 
