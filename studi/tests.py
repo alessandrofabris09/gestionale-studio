@@ -215,8 +215,15 @@ class VerificaWorkflowEOre(TestCase):
         self.assertEqual(parcella.importo, Decimal('100'))
         voce.refresh_from_db()
         self.assertTrue(voce.inserita_in_parcella)
+        self.assertEqual(voce.parcella_id, parcella.pk)
         self.client.post(path)
         self.assertEqual(Parcella.objects.filter(pratica=self.pa).count(), 1)
+        parcella.delete()
+        voce.refresh_from_db()
+        self.assertFalse(voce.inserita_in_parcella)
+        self.assertEqual(self.client.post(path).status_code, 302)
+        voce.refresh_from_db()
+        self.assertIsNotNone(voce.parcella_id)
 
     def test_archivi_altrui_non_accessibili(self):
         from django.urls import reverse

@@ -1,6 +1,7 @@
 from django.db import transaction
 from decimal import Decimal
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper
 from django.shortcuts import render, redirect, get_object_or_404
@@ -10,6 +11,7 @@ from pratiche.models import Pratica
 from studi.utils import get_studio_utente
 from studi.permessi import (
     puo_modificare_parcelle,
+    puo_vedere_parcelle,
     puo_gestire_documenti,
 )
 
@@ -72,7 +74,8 @@ def lista_ore_pratica(request, pratica_id):
         pratica=pratica
     ).select_related(
         'utente',
-        'pratica'
+        'pratica',
+        'parcella',
     )
 
     totale_ore = voci.aggregate(
@@ -89,14 +92,14 @@ def lista_ore_pratica(request, pratica_id):
 
     totale_non_fatturato = voci.filter(
         fatturabile=True,
-        inserita_in_parcella=False
+        fatturazione_storica=False, parcella__isnull=True,
     ).aggregate(
         totale=Sum(valore_expr)
     )['totale'] or Decimal('0.00')
 
     ore_non_fatturate = voci.filter(
         fatturabile=True,
-        inserita_in_parcella=False
+        fatturazione_storica=False, parcella__isnull=True,
     ).aggregate(
         totale=Sum('ore')
     )['totale'] or Decimal('0.00')
@@ -111,6 +114,7 @@ def lista_ore_pratica(request, pratica_id):
             'totale_importo': totale_importo,
             'totale_non_fatturato': totale_non_fatturato,
             'ore_non_fatturate': ore_non_fatturate,
+            'puo_vedere_parcelle': puo_vedere_parcelle(request),
         }
     )
 
@@ -172,6 +176,7 @@ def nuova_voce_ora(request, pratica_id):
 
 
 @login_required
+@transaction.atomic
 def modifica_voce_ora(request, voce_id):
 
     if not puo_gestire_documenti(request):
@@ -189,6 +194,12 @@ def modifica_voce_ora(request, voce_id):
     )
 
     pratica = voce.pratica
+    if request.method == 'POST':
+        Pratica.objects.select_for_update().get(pk=pratica.pk)
+        voce = get_object_or_404(VoceOra, pk=voce_id, pratica=pratica)
+    if voce.parcella_id:
+        messages.error(request, 'La voce è collegata a una parcella e non può essere modificata.')
+        return redirect('lista_ore_pratica', pratica_id=pratica.pk)
 
     if request.method == 'POST':
 
@@ -229,6 +240,7 @@ def modifica_voce_ora(request, voce_id):
 
 
 @login_required
+@transaction.atomic
 def elimina_voce_ora(request, voce_id):
 
     if not puo_gestire_documenti(request):
@@ -246,6 +258,12 @@ def elimina_voce_ora(request, voce_id):
     )
 
     pratica = voce.pratica
+    if request.method == 'POST':
+        Pratica.objects.select_for_update().get(pk=pratica.pk)
+        voce = get_object_or_404(VoceOra, pk=voce_id, pratica=pratica)
+    if voce.parcella_id:
+        messages.error(request, 'La voce è collegata a una parcella e non può essere eliminata.')
+        return redirect('lista_ore_pratica', pratica_id=pratica.pk)
 
     if request.method == 'POST':
 
@@ -295,8 +313,12 @@ def genera_parcella_da_ore(request, pratica_id):
     voci_da_fatturare = VoceOra.objects.filter(
         pratica=pratica,
         fatturabile=True,
-        inserita_in_parcella=False
+        fatturazione_storica=False, parcella__isnull=True,
     )
+    if request.method == 'POST':
+        voci_da_fatturare = voci_da_fatturare.filter(
+            pk__in=list(voci_da_fatturare.values_list('pk', flat=True)),
+        )
 
     valore_expr = valore_ore_expr()
 
@@ -329,13 +351,13 @@ def genera_parcella_da_ore(request, pratica_id):
         parcella = Parcella.objects.create(
             pratica=pratica,
             tipo_documento='PARCELLA',
-            descrizione=descrizione,
+            descrizione=descrizione[:255],
             importo=totale_importo,
             data_emissione=timezone.now().date(),
         )
 
         voci_da_fatturare.update(
-            inserita_in_parcella=True
+            parcella=parcella
         )
 
         Attivita.objects.create(

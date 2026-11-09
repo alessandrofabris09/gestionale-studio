@@ -162,6 +162,15 @@ class ParcellaForm(forms.ModelForm):
 
             self.fields['pratica'].queryset = Pratica.objects.none()
 
+        if self.instance.pk and self.instance.voci_ore.exists():
+            self.fields['pratica'].disabled = True
+            self.fields['pratica'].help_text = 'La pratica è vincolata alle ore collegate.'
+            self.fields['tipo_documento'].choices = [
+                (valore, etichetta)
+                for valore, etichetta in self.fields['tipo_documento'].choices
+                if valore != 'PREVENTIVO'
+            ]
+
         self.fields['numero_documento'].required = False
         self.fields['importo_pagato'].required = False
         self.fields['data_emissione'].required = False
