@@ -32,6 +32,30 @@ class AttivazioneSicuraTests(TestCase):
         self.assertEqual(self.client.post(self.path, {'workflow': '99999'}).status_code, 200)
         self.assertFalse(WorkflowPratica.objects.exists())
 
+    def test_avanzamento_e_scadenza_seguono_la_fase(self):
+        ChecklistWorkflow.objects.create(workflow=self.workflow, voce='Facoltativa', obbligatorio=False)
+        self.client.post(self.path, {'workflow': self.workflow.pk})
+        fase = FasePratica.objects.get()
+        scadenza = Scadenza.objects.get(fase_origine=fase)
+        manuale = Scadenza.objects.create(
+            pratica=self.pratica, titolo=scadenza.titolo, data_scadenza=scadenza.data_scadenza,
+        )
+        dettaglio = reverse('dettaglio_pratica', args=[self.pratica.pk])
+        fase_url = reverse('toggle_fase', args=[fase.pk])
+        self.client.post(fase_url)
+        scadenza.refresh_from_db()
+        manuale.refresh_from_db()
+        self.assertTrue(scadenza.completata)
+        self.assertFalse(manuale.completata)
+        self.assertNotContains(self.client.get(dettaglio), 'Workflow completato')
+        voce = ChecklistPratica.objects.get(obbligatorio=True)
+        self.client.post(reverse('toggle_checklist', args=[voce.pk]))
+        self.assertContains(self.client.get(dettaglio), 'Workflow completato')
+        self.client.post(fase_url)
+        scadenza.refresh_from_db()
+        self.assertFalse(scadenza.completata)
+        self.assertNotContains(self.client.get(dettaglio), 'Workflow completato')
+
     def test_catalogo_energia_disponibile_con_filtro_e_fasi_specifiche(self):
         modello = TipoWorkflow.objects.get(studio=None, nome='ENEA - Bonus Casa')
         risposta = self.client.get(reverse('nuova_pratica'))

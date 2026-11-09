@@ -108,7 +108,7 @@ def attiva_workflow_automatico(pratica, variante=None):
                 days=fase.giorni_scadenza
             )
 
-        FasePratica.objects.create(
+        fase_pratica = FasePratica.objects.create(
             workflow_pratica=workflow_pratica,
             titolo=fase.titolo,
             descrizione=fase.descrizione,
@@ -121,6 +121,7 @@ def attiva_workflow_automatico(pratica, variante=None):
             Scadenza.objects.create(
                 pratica=pratica,
                 workflow_origine=workflow_pratica,
+                fase_origine=fase_pratica,
                 titolo=fase.titolo,
                 descrizione=f'Workflow automatico: {fase.titolo}',
                 data_scadenza=data_scadenza,
@@ -230,10 +231,13 @@ def dettaglio_pratica(request, pratica_id):
             studio=studio
         )
 
-    try:
-        workflow_pratica = pratica.workflow_pratica
-    except Exception:
-        workflow_pratica = None
+    workflow_pratica = getattr(pratica, 'workflow_pratica', None)
+    fasi = list(workflow_pratica.fasi_pratica.order_by('ordine', 'pk')) if workflow_pratica else []
+    checklist = list(workflow_pratica.checklist_pratica.order_by('ordine', 'pk')) if workflow_pratica else []
+    obbligatorie = [voce for voce in checklist if voce.obbligatorio]
+    fasi_completate = sum(fase.completata for fase in fasi)
+    controlli_completati = sum(voce.completato for voce in obbligatorie)
+    totale_workflow = len(fasi) + len(obbligatorie)
 
     documenti = pratica.documenti.all()
     puo_vedere_scadenze = puo_usare_agenda(request)
@@ -261,6 +265,14 @@ def dettaglio_pratica(request, pratica_id):
         ),
         'attivita': attivita,
         'workflow_pratica': workflow_pratica,
+        'fasi_workflow': fasi,
+        'checklist_workflow': checklist,
+        'fasi_completate': fasi_completate,
+        'controlli_completati': controlli_completati,
+        'controlli_obbligatori': len(obbligatorie),
+        'passaggi_completati': fasi_completate + controlli_completati,
+        'totale_workflow': totale_workflow,
+        'puo_modificare_workflow': studio is not None and puo_modificare_pratiche(request),
     }
 
     return render(

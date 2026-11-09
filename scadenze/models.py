@@ -25,6 +25,10 @@ class Scadenza(models.Model):
         related_name='scadenze_generate',
         editable=False,
     )
+    fase_origine = models.OneToOneField(
+        'workflow.FasePratica', on_delete=models.SET_NULL,
+        null=True, blank=True, editable=False, related_name='scadenza_generata',
+    )
     archiviata = models.BooleanField(default=False, editable=False)
     da_pratica = models.BooleanField(default=False, editable=False)
 

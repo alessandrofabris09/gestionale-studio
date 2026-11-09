@@ -180,7 +180,7 @@ def attiva_workflow_pratica(request, pratica_id):
                             days=fase.giorni_scadenza
                         )
 
-                    FasePratica.objects.create(
+                    fase_pratica = FasePratica.objects.create(
                         workflow_pratica=workflow_pratica,
                         titolo=fase.titolo,
                         descrizione=fase.descrizione,
@@ -192,6 +192,7 @@ def attiva_workflow_pratica(request, pratica_id):
                         Scadenza.objects.create(
                             pratica=pratica,
                             workflow_origine=workflow_pratica,
+                            fase_origine=fase_pratica,
                             titolo=fase.titolo,
                             descrizione=f'Fase workflow: {fase.titolo}',
                             data_scadenza=data_scadenza,
@@ -267,6 +268,7 @@ def toggle_checklist(request, checklist_id):
 
 @login_required
 @require_POST
+@transaction.atomic
 def toggle_fase(request, fase_id):
 
     if not puo_modificare_pratiche(request):
@@ -282,11 +284,16 @@ def toggle_fase(request, fase_id):
         id=fase_id,
         workflow_pratica__pratica__studio=studio
     )
+    pratica_id = fase.workflow_pratica.pratica_id
+    # Usa lo stesso blocco della sostituzione del workflow.
+    get_object_or_404(Pratica.objects.select_for_update(), pk=pratica_id, studio=studio)
+    fase = get_object_or_404(FasePratica, pk=fase_id, workflow_pratica__pratica_id=pratica_id)
 
     fase.completata = not fase.completata
-    fase.save()
+    fase.save(update_fields=['completata'])
+    Scadenza.objects.filter(fase_origine=fase, archiviata=False).update(completata=fase.completata)
 
     return redirect(
         'dettaglio_pratica',
-        pratica_id=fase.workflow_pratica.pratica.id
+        pratica_id=pratica_id
     )

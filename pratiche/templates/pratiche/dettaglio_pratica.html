@@ -374,19 +374,27 @@ Scheda pratica
         Workflow pratica
     </h2>
 
-    {% if workflow_pratica and workflow_pratica.workflow %}
+    {% if workflow_pratica %}
 
         <div class="item">
             <div class="item-title">Procedimento attivo</div>
             <span class="badge type">
                 <i class="fa-solid fa-folder-tree"></i>
-                {{ workflow_pratica.workflow.nome }}
+                {{ workflow_pratica.workflow.nome|default:"Modello non più disponibile" }}
             </span>
         </div>
 
+        {% if totale_workflow %}
+            <div class="item">
+                <strong>{% if passaggi_completati == totale_workflow %}Workflow completato{% else %}Avanzamento workflow{% endif %}</strong>
+                <p>{{ fasi_completate }} di {{ fasi_workflow|length }} fasi · {{ controlli_completati }} di {{ controlli_obbligatori }} controlli obbligatori</p>
+                <progress aria-label="Avanzamento workflow" value="{{ passaggi_completati }}" max="{{ totale_workflow }}"></progress>
+            </div>
+        {% endif %}
+
         <h3>Fasi operative</h3>
 
-        {% for fase in workflow_pratica.fasi_pratica.all %}
+        {% for fase in fasi_workflow %}
 
             <div class="item">
                 <div class="item-title">
@@ -412,9 +420,10 @@ Scheda pratica
                     </span>
                 {% endif %}
 
-                <br>
+                {% if fase.descrizione %}<p class="muted">{{ fase.descrizione }}</p>{% endif %}
 
-                <form method="post" action="/workflow/fase/{{ fase.id }}/toggle/" style="display:inline">{% csrf_token %}<button type="submit" class="action-btn">
+                {% if puo_modificare_workflow %}
+                <form method="post" action="{% url 'toggle_fase' fase.id %}" style="display:inline">{% csrf_token %}<button type="submit" class="action-btn">
                     {% if fase.completata %}
                         <i class="fa-solid fa-rotate-left"></i>
                         Segna NON completata
@@ -423,6 +432,7 @@ Scheda pratica
                         Segna completata
                     {% endif %}
                 </button></form>
+                {% endif %}
             </div>
 
         {% empty %}
@@ -433,7 +443,7 @@ Scheda pratica
 
         <h3>Checklist documenti / attività</h3>
 
-        {% for voce in workflow_pratica.checklist_pratica.all %}
+        {% for voce in checklist_workflow %}
 
             <div class="item">
                 <div class="item-title">
@@ -464,9 +474,10 @@ Scheda pratica
                     </span>
                 {% endif %}
 
-                <br>
+                {% if voce.descrizione %}<p class="muted">{{ voce.descrizione }}</p>{% endif %}
 
-                <form method="post" action="/workflow/checklist/{{ voce.id }}/toggle/" style="display:inline">{% csrf_token %}<button type="submit" class="action-btn">
+                {% if puo_modificare_workflow %}
+                <form method="post" action="{% url 'toggle_checklist' voce.id %}" style="display:inline">{% csrf_token %}<button type="submit" class="action-btn">
                     {% if voce.completato %}
                         <i class="fa-solid fa-rotate-left"></i>
                         Segna NON completato
@@ -475,6 +486,7 @@ Scheda pratica
                         Segna completato
                     {% endif %}
                 </button></form>
+                {% endif %}
             </div>
 
         {% empty %}
