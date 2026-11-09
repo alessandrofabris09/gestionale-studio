@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.utils.timezone import now
 
 from studi.utils import get_studio_utente
@@ -260,10 +261,11 @@ def toggle_checklist(request, checklist_id):
     checklist.completato = not checklist.completato
     checklist.save()
 
-    return redirect(
+    return redirect(reverse(
         'dettaglio_pratica',
-        pratica_id=checklist.workflow_pratica.pratica.id
-    )
+        kwargs={'pratica_id': checklist.workflow_pratica.pratica_id},
+        fragment=f'checklist-{checklist.pk}',
+    ))
 
 
 @login_required
@@ -293,7 +295,8 @@ def toggle_fase(request, fase_id):
     fase.save(update_fields=['completata'])
     Scadenza.objects.filter(fase_origine=fase, archiviata=False).update(completata=fase.completata)
 
-    return redirect(
+    return redirect(reverse(
         'dettaglio_pratica',
-        pratica_id=pratica_id
-    )
+        kwargs={'pratica_id': pratica_id},
+        fragment=f'fase-{fase.pk}',
+    ))

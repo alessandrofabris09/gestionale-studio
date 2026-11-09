@@ -147,6 +147,11 @@ Scheda pratica
         border-bottom:1px solid #e5e7eb;
     }
 
+    #parcelle,
+    .action-btn[id]{
+        scroll-margin-block-start:24px;
+    }
+
     .item:last-child{
         border-bottom:none;
     }
@@ -199,6 +204,13 @@ Scheda pratica
         <i class="fa-solid fa-arrow-left"></i>
         Torna alle pratiche
     </a>
+
+    {% if puo_vedere_economia %}
+    <a class="btn" href="#parcelle">
+        <i class="fa-solid fa-euro-sign"></i>
+        Parcelle
+    </a>
+    {% endif %}
 
     <a class="btn" href="/workflow/pratica/{{ pratica.id }}/attiva/">
         <i class="fa-solid fa-diagram-project"></i>
@@ -367,6 +379,68 @@ Scheda pratica
 
 </div>
 
+{% if puo_vedere_economia %}
+<div class="card" id="parcelle">
+
+    <h2>
+        <i class="fa-solid fa-euro-sign"></i>
+        Parcelle / Preventivi / Fatture
+    </h2>
+
+    {% if puo_creare_parcella %}
+    <div class="page-actions">
+        <a class="btn" href="{% url 'nuova_parcella' %}?pratica={{ pratica.pk }}">Nuova parcella</a>
+    </div>
+    {% endif %}
+
+    {% for parcella in parcelle %}
+
+        <div class="item">
+
+            <div class="item-title">
+                {% if parcella.numero_documento %}
+                    {{ parcella.numero_documento }}
+                {% else %}
+                    Documento non numerato
+                {% endif %}
+                - {{ parcella.descrizione }}
+            </div>
+
+            <span class="badge type">
+                {{ parcella.get_tipo_documento_display }}
+            </span>
+
+            <span class="badge">
+                {{ parcella.get_stato_display }}
+            </span>
+
+            <span class="badge money">
+                Importo: € {{ parcella.importo }}
+            </span>
+
+            <span class="badge ok">
+                Pagato: € {{ parcella.importo_pagato }}
+            </span>
+
+            <br>
+
+            <a class="action-btn" href="{% url 'pdf_parcella' parcella.id %}" target="_blank">
+                <i class="fa-solid fa-file-pdf"></i>
+                PDF documento
+            </a>
+
+        </div>
+
+    {% empty %}
+
+        <p class="muted">Nessuna parcella collegata.</p>
+
+    {% endfor %}
+
+</div>
+
+{% endif %}
+
 <div class="card">
 
     <h2>
@@ -423,7 +497,7 @@ Scheda pratica
                 {% if fase.descrizione %}<p class="muted">{{ fase.descrizione }}</p>{% endif %}
 
                 {% if puo_modificare_workflow %}
-                <form method="post" action="{% url 'toggle_fase' fase.id %}" style="display:inline">{% csrf_token %}<button type="submit" class="action-btn">
+                <form method="post" action="{% url 'toggle_fase' fase.id %}" style="display:inline">{% csrf_token %}<button type="submit" class="action-btn" id="fase-{{ fase.pk }}">
                     {% if fase.completata %}
                         <i class="fa-solid fa-rotate-left"></i>
                         Segna NON completata
@@ -477,7 +551,7 @@ Scheda pratica
                 {% if voce.descrizione %}<p class="muted">{{ voce.descrizione }}</p>{% endif %}
 
                 {% if puo_modificare_workflow %}
-                <form method="post" action="{% url 'toggle_checklist' voce.id %}" style="display:inline">{% csrf_token %}<button type="submit" class="action-btn">
+                <form method="post" action="{% url 'toggle_checklist' voce.id %}" style="display:inline">{% csrf_token %}<button type="submit" class="action-btn" id="checklist-{{ voce.pk }}">
                     {% if voce.completato %}
                         <i class="fa-solid fa-rotate-left"></i>
                         Segna NON completato
@@ -586,68 +660,6 @@ Scheda pratica
     {% endfor %}
 
 </div>
-
-{% if puo_vedere_economia %}
-<div class="card">
-
-    <h2>
-        <i class="fa-solid fa-euro-sign"></i>
-        Parcelle / Preventivi / Fatture
-    </h2>
-
-    {% if puo_creare_parcella %}
-    <div class="page-actions">
-        <a class="btn" href="{% url 'nuova_parcella' %}?pratica={{ pratica.pk }}">Nuova parcella</a>
-    </div>
-    {% endif %}
-
-    {% for parcella in parcelle %}
-
-        <div class="item">
-
-            <div class="item-title">
-                {% if parcella.numero_documento %}
-                    {{ parcella.numero_documento }}
-                {% else %}
-                    Documento non numerato
-                {% endif %}
-                - {{ parcella.descrizione }}
-            </div>
-
-            <span class="badge type">
-                {{ parcella.get_tipo_documento_display }}
-            </span>
-
-            <span class="badge">
-                {{ parcella.get_stato_display }}
-            </span>
-
-            <span class="badge money">
-                Importo: € {{ parcella.importo }}
-            </span>
-
-            <span class="badge ok">
-                Pagato: € {{ parcella.importo_pagato }}
-            </span>
-
-            <br>
-
-            <a class="action-btn" href="{% url 'pdf_parcella' parcella.id %}" target="_blank">
-                <i class="fa-solid fa-file-pdf"></i>
-                PDF documento
-            </a>
-
-        </div>
-
-    {% empty %}
-
-        <p class="muted">Nessuna parcella collegata.</p>
-
-    {% endfor %}
-
-</div>
-
-{% endif %}
 
 <div class="card">
 
