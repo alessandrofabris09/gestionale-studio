@@ -75,6 +75,7 @@ def abbonamento_da_fattura(invoice):
 
 
 @csrf_exempt
+@require_POST
 def stripe_webhook(request):
     """
     Webhook Stripe.
@@ -90,6 +91,8 @@ def stripe_webhook(request):
     )
 
     endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
+    if not endpoint_secret or not sig_header:
+        return HttpResponse(status=400)
 
     try:
 

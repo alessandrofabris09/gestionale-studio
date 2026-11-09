@@ -1,12 +1,13 @@
 """Verifiche indipendenti, solo dati fittizi e storage temporaneo."""
 from datetime import timedelta
 from decimal import Decimal
+import hmac
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from time import time
 from unittest.mock import patch
 from types import SimpleNamespace
-
-from stripe import Event
 
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -351,11 +352,35 @@ class OperazioniQA(BaseQA):
 
 
 class WebhookQA(BaseQA):
-    def send(self,event):
-        stripe_event = Event.construct_from(event, None)
-        with patch('billing.views.stripe.Webhook.construct_event', return_value=stripe_event):
-            response=self.client.post('/billing/webhook/','{}',content_type='application/json')
-            self.assertEqual(response.status_code,200)
+    def send(self, event, secret='whsec_solo_prova', expected_status=200):
+        payload = json.dumps({'object': 'event', **event})
+        timestamp = int(time())
+        signature = hmac.digest(
+            secret.encode(), f'{timestamp}.{payload}'.encode(), 'sha256'
+        ).hex()
+        with override_settings(STRIPE_WEBHOOK_SECRET=secret):
+            response = self.client.post(
+                '/billing/webhook/',
+                payload,
+                content_type='application/json',
+                HTTP_STRIPE_SIGNATURE=f't={timestamp},v1={signature}',
+            )
+        self.assertEqual(response.status_code, expected_status)
+
+    def test_firma_con_segreto_vuoto_non_attiva_pro(self):
+        session = {
+            'metadata': {'studio_id': str(self.studio.pk)},
+            'mode': 'subscription',
+            'payment_status': 'paid',
+            'subscription': 'sub_qa',
+        }
+        self.send(
+            {'type': 'checkout.session.completed', 'data': {'object': session}},
+            secret='',
+            expected_status=400,
+        )
+        self.studio.refresh_from_db()
+        self.assertEqual(self.studio.piano, 'FREE')
 
     def test_annullamento_e_pagamento_fallito(self):
         for event_type in ['invoice.payment_failed','customer.subscription.deleted']:
