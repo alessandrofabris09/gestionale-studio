@@ -1,10 +1,12 @@
 from django.views.decorators.http import require_POST
 import os
 import json
+import logging
 import resend
 
 from datetime import datetime, timedelta
 from pathlib import Path
+from uuid import uuid4
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -19,6 +21,7 @@ from documenti.models import Documento
 from studi.permessi import puo_gestire_backup
 from studi.email_templates import layout_email_base, tabella_email
 
+logger = logging.getLogger(__name__)
 
 MAX_BACKUP_DAYS = int(
     os.environ.get(
@@ -80,23 +83,12 @@ def carica_backup_su_storage(filepath, filename, sottocartella):
 
     with open(filepath, 'rb') as file:
 
-        if default_storage.exists(storage_path):
-            default_storage.delete(storage_path)
-
         saved_path = default_storage.save(
             storage_path,
             File(file)
         )
 
-    try:
-        file_url = default_storage.url(saved_path)
-    except Exception:
-        file_url = ''
-
-    return {
-        'path': saved_path,
-        'url': file_url,
-    }
+    return {'path': saved_path}
 
 
 def esegui_backup_database():
@@ -114,7 +106,7 @@ def esegui_backup_database():
 
     backup_dir = get_backup_dir()
 
-    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    timestamp = f"{datetime.now():%Y-%m-%d_%H-%M-%S}_{uuid4().hex}"
 
     # =========================
     # BACKUP DATABASE
@@ -842,9 +834,10 @@ def crea_backup_cron(request, codice):
             f"ENDPOINT: {storage_info['endpoint']}\n"
         )
 
-    except Exception as e:
+    except Exception as exc:
 
-        messaggio = f'Errore backup: {e}'
+        logger.error('Backup automatico non riuscito (%s).', type(exc).__name__)
+        messaggio = 'Backup non completato. Consultare i log operativi.'
 
         return HttpResponse(
             messaggio,
