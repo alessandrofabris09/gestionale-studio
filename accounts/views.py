@@ -69,7 +69,6 @@ def registrazione_studio(request):
                 piano='FREE',
                 stato_abbonamento='TRIAL',
                 trial_fino_al=timezone.now().date() + timedelta(days=14),
-                limite_pratiche=10,
                 limite_utenti=1,
                 limite_storage_mb=500,
                 attivo=True,

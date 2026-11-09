@@ -40,6 +40,7 @@ class RegistrazioniSicureTests(TestCase):
                 profile = ProfiloUtente.objects.get(user=user)
                 self.assertEqual(profile.ruolo, 'TITOLARE')
                 self.assertEqual(profile.studio.titolare_id, user.pk)
+                self.assertEqual(profile.studio.limite_pratiche, 20)
 
     def test_errore_profilo_non_lascia_account_o_studio(self):
         for path, target in [('/utenti/registrazione/', 'utenti.views.ProfiloUtente.objects.create'), ('/accounts/registrazione/', 'accounts.views.ProfiloUtente.objects.create')]:
