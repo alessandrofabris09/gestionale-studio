@@ -148,11 +148,6 @@ def esegui_backup_database():
     for documento in Documento.objects.all().order_by('id'):
 
         try:
-            file_url = documento.file.url
-        except Exception:
-            file_url = ''
-
-        try:
             file_name = documento.file.name
         except Exception:
             file_name = ''
@@ -174,7 +169,6 @@ def esegui_backup_database():
                 else ''
             ),
             'file_name': file_name,
-            'file_url': file_url,
             'note': documento.note,
             'caricato_il': (
                 documento.caricato_il.strftime('%d/%m/%Y %H:%M:%S')

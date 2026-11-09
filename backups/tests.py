@@ -32,16 +32,48 @@ class BackupAllegatiTests(TestCase):
                 documento = Documento(pratica=pratica, titolo='QA allegato')
                 contenuto = b'allegato fittizio\x00\xff'
                 documento.file.save('prova.pdf', ContentFile(contenuto))
+                altro = Studio.objects.create(nome='Altro studio', titolare=user)
+                altro_cliente = Cliente.objects.create(studio=altro, nome='Altro cliente')
+                altro_immobile = Immobile.objects.create(studio=altro, cliente=altro_cliente, comune='QA')
+                altra_pratica = Pratica.objects.create(
+                    studio=altro, cliente=altro_cliente, immobile=altro_immobile, oggetto='Altra pratica',
+                )
+                altro_documento = Documento(pratica=altra_pratica, titolo='Documento di un altro studio')
+                altro_documento.file.save('altro.pdf', ContentFile(b'altro studio'))
                 zip_path = root / 'backup.zip'
-                call_command('esporta_allegati', zip_path)
+                call_command('esporta_allegati', zip_path, studio_id=studio.pk)
 
                 documento.file.storage.delete(documento.file.name)
                 with self.assertRaises(CommandError):
                     call_command('esporta_allegati', root / 'incompleto.zip')
                 self.assertFalse((root / 'incompleto.zip').exists())
 
+                studio_pk = studio.pk
+                documento_pk = documento.pk
+                studio.delete()
+                self.assertFalse(Studio.objects.filter(pk=studio_pk).exists())
+                self.assertFalse(Documento.objects.filter(pk=documento_pk).exists())
+                self.assertFalse(documento.file.storage.exists(documento.file.name))
+                self.assertTrue(Studio.objects.filter(pk=altro.pk).exists())
+                self.assertTrue(Documento.objects.filter(pk=altro_documento.pk).exists())
+                self.assertTrue(altro_documento.file.storage.exists(altro_documento.file.name))
+
             storage = FileSystemStorage(location=root / 'ripristino')
             with ZipFile(zip_path) as archivio:
+                self.assertCountEqual(
+                    archivio.namelist(),
+                    ['indice.json', 'dati-operativi.json', f'allegati/{documento.pk}'],
+                )
+                dati = json.loads(archivio.read('dati-operativi.json'))
+                self.assertCountEqual(
+                    [(riga['model'], riga['pk']) for riga in dati],
+                    [
+                        ('clienti.cliente', cliente.pk),
+                        ('immobili.immobile', immobile.pk),
+                        ('pratiche.pratica', pratica.pk),
+                        ('documenti.documento', documento.pk),
+                    ],
+                )
                 voce, = json.loads(archivio.read('indice.json'))
                 self.assertEqual(voce['file'], documento.file.name)
                 storage.save(voce['file'], ContentFile(archivio.read(voce['voce_zip'])))
