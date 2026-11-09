@@ -74,4 +74,9 @@ CSRF_COOKIE_SECURE = True
 # Durata breve durante il collaudo. Gunicorn riconosce HTTPS dal proxy Render.
 SECURE_HSTS_SECONDS = 300
 if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
-    EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+    if valore_staging('RESEND_API_KEY') and valore_staging('EMAIL_FROM_NOTIFICHE'):
+        EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+        ANYMAIL = {'RESEND_API_KEY': valore_staging('RESEND_API_KEY')}
+        DEFAULT_FROM_EMAIL = EMAIL_FROM_NOTIFICHE
+    else:
+        EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
