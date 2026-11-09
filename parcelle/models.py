@@ -1,4 +1,5 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
+from uuid import uuid4
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction, router
@@ -332,7 +333,7 @@ class Parcella(models.Model):
 
         pagato = self.importo_pagato or Decimal('0.00')
 
-        return self.totale_documento - pagato
+        return self.totale_documento.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP) - pagato
 
     def aggiorna_stato_pagamento(self):
         """
@@ -340,7 +341,7 @@ class Parcella(models.Model):
         """
 
         pagato = self.importo_pagato or Decimal('0.00')
-        totale = self.totale_documento
+        totale = self.totale_documento.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
         if pagato <= Decimal('0.00'):
             self.stato = 'DA_PAGARE'
@@ -362,3 +363,17 @@ class Parcella(models.Model):
         )
 
         return f'{numero} - {self.descrizione}'
+
+
+class Incasso(models.Model):
+    parcella = models.ForeignKey(Parcella, on_delete=models.CASCADE, related_name='incassi')
+    chiave = models.UUIDField(default=uuid4, editable=False, unique=True)
+    importo = models.DecimalField(max_digits=10, decimal_places=2)
+    data = models.DateField()
+    riferimento = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ['-data', '-pk']
+        constraints = [
+            models.CheckConstraint(condition=models.Q(importo__gt=0), name='incasso_importo_positivo'),
+        ]

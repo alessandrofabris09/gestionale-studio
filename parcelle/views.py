@@ -1,9 +1,11 @@
 from io import BytesIO
 from datetime import date
 from decimal import Decimal
+from uuid import uuid4
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.http import FileResponse
@@ -20,8 +22,8 @@ from studi.permessi import (
     puo_eliminare_parcelle,
 )
 
-from .models import NumeroDocumentoDuplicato, Parcella
-from .forms import ParcellaForm
+from .models import Incasso, NumeroDocumentoDuplicato, Parcella
+from .forms import IncassoForm, ParcellaForm
 
 from attivita.models import Attivita
 
@@ -167,15 +169,16 @@ def nuova_parcella(request):
 
 
 @login_required
+@transaction.atomic
 def modifica_parcella(request, parcella_id):
 
     if not puo_modificare_parcelle(request):
         return accesso_negato(request)
 
-    parcella = get_object_or_404(
-        get_parcelle_queryset(request),
-        id=parcella_id
-    )
+    parcelle = get_parcelle_queryset(request)
+    if request.method == 'POST':
+        parcelle = parcelle.select_for_update(of=('self',))
+    parcella = get_object_or_404(parcelle, id=parcella_id)
 
     studio = get_studio_utente(request)
 
@@ -263,6 +266,53 @@ def elimina_parcella(request, parcella_id):
             'parcella': parcella
         }
     )
+
+
+@login_required
+@transaction.atomic
+def storico_incassi(request, parcella_id):
+    if not puo_vedere_parcelle(request):
+        return accesso_negato(request)
+    puo_registrare = puo_modificare_parcelle(request)
+    parcelle = get_parcelle_queryset(request).exclude(tipo_documento='PREVENTIVO')
+    if request.method == 'POST':
+        if not puo_registrare:
+            return accesso_negato(request)
+        parcelle = parcelle.select_for_update(of=('self',))
+    parcella = get_object_or_404(parcelle, pk=parcella_id)
+    form = IncassoForm(request.POST if request.method == 'POST' else None, initial={'chiave': uuid4()})
+    if request.method == 'POST' and form.is_valid():
+        dati = form.cleaned_data
+        if parcella.incassi.filter(chiave=dati['chiave']).exists():
+            return redirect('storico_incassi', parcella_id=parcella.pk)
+        if Incasso.objects.filter(chiave=dati['chiave']).exists():
+            form.add_error(None, 'Riapri lo storico per iniziare una nuova registrazione.')
+        elif dati['importo'] > parcella.saldo_residuo:
+            form.add_error('importo', 'L’importo supera il saldo residuo.')
+        else:
+            _, creato = Incasso.objects.get_or_create(
+                chiave=dati['chiave'],
+                defaults={'parcella': parcella, 'importo': dati['importo'],
+                          'data': dati['data'], 'riferimento': dati['riferimento']},
+            )
+            if not creato:
+                form.add_error(None, 'Riapri lo storico per iniziare una nuova registrazione.')
+            else:
+                parcella.importo_pagato += dati['importo']
+                parcella.data_pagamento = max(parcella.data_pagamento or dati['data'], dati['data'])
+                parcella.aggiorna_stato_pagamento()
+                Parcella.objects.filter(pk=parcella.pk).update(
+                    importo_pagato=parcella.importo_pagato,
+                    data_pagamento=parcella.data_pagamento, stato=parcella.stato,
+                )
+                return redirect('storico_incassi', parcella_id=parcella.pk)
+
+    incassi = list(parcella.incassi.all())
+    return render(request, 'parcelle/storico_incassi.html', {
+        'parcella': parcella, 'incassi': incassi,
+        'saldo_storico': parcella.importo_pagato - sum(incasso.importo for incasso in incassi),
+        'form': form if puo_registrare and parcella.saldo_residuo > 0 else None,
+    })
 
 
 def euro(value):

@@ -203,6 +203,34 @@ class VerificaWorkflowEOre(TestCase):
         strict.force_login(self.admin)
         self.assertEqual(strict.post('/backups/crea/').status_code, 403)
 
+    def test_incassi_multipli_con_importo_storico_e_reinvio(self):
+        from decimal import Decimal
+        from uuid import uuid4
+        from django.urls import reverse
+        from parcelle.models import Parcella
+
+        parcella = Parcella.objects.create(
+            pratica=self.pa, descrizione='Prova incassi', importo=Decimal('100'),
+            importo_pagato=Decimal('20'), applica_cassa=False, applica_iva=False,
+        )
+        self.client.force_login(self.a)
+        url = reverse('storico_incassi', args=[parcella.pk])
+        dati = {'chiave': uuid4(), 'data': date.today().isoformat(), 'importo': '30.00'}
+        self.assertEqual(self.client.post(url, dati).status_code, 302)
+        self.assertEqual(self.client.post(url, dati).status_code, 302)
+        parcella.refresh_from_db()
+        self.assertEqual(parcella.importo_pagato, Decimal('50'))
+        self.assertEqual(parcella.stato, 'PARZIALE')
+        self.assertEqual(self.client.get(url).context['saldo_storico'], Decimal('20'))
+        dati.update(chiave=uuid4(), importo='51.00')
+        self.assertContains(self.client.post(url, dati), 'supera il saldo residuo')
+        dati.update(importo='50.00')
+        self.assertEqual(self.client.post(url, dati).status_code, 302)
+        parcella.refresh_from_db()
+        self.assertEqual(parcella.stato, 'PAGATO')
+        self.assertEqual(parcella.saldo_residuo, Decimal('0'))
+        self.assertEqual(parcella.incassi.count(), 2)
+
     def test_generazione_parcella_da_ore(self):
         from decimal import Decimal
         from ore.models import VoceOra

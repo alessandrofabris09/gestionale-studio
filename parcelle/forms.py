@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django import forms
+from django.utils import timezone
 
 from pratiche.models import Pratica
 
@@ -8,6 +9,16 @@ from .models import (
     Parcella,
     ALIQUOTE_CASSA_STANDARD,
 )
+
+
+class IncassoForm(forms.Form):
+    chiave = forms.UUIDField(widget=forms.HiddenInput)
+    importo = forms.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))
+    data = forms.DateField(
+        label='Data incasso', initial=timezone.localdate,
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+    )
+    riferimento = forms.CharField(max_length=255, required=False)
 
 
 class ParcellaForm(forms.ModelForm):
@@ -170,6 +181,16 @@ class ParcellaForm(forms.ModelForm):
                 for valore, etichetta in self.fields['tipo_documento'].choices
                 if valore != 'PREVENTIVO'
             ]
+
+        if self.instance.pk:
+            for campo in ('importo_pagato', 'data_pagamento', 'stato'):
+                self.fields[campo].disabled = True
+            if self.instance.incassi.exists():
+                self.fields['tipo_documento'].choices = [
+                    (valore, etichetta)
+                    for valore, etichetta in self.fields['tipo_documento'].choices
+                    if valore != 'PREVENTIVO'
+                ]
 
         self.fields['numero_documento'].required = False
         self.fields['importo_pagato'].required = False

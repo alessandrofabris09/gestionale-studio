@@ -1,0 +1,30 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Storico incassi{% endblock %}
+
+{% block content %}
+<section class="card" style="padding: 1.5rem">
+    <p><a href="{% url 'lista_parcelle' %}">Torna alle parcelle</a></p>
+    <h1>Storico incassi · {{ parcella.numero_documento }}</h1>
+    <p>{{ parcella.descrizione }}</p>
+    <p>Incassato <strong>€ {{ parcella.importo_pagato|floatformat:2 }}</strong> · Residuo <strong>€ {{ parcella.saldo_residuo|floatformat:2 }}</strong></p>
+    {% if saldo_storico > 0 %}
+        <p>Importo già registrato senza dettaglio dei movimenti · € {{ saldo_storico|floatformat:2 }}</p>
+    {% endif %}
+    <ul>
+        {% for incasso in incassi %}
+            <li>{{ incasso.data|date:"d/m/Y" }} · € {{ incasso.importo|floatformat:2 }}{% if incasso.riferimento %} · {{ incasso.riferimento }}{% endif %}</li>
+        {% empty %}
+            <li>Nessun movimento registrato nello storico.</li>
+        {% endfor %}
+    </ul>
+    {% if form %}
+        <h2>Registra un incasso</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Registra incasso</button>
+        </form>
+    {% endif %}
+</section>
+{% endblock %}

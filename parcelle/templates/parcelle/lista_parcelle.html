@@ -293,6 +293,9 @@ Parcelle e pagamenti
                     <td>
                         <div class="actions">
 
+                            {% if parcella.tipo_documento != 'PREVENTIVO' %}
+                                <a class="action-btn" href="{% url 'storico_incassi' parcella.id %}">Incassi</a>
+                            {% endif %}
                             <a class="action-btn edit-btn" href="/parcelle/{{ parcella.id }}/modifica/">
                                 <i class="fa-solid fa-pen"></i>
                                 Modifica
