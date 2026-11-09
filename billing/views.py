@@ -1,12 +1,15 @@
 from django.views.decorators.http import require_POST
 from studi.permessi import puo_gestire_abbonamento
 import os
+from uuid import uuid4
 import stripe
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.utils.timezone import now
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
@@ -49,6 +52,7 @@ def disattiva_piano_pro(studio):
     studio.stato_abbonamento = 'SCADUTO'
 
     studio.stripe_subscription_id = ''
+    studio.stripe_checkout_pending = {}
 
     studio.limite_pratiche = 20
     studio.limite_utenti = 1
@@ -165,6 +169,7 @@ def stripe_webhook(request):
                     studio = Studio.objects.select_for_update().get(id=studio_id)
                     # I rinnovi aggiornano lo stato tramite gli eventi di fattura.
                     if not studio.stripe_subscription_id:
+                        studio.stripe_checkout_pending = {}
                         attiva_piano_pro(
                             studio=studio,
                             customer_id=customer_id,
@@ -407,19 +412,6 @@ def checkout_pro(request):
     }
 
     if studio.stripe_customer_id:
-
-        try:
-
-            stripe.Customer.modify(
-                studio.stripe_customer_id,
-                email=email_checkout,
-                name=studio.nome,
-            )
-
-        except Exception:
-
-            pass
-
         checkout_data['customer'] = studio.stripe_customer_id
 
     else:
@@ -440,12 +432,67 @@ def checkout_pro(request):
         ]
 
     try:
-        session = stripe.checkout.Session.create(**checkout_data)
+        while True:
+            with transaction.atomic():
+                studio = Studio.objects.select_for_update().get(pk=studio.pk)
+                if studio.is_pro() or studio.stripe_subscription_id:
+                    return redirect('abbonamento')
+                pending = studio.stripe_checkout_pending
+                if not pending:
+                    pending = {
+                        'key': str(uuid4()),
+                        'payload': checkout_data,
+                        'created': int(now().timestamp()),
+                    }
+                    studio.stripe_checkout_pending = pending
+                    studio.save(update_fields=['stripe_checkout_pending'])
+
+            with transaction.atomic():
+                studio = Studio.objects.select_for_update().get(pk=studio.pk)
+                if studio.is_pro() or studio.stripe_subscription_id:
+                    return redirect('abbonamento')
+                pending = studio.stripe_checkout_pending
+                if not pending:
+                    continue
+
+                if pending.get('session_id'):
+                    session = stripe.checkout.Session.retrieve(pending['session_id'])
+                else:
+                    # Stripe può rimuovere la chiave dopo 24 ore. Se l'esito
+                    # resta incerto, serve una verifica prima di ricreare.
+                    if now().timestamp() - pending['created'] >= 23 * 3600:
+                        return render(request, 'billing/success.html', {
+                            'studio': studio,
+                            'errore': 'Il checkout precedente richiede una verifica. Contatta il supporto.',
+                        })
+                    if pending['payload'].get('customer'):
+                        try:
+                            stripe.Customer.modify(
+                                pending['payload']['customer'],
+                                email=email_checkout,
+                                name=studio.nome,
+                            )
+                        except stripe.error.StripeError:
+                            pass
+                    session = stripe.checkout.Session.create(
+                        **pending['payload'], idempotency_key=pending['key'],
+                    )
+                    pending['session_id'] = session.id
+                    studio.save(update_fields=['stripe_checkout_pending'])
+
+                if session.status == 'expired':
+                    studio.stripe_checkout_pending = {}
+                    studio.save(update_fields=['stripe_checkout_pending'])
+                    continue
+                break
     except stripe.error.StripeError:
         return render(request, 'billing/success.html', {
             'studio': studio,
             'errore': 'Il servizio di pagamento non è disponibile. Riprova più tardi.',
         })
+
+    if session.status != 'open' or not session.url:
+        return redirect(reverse('checkout_success', query={'session_id': session.id}))
 
     return redirect(
         session.url,

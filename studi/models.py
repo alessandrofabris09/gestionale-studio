@@ -20,6 +20,7 @@ STATI_ABBONAMENTO = [
 
 
 class Studio(models.Model):
+    stripe_checkout_pending = models.JSONField(default=dict, blank=True, editable=False)
 
     nome = models.CharField(max_length=255)
 

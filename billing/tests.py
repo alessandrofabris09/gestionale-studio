@@ -31,7 +31,7 @@ class CheckoutProtezioneTests(TestCase):
             create.assert_not_called()
 
     def test_titolare_checkout_con_studio_corretto(self):
-        with patch('billing.views.stripe.checkout.Session.create', return_value=SimpleNamespace(url='https://checkout.stripe.com/qa')) as create:
+        with patch('billing.views.stripe.checkout.Session.create', return_value=SimpleNamespace(id='cs_qa', status='open', url='https://checkout.stripe.com/qa')) as create:
             response = self.client.post('/billing/checkout/pro/', {'studio_id': '99999'})
             self.assertEqual(response.status_code, 302)
             self.assertEqual(response['Location'], 'https://checkout.stripe.com/qa')
@@ -44,6 +44,29 @@ class CheckoutProtezioneTests(TestCase):
             with self.subTest(role=role), patch('billing.views.stripe.checkout.Session.create') as create:
                 self.assertEqual(self.client.post('/billing/checkout/pro/').status_code, 403)
                 create.assert_not_called()
+
+    def test_checkout_riusa_sessione_e_rinnova_solo_dopo_scadenza(self):
+        url = '/billing/checkout/pro/'
+        prima = SimpleNamespace(id='cs_prima', status='open', url='https://checkout.stripe.com/prima')
+        seconda = SimpleNamespace(id='cs_seconda', status='open', url='https://checkout.stripe.com/seconda')
+        with (
+            patch('billing.views.stripe.checkout.Session.create', side_effect=[prima, seconda]) as create,
+            patch('billing.views.stripe.checkout.Session.retrieve', return_value=prima) as retrieve,
+        ):
+            self.assertEqual(self.client.post(url)['Location'], prima.url)
+            self.assertEqual(self.client.post(url)['Location'], prima.url)
+            create.assert_called_once()
+            retrieve.assert_called_once_with(prima.id)
+
+            retrieve.return_value = SimpleNamespace(id=prima.id, status='complete', url=None)
+            self.assertEqual(self.client.post(url)['Location'], '/billing/success/?session_id=cs_prima')
+            create.assert_called_once()
+
+            retrieve.return_value.status = 'expired'
+            self.assertEqual(self.client.post(url)['Location'], seconda.url)
+            self.assertEqual(create.call_count, 2)
+            first, second = create.call_args_list
+            self.assertNotEqual(first.kwargs['idempotency_key'], second.kwargs['idempotency_key'])
 
     def test_pulsante_abbonamento_usa_post(self):
         response = self.client.get('/studi/abbonamento/')
@@ -138,7 +161,7 @@ class CheckoutProtezioneTests(TestCase):
         client.force_login(self.owner)
         client.get('/studi/abbonamento/')
         token = client.cookies['csrftoken'].value
-        with patch('billing.views.stripe.checkout.Session.create', return_value=SimpleNamespace(url='https://checkout.stripe.com/qa')) as create:
+        with patch('billing.views.stripe.checkout.Session.create', return_value=SimpleNamespace(id='cs_qa', status='open', url='https://checkout.stripe.com/qa')) as create:
             response = client.post('/billing/checkout/pro/', {'csrfmiddlewaretoken': token})
             self.assertEqual(response.status_code, 302)
             create.assert_called_once()
