@@ -1,10 +1,11 @@
-{% load permessi_tags %}
+{% load permessi_tags static %}
 
 <!DOCTYPE html>
 <html lang="it">
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>
         {% block title %}
@@ -22,8 +23,8 @@
         }
 
         body{
-            font-family:Arial, sans-serif;
-            background:#f3f4f6;
+            font-family:var(--studio-font);
+            background:var(--studio-background);
             display:flex;
             min-height:100vh;
             color:#111827;
@@ -60,6 +61,7 @@
         }
 
         .menu a,
+        .menu-action,
         .logout-button{
             width:100%;
             display:flex;
@@ -75,11 +77,12 @@
             border:0;
             cursor:pointer;
             font-size:15px;
-            font-family:Arial, sans-serif;
+            font-family:var(--studio-font);
             text-align:left;
         }
 
         .menu a:hover,
+        .menu-action:hover,
         .logout-button:hover{
             background:#374151;
         }
@@ -173,7 +176,7 @@
             border:0;
             cursor:pointer;
             font-size:14px;
-            font-family:Arial, sans-serif;
+            font-family:var(--studio-font);
             margin-right:6px;
         }
 
@@ -295,7 +298,7 @@
             border:1px solid #d1d5db;
             border-radius:8px;
             font-size:15px;
-            font-family:Arial, sans-serif;
+            font-family:var(--studio-font);
         }
 
         .form-control:focus,
@@ -340,9 +343,10 @@
         }
     </style>
 
+    <link rel="stylesheet" href="{% static 'css/studio-ui.css' %}">
 </head>
 
-<body>
+<body class="studio-ui">
 
     <aside class="sidebar">
 
@@ -434,10 +438,10 @@
                         Alert scadenze
                     </a>
 
-                    <a href="/scadenze/invia-alert-giornalieri/" class="{% if '/scadenze/invia-alert-giornalieri' in request.path %}active{% endif %}">
+                    <form method="post" action="/scadenze/invia-alert-giornalieri/">{% csrf_token %}<button type="submit" class="menu-action">
                         <i class="fa-solid fa-envelope-circle-check"></i>
                         Invia alert giornalieri
-                    </a>
+                    </button></form>
 
                 {% endif %}
 

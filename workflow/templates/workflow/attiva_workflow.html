@@ -57,6 +57,10 @@ Attiva workflow pratica
     ← Torna alla pratica
 </a>
 
+{% if gestisce_modelli %}
+    <p><a href="{% url 'modelli_workflow' %}">Gestisci i modelli dello studio</a></p>
+{% endif %}
+
 <form method="post">
 
     {% csrf_token %}

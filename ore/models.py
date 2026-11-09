@@ -68,8 +68,13 @@ class VoceOra(models.Model):
         default=True
     )
 
-    inserita_in_parcella = models.BooleanField(
+    fatturazione_storica = models.BooleanField(
         default=False
+    )
+
+    parcella = models.ForeignKey(
+        'parcelle.Parcella', on_delete=models.SET_NULL, null=True, blank=True,
+        editable=False, related_name='voci_ore',
     )
 
     note = models.TextField(
@@ -91,6 +96,10 @@ class VoceOra(models.Model):
 
     def __str__(self):
         return f'{self.pratica} - {self.data} - {self.ore} ore'
+
+    @property
+    def inserita_in_parcella(self):
+        return self.fatturazione_storica or self.parcella_id is not None
 
     @property
     def importo(self):

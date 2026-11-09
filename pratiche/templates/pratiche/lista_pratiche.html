@@ -268,12 +268,9 @@ Pratiche operative
         <label>Stato</label>
         <select name="stato">
             <option value="">Tutti</option>
-            <option value="PREVENTIVO" {% if stato == 'PREVENTIVO' %}selected{% endif %}>Preventivo</option>
-            <option value="IN CORSO" {% if stato == 'IN_CORSO' %}selected{% endif %}>In corso</option>
-            <option value="DEPOSITATA" {% if stato == 'DEPOSITATA' %}selected{% endif %}>Depositata</option>
-            <option value="INTEGRAZIONE" {% if stato == 'INTEGRAZIONE' %}selected{% endif %}>Integrazione</option>
-            <option value="APPROVATA" {% if stato == 'APPROVATA' %}selected{% endif %}>Approvata</option>
-            <option value="CONCLUSA" {% if stato == 'CONCLUSA' %}selected{% endif %}>Conclusa</option>
+            {% for valore, etichetta in stati_pratica %}
+                <option value="{{ valore }}"{% if stato == valore %} selected{% endif %}>{{ etichetta }}</option>
+            {% endfor %}
         </select>
     </div>
 
@@ -281,12 +278,8 @@ Pratiche operative
         <label>Tipo</label>
         <select name="tipo">
             <option value="">Tutte</option>
-            {% for pratica in pratiche %}
-                {% if pratica.tipo_pratica %}
-                    <option value="{{ pratica.tipo_pratica }}" {% if tipo == pratica.tipo_pratica %}selected{% endif %}>
-                        {{ pratica.tipo_pratica }}
-                    </option>
-                {% endif %}
+            {% for valore in tipi_pratica %}
+                <option value="{{ valore }}"{% if tipo == valore %} selected{% endif %}>{{ valore }}</option>
             {% endfor %}
         </select>
     </div>
@@ -304,6 +297,8 @@ Pratiche operative
     </div>
 
 </form>
+
+<p>{{ pagina.paginator.count }} pratiche trovate</p>
 
 <div class="table-card">
 
@@ -429,5 +424,17 @@ Pratiche operative
     </table>
 
 </div>
+
+{% if pagina.has_other_pages %}
+<nav class="page-actions" aria-label="Pagine delle pratiche">
+    {% if pagina.has_previous %}
+        <a class="btn" href="?{% if query_filtri %}{{ query_filtri }}&amp;{% endif %}page={{ pagina.previous_page_number }}">Precedente</a>
+    {% endif %}
+    <span>Pagina {{ pagina.number }} di {{ pagina.paginator.num_pages }}</span>
+    {% if pagina.has_next %}
+        <a class="btn" href="?{% if query_filtri %}{{ query_filtri }}&amp;{% endif %}page={{ pagina.next_page_number }}">Successiva</a>
+    {% endif %}
+</nav>
+{% endif %}
 
 {% endblock %}

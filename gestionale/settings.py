@@ -64,7 +64,7 @@ CSRF_TRUSTED_ORIGINS = [
 # =========================
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'gestionale.apps.PlatformAdminConfig',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -358,6 +358,13 @@ EMAIL_FROM_NOTIFICHE = os.environ.get(
     'EMAIL_FROM_NOTIFICHE',
     'Gestionale Studio <onboarding@resend.dev>'
 )
+
+# Il piano Free di Render blocca le porte SMTP. Con un mittente esplicito,
+# Django può spedire via HTTPS tramite lo stesso servizio delle notifiche.
+if os.environ.get('RENDER') and os.environ.get('RESEND_API_KEY') and os.environ.get('EMAIL_FROM_NOTIFICHE'):
+    EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+    ANYMAIL = {'RESEND_API_KEY': os.environ['RESEND_API_KEY']}
+    DEFAULT_FROM_EMAIL = EMAIL_FROM_NOTIFICHE
 
 
 # =========================

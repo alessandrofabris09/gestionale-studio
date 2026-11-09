@@ -260,6 +260,9 @@ Modifica parcella
 
     </div>
 
+    {% if parcella.tipo_documento != 'PREVENTIVO' %}
+        <p><a href="{% url 'storico_incassi' parcella.pk %}">Apri lo storico incassi</a> per registrare un pagamento.</p>
+    {% endif %}
     <form method="post">
 
         {% csrf_token %}

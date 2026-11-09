@@ -1,4 +1,5 @@
 {% extends 'base/base.html' %}
+{% load static %}
 
 {% block title %}
 Nuova pratica
@@ -152,6 +153,23 @@ Nuova pratica
         flex-wrap:wrap;
     }
 
+    .creazione-rapida{
+        width:min(90vw, 520px);
+        padding:24px;
+        border:0;
+        border-radius:18px;
+    }
+
+    .creazione-rapida .field,
+    .azione-rapida{
+        margin-top:12px;
+    }
+
+    .errorlist,
+    .errori-creazione{
+        color:#991b1b;
+    }
+
     @media(max-width:900px){
         .form-grid{
             grid-template-columns:1fr;
@@ -164,6 +182,9 @@ Nuova pratica
 </style>
 
 <div class="page-actions">
+    {% if request.user.profilo_studio.ruolo == 'TITOLARE' %}
+        <a class="btn" href="{% url 'modelli_workflow' %}">Modelli dello studio</a>
+    {% endif %}
 
     <a class="btn" href="/pratiche/">
         <i class="fa-solid fa-arrow-left"></i>
@@ -192,9 +213,10 @@ Nuova pratica
 
     </div>
 
-    <form method="post">
+    <form method="post" class="scheda-pratica-form" id="form-pratica">
 
         {% csrf_token %}
+        {{ form.errors }}
 
         <div class="section">
 
@@ -205,17 +227,27 @@ Nuova pratica
             <div class="form-grid">
 
                 <div class="field">
-                    <label>Cliente</label>
+                    {{ form.cliente.label_tag }}
                     {{ form.cliente }}
+                    {% if cliente_rapido %}
+                    <div class="azione-rapida" hidden>
+                        <button type="button" class="btn" data-apri="cliente-rapido">Nuovo cliente</button>
+                    </div>
+                    {% endif %}
                 </div>
 
                 <div class="field">
-                    <label>Immobile</label>
+                    {{ form.immobile.label_tag }}
                     {{ form.immobile }}
+                    {% if immobile_rapido %}
+                    <div class="azione-rapida" hidden>
+                        <button type="button" class="btn" data-apri="immobile-rapido">Nuovo immobile</button>
+                    </div>
+                    {% endif %}
                 </div>
 
-                <div class="field">
-                    <label>Tipo pratica</label>
+                <div class="field full">
+                    <label for="{{ form.tipo_pratica.id_for_label }}">Tipo pratica</label>
                     {{ form.tipo_pratica }}
                 </div>
 
@@ -262,13 +294,21 @@ Nuova pratica
                 </div>
 
                 <div class="field">
-                    <label>Scadenza</label>
+                    <label for="{{ form.scadenza.id_for_label }}">Scadenza operativa</label>
                     {{ form.scadenza }}
+                    <small>Compare in Agenda e Scadenze.</small>
                 </div>
 
                 <div class="field">
-                    <label>Compenso</label>
+                    <label for="{{ form.compenso.id_for_label }}">Compenso concordato (€)</label>
                     {{ form.compenso }}
+                    <small>Importo base proposto per la prima parcella.</small>
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.scadenza_compenso.id_for_label }}">Scadenza prevista del pagamento</label>
+                    {{ form.scadenza_compenso }}
+                    <small>Proposta nel modulo della prima parcella.</small>
                 </div>
 
             </div>
@@ -309,5 +349,42 @@ Nuova pratica
     </form>
 
 </div>
+
+
+{% if cliente_rapido %}
+<dialog class="creazione-rapida" id="cliente-rapido" aria-labelledby="titolo-cliente-rapido">
+    <h2 id="titolo-cliente-rapido">Nuovo cliente</h2>
+    <form method="post" action="{% url 'nuovo_cliente' %}" data-creazione="cliente">
+        {% csrf_token %}
+        <div class="field">{{ cliente_rapido.nome.label_tag }}{{ cliente_rapido.nome }}</div>
+        <div class="field">{{ cliente_rapido.email.label_tag }}{{ cliente_rapido.email }}</div>
+        <div class="field">{{ cliente_rapido.telefono.label_tag }}{{ cliente_rapido.telefono }}</div>
+        <div class="errori-creazione" role="alert" hidden></div>
+        <div class="actions">
+            <button class="btn save-btn" type="submit">Salva cliente</button>
+            <button class="btn cancel-btn" type="button" data-chiudi>Annulla</button>
+        </div>
+    </form>
+</dialog>
+{% endif %}
+
+{% if immobile_rapido %}
+<dialog class="creazione-rapida" id="immobile-rapido" aria-labelledby="titolo-immobile-rapido">
+    <h2 id="titolo-immobile-rapido">Nuovo immobile</h2>
+    <form method="post" action="{% url 'nuovo_immobile' %}" data-creazione="immobile">
+        {% csrf_token %}
+        <div class="field">{{ immobile_rapido.cliente.label_tag }}{{ immobile_rapido.cliente }}</div>
+        <div class="field">{{ immobile_rapido.comune.label_tag }}{{ immobile_rapido.comune }}</div>
+        <div class="field">{{ immobile_rapido.indirizzo.label_tag }}{{ immobile_rapido.indirizzo }}</div>
+        <div class="errori-creazione" role="alert" hidden></div>
+        <div class="actions">
+            <button class="btn save-btn" type="submit">Salva immobile</button>
+            <button class="btn cancel-btn" type="button" data-chiudi>Annulla</button>
+        </div>
+    </form>
+</dialog>
+{% endif %}
+<div id="esito-creazione-rapida" role="status"></div>
+<script src="{% static 'pratiche/creazione-rapida.js' %}" defer></script>
 
 {% endblock %}

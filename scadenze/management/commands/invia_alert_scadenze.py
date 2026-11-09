@@ -16,6 +16,7 @@ class Command(BaseCommand):
         limite = oggi + timedelta(days=7)
 
         scadenze = Scadenza.objects.filter(
+            archiviata=False,
             completata=False,
             data_scadenza__lte=limite
         ).order_by('data_scadenza')

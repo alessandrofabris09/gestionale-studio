@@ -1,6 +1,9 @@
+from django.db import transaction
 from datetime import timedelta
 from io import BytesIO
+from urllib.parse import urlencode
 
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
@@ -14,13 +17,16 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import mm
 
-from studi.utils import get_studio_utente, studio_puo_creare_pratiche
+from studi.utils import get_studio_utente, studio_puo_creare_pratiche, is_admin_piattaforma
 
 from studi.permessi import (
+    puo_usare_agenda,
     puo_creare_pratiche,
     puo_modificare_pratiche,
     puo_eliminare_pratiche,
     puo_gestire_documenti,
+    puo_vedere_parcelle,
+    puo_modificare_parcelle,
 )
 
 from workflow.models import (
@@ -30,10 +36,14 @@ from workflow.models import (
     ChecklistPratica,
 )
 
+from clienti.forms import ClienteForm
+from clienti.views import puo_modificare_clienti
+from immobili.forms import ImmobileForm
+from immobili.views import puo_modificare_immobili
 from scadenze.models import Scadenza
 from attivita.models import Attivita
 
-from .models import Pratica
+from .models import Pratica, STATI_PRATICA
 from .forms import PraticaForm
 
 
@@ -67,11 +77,13 @@ def puo_vedere_area_pratiche(request):
     )
 
 
-def attiva_workflow_automatico(pratica):
+@transaction.atomic
+def attiva_workflow_automatico(pratica, variante=None):
 
-    workflow = TipoWorkflow.objects.filter(
+    workflow = variante or TipoWorkflow.objects.filter(
         nome=pratica.tipo_pratica,
-        attivo=True
+        attivo=True,
+        studio__isnull=True,
     ).first()
 
     if not workflow:
@@ -96,7 +108,7 @@ def attiva_workflow_automatico(pratica):
                 days=fase.giorni_scadenza
             )
 
-        FasePratica.objects.create(
+        fase_pratica = FasePratica.objects.create(
             workflow_pratica=workflow_pratica,
             titolo=fase.titolo,
             descrizione=fase.descrizione,
@@ -108,6 +120,8 @@ def attiva_workflow_automatico(pratica):
 
             Scadenza.objects.create(
                 pratica=pratica,
+                workflow_origine=workflow_pratica,
+                fase_origine=fase_pratica,
                 titolo=fase.titolo,
                 descrizione=f'Workflow automatico: {fase.titolo}',
                 data_scadenza=data_scadenza,
@@ -135,19 +149,24 @@ def lista_pratiche(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         return redirect('login')
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         pratiche = Pratica.objects.all().order_by('-id')
     else:
         pratiche = Pratica.objects.filter(
             studio=studio
         ).order_by('-id')
 
-    ricerca = request.GET.get('ricerca')
-    stato = request.GET.get('stato')
-    tipo = request.GET.get('tipo')
+    tipi_pratica = pratiche.exclude(tipo_pratica='').order_by(
+        'tipo_pratica',
+    ).values_list('tipo_pratica', flat=True).distinct()
+    ricerca = request.GET.get('ricerca', '').strip()
+    stato = request.GET.get('stato', '')
+    if stato == 'IN CORSO':
+        stato = 'IN_CORSO'
+    tipo = request.GET.get('tipo', '')
 
     if ricerca:
 
@@ -170,8 +189,16 @@ def lista_pratiche(request):
             tipo_pratica=tipo
         )
 
+    pagina = Paginator(pratiche.select_related('cliente'), 25).get_page(
+        request.GET.get('page'),
+    )
+    filtri = {'ricerca': ricerca, 'stato': stato, 'tipo': tipo}
     context = {
-        'pratiche': pratiche,
+        'pratiche': pagina,
+        'pagina': pagina,
+        'stati_pratica': STATI_PRATICA,
+        'tipi_pratica': tipi_pratica,
+        'query_filtri': urlencode({chiave: valore for chiave, valore in filtri.items() if valore}),
         'ricerca': ricerca,
         'stato': stato,
         'tipo': tipo,
@@ -192,7 +219,7 @@ def dettaglio_pratica(request, pratica_id):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         pratica = get_object_or_404(
             Pratica,
             id=pratica_id
@@ -204,23 +231,48 @@ def dettaglio_pratica(request, pratica_id):
             studio=studio
         )
 
-    try:
-        workflow_pratica = pratica.workflow_pratica
-    except Exception:
-        workflow_pratica = None
+    workflow_pratica = getattr(pratica, 'workflow_pratica', None)
+    fasi = list(workflow_pratica.fasi_pratica.order_by('ordine', 'pk')) if workflow_pratica else []
+    checklist = list(workflow_pratica.checklist_pratica.order_by('ordine', 'pk')) if workflow_pratica else []
+    obbligatorie = [voce for voce in checklist if voce.obbligatorio]
+    fasi_completate = sum(fase.completata for fase in fasi)
+    controlli_completati = sum(voce.completato for voce in obbligatorie)
+    totale_workflow = len(fasi) + len(obbligatorie)
 
     documenti = pratica.documenti.all()
+    puo_vedere_scadenze = puo_usare_agenda(request)
+    scadenze_aperte = pratica.scadenze.filter(
+        archiviata=False, completata=False,
+    ).order_by('data_scadenza', 'pk') if puo_vedere_scadenze else None
 
-    parcelle = pratica.parcelle.all()
+    puo_vedere_economia = puo_vedere_parcelle(request)
+    parcelle = pratica.parcelle.all() if puo_vedere_economia else pratica.parcelle.none()
 
     attivita = pratica.attivita.all().order_by('-data')
+    if not puo_vedere_economia:
+        attivita = attivita.exclude(tipo='PARCELLA')
 
     context = {
         'pratica': pratica,
         'documenti': documenti,
+        'puo_vedere_scadenze': puo_vedere_scadenze,
+        'scadenze_aperte': scadenze_aperte,
         'parcelle': parcelle,
+        'puo_vedere_economia': puo_vedere_economia,
+        'puo_creare_parcella': (
+            studio is not None and pratica.studio_id == studio.pk
+            and puo_modificare_parcelle(request)
+        ),
         'attivita': attivita,
         'workflow_pratica': workflow_pratica,
+        'fasi_workflow': fasi,
+        'checklist_workflow': checklist,
+        'fasi_completate': fasi_completate,
+        'controlli_completati': controlli_completati,
+        'controlli_obbligatori': len(obbligatorie),
+        'passaggi_completati': fasi_completate + controlli_completati,
+        'totale_workflow': totale_workflow,
+        'puo_modificare_workflow': studio is not None and puo_modificare_pratiche(request),
     }
 
     return render(
@@ -231,6 +283,7 @@ def dettaglio_pratica(request, pratica_id):
 
 
 @login_required
+@transaction.atomic
 def nuova_pratica(request):
 
     if not puo_creare_pratiche(request):
@@ -238,10 +291,10 @@ def nuova_pratica(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
-        return redirect('login')
+    if not studio:
+        return accesso_negato(request)
 
-    if not request.user.is_superuser:
+    if not is_admin_piattaforma(request):
 
         if not studio_puo_creare_pratiche(studio):
 
@@ -273,7 +326,7 @@ def nuova_pratica(request):
             pratica.studio = studio
             pratica.save()
 
-            workflow_pratica = attiva_workflow_automatico(pratica)
+            workflow_pratica = attiva_workflow_automatico(pratica, form.variante_workflow)
 
             Attivita.objects.create(
                 pratica=pratica,
@@ -306,7 +359,15 @@ def nuova_pratica(request):
         request,
         'pratiche/nuova_pratica.html',
         {
-            'form': form
+            'form': form,
+            'cliente_rapido': (
+                ClienteForm(auto_id='rapido_cliente_%s')
+                if puo_modificare_clienti(request) else None
+            ),
+            'immobile_rapido': (
+                ImmobileForm(studio=studio, auto_id='rapido_immobile_%s')
+                if puo_modificare_immobili(request) else None
+            ),
         }
     )
 
@@ -319,7 +380,7 @@ def modifica_pratica(request, pratica_id):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         pratica = get_object_or_404(
             Pratica,
             id=pratica_id
@@ -380,7 +441,7 @@ def elimina_pratica(request, pratica_id):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         pratica = get_object_or_404(
             Pratica,
             id=pratica_id
@@ -505,7 +566,7 @@ def pdf_pratica(request, pratica_id):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         pratica = get_object_or_404(
             Pratica,
             id=pratica_id
@@ -896,6 +957,7 @@ def pdf_pratica(request, pratica_id):
     parcelle_count = pratica.parcelle.count()
     attivita_count = pratica.attivita.count()
     scadenze_aperte = pratica.scadenze.filter(
+        archiviata=False,
         completata=False
     ).count()
 

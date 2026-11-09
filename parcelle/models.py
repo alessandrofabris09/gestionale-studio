@@ -1,6 +1,9 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
+from uuid import uuid4
 
-from django.db import models
+from django.core.exceptions import ValidationError
+from django.db import models, transaction, router
+from studi.models import Studio
 from django.utils import timezone
 
 from pratiche.models import Pratica
@@ -36,6 +39,11 @@ ALIQUOTE_CASSA_STANDARD = {
     'EPPI': Decimal('5.00'),
     'MANUALE': Decimal('0.00'),
 }
+
+
+class NumeroDocumentoDuplicato(ValidationError):
+    def __init__(self):
+        super().__init__('Questo numero documento è già utilizzato nello studio.')
 
 
 class Parcella(models.Model):
@@ -158,25 +166,39 @@ class Parcella(models.Model):
 
         self.normalizza_aliquote()
 
-        if not self.numero_documento or self.numero_documento.strip() == '':
-
-            anno = timezone.now().year
-
-            prefisso = self.get_prefisso_documento()
-
-            ultimo_numero = Parcella.objects.filter(
-                pratica__studio=self.pratica.studio,
-                tipo_documento=self.tipo_documento,
-                data_emissione__year=anno
-            ).count() + 1
-
-            self.numero_documento = (
-                f'{prefisso}-{anno}-{ultimo_numero:04d}'
-            )
-
         self.aggiorna_stato_pagamento()
 
-        super().save(*args, **kwargs)
+        using = kwargs.get('using') or router.db_for_write(type(self), instance=self)
+        studio_id = self.pratica.studio_id
+        with transaction.atomic(using=using):
+            # La stessa riga serializza assegnazioni manuali e automatiche.
+            Studio.objects.using(using).select_for_update().get(pk=studio_id)
+            altre = Parcella.objects.using(using).filter(
+                pratica__studio_id=studio_id,
+            ).exclude(pk=self.pk)
+            self.numero_documento = (self.numero_documento or '').strip()
+            if self.numero_documento:
+                if altre.filter(numero_documento=self.numero_documento).exists():
+                    precedente = Parcella.objects.using(using).filter(
+                        pk=self.pk, pratica__studio_id=studio_id,
+                        numero_documento=self.numero_documento,
+                    )
+                    # Consente aggiornamenti che non alterano un numero storico.
+                    if not precedente.exists():
+                        raise NumeroDocumentoDuplicato()
+            else:
+                anno = self.data_emissione.year
+                prefisso = f'{self.get_prefisso_documento()}-{anno}-'
+                numeri = altre.filter(
+                    numero_documento__startswith=prefisso,
+                ).values_list('numero_documento', flat=True)
+                progressivi = (numero[len(prefisso):] for numero in numeri)
+                massimo = max(
+                    (int(valore) for valore in progressivi if valore.isdecimal()),
+                    default=0,
+                )
+                self.numero_documento = f'{prefisso}{massimo + 1:04d}'
+            super().save(*args, **kwargs)
 
     def normalizza_aliquote(self):
         """
@@ -311,7 +333,7 @@ class Parcella(models.Model):
 
         pagato = self.importo_pagato or Decimal('0.00')
 
-        return self.totale_documento - pagato
+        return self.totale_documento.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP) - pagato
 
     def aggiorna_stato_pagamento(self):
         """
@@ -319,7 +341,7 @@ class Parcella(models.Model):
         """
 
         pagato = self.importo_pagato or Decimal('0.00')
-        totale = self.totale_documento
+        totale = self.totale_documento.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
         if pagato <= Decimal('0.00'):
             self.stato = 'DA_PAGARE'
@@ -341,3 +363,17 @@ class Parcella(models.Model):
         )
 
         return f'{numero} - {self.descrizione}'
+
+
+class Incasso(models.Model):
+    parcella = models.ForeignKey(Parcella, on_delete=models.CASCADE, related_name='incassi')
+    chiave = models.UUIDField(default=uuid4, editable=False, unique=True)
+    importo = models.DecimalField(max_digits=10, decimal_places=2)
+    data = models.DateField()
+    riferimento = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ['-data', '-pk']
+        constraints = [
+            models.CheckConstraint(condition=models.Q(importo__gt=0), name='incasso_importo_positivo'),
+        ]

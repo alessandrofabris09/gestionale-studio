@@ -1,9 +1,15 @@
+from django.views.decorators.http import require_POST
+from studi.permessi import puo_gestire_abbonamento
 import os
+from uuid import uuid4
 import stripe
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.utils.timezone import now
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
@@ -46,6 +52,7 @@ def disattiva_piano_pro(studio):
     studio.stato_abbonamento = 'SCADUTO'
 
     studio.stripe_subscription_id = ''
+    studio.stripe_checkout_pending = {}
 
     studio.limite_pratiche = 20
     studio.limite_utenti = 1
@@ -63,7 +70,17 @@ def aggiorna_stato_abbonamento(studio, stato):
     studio.save()
 
 
+def abbonamento_da_fattura(invoice):
+    parent = invoice.get('parent') or {}
+    details = parent.get('subscription_details') or {}
+    subscription = details.get('subscription') or invoice.get('subscription')
+    if isinstance(subscription, dict):
+        return subscription.get('id')
+    return subscription
+
+
 @csrf_exempt
+@require_POST
 def stripe_webhook(request):
     """
     Webhook Stripe.
@@ -79,6 +96,8 @@ def stripe_webhook(request):
     )
 
     endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
+    if not endpoint_secret or not sig_header:
+        return HttpResponse(status=400)
 
     try:
 
@@ -86,7 +105,7 @@ def stripe_webhook(request):
             payload,
             sig_header,
             endpoint_secret
-        )
+        ).to_dict()
 
     except ValueError:
 
@@ -146,15 +165,16 @@ def stripe_webhook(request):
 
             try:
 
-                studio = Studio.objects.get(
-                    id=studio_id
-                )
-
-                attiva_piano_pro(
-                    studio=studio,
-                    customer_id=customer_id,
-                    subscription_id=subscription_id
-                )
+                with transaction.atomic():
+                    studio = Studio.objects.select_for_update().get(id=studio_id)
+                    # I rinnovi aggiornano lo stato tramite gli eventi di fattura.
+                    if not studio.stripe_subscription_id:
+                        studio.stripe_checkout_pending = {}
+                        attiva_piano_pro(
+                            studio=studio,
+                            customer_id=customer_id,
+                            subscription_id=subscription_id,
+                        )
 
             except Studio.DoesNotExist:
 
@@ -168,9 +188,7 @@ def stripe_webhook(request):
 
         invoice = event['data']['object']
 
-        subscription_id = invoice.get(
-            'subscription'
-        )
+        subscription_id = abbonamento_da_fattura(invoice)
 
         customer_id = invoice.get(
             'customer'
@@ -202,9 +220,7 @@ def stripe_webhook(request):
 
         invoice = event['data']['object']
 
-        subscription_id = invoice.get(
-            'subscription'
-        )
+        subscription_id = abbonamento_da_fattura(invoice)
 
         if subscription_id:
 
@@ -321,6 +337,7 @@ def stripe_webhook(request):
 
 
 @login_required
+@require_POST
 def checkout_pro(request):
     """
     Crea la sessione Stripe Checkout per passare al piano PRO.
@@ -329,6 +346,9 @@ def checkout_pro(request):
     Se esiste già un cliente Stripe, aggiorna anche la sua email.
     """
 
+    if not puo_gestire_abbonamento(request):
+        return render(request, 'errors/accesso_negato.html', status=403)
+
     studio = get_studio_utente(request)
 
     if not studio:
@@ -336,6 +356,9 @@ def checkout_pro(request):
         return redirect(
             'login'
         )
+
+    if studio.is_pro() or studio.stripe_subscription_id:
+        return redirect('abbonamento')
 
     if not settings.STRIPE_SECRET_KEY or not settings.STRIPE_PRICE_PRO_MONTHLY:
 
@@ -389,19 +412,6 @@ def checkout_pro(request):
     }
 
     if studio.stripe_customer_id:
-
-        try:
-
-            stripe.Customer.modify(
-                studio.stripe_customer_id,
-                email=email_checkout,
-                name=studio.nome,
-            )
-
-        except Exception:
-
-            pass
-
         checkout_data['customer'] = studio.stripe_customer_id
 
     else:
@@ -421,9 +431,68 @@ def checkout_pro(request):
             }
         ]
 
-    session = stripe.checkout.Session.create(
-        **checkout_data
-    )
+    try:
+        while True:
+            with transaction.atomic():
+                studio = Studio.objects.select_for_update().get(pk=studio.pk)
+                if studio.is_pro() or studio.stripe_subscription_id:
+                    return redirect('abbonamento')
+                pending = studio.stripe_checkout_pending
+                if not pending:
+                    pending = {
+                        'key': str(uuid4()),
+                        'payload': checkout_data,
+                        'created': int(now().timestamp()),
+                    }
+                    studio.stripe_checkout_pending = pending
+                    studio.save(update_fields=['stripe_checkout_pending'])
+
+            with transaction.atomic():
+                studio = Studio.objects.select_for_update().get(pk=studio.pk)
+                if studio.is_pro() or studio.stripe_subscription_id:
+                    return redirect('abbonamento')
+                pending = studio.stripe_checkout_pending
+                if not pending:
+                    continue
+
+                if pending.get('session_id'):
+                    session = stripe.checkout.Session.retrieve(pending['session_id'])
+                else:
+                    # Stripe può rimuovere la chiave dopo 24 ore. Se l'esito
+                    # resta incerto, serve una verifica prima di ricreare.
+                    if now().timestamp() - pending['created'] >= 23 * 3600:
+                        return render(request, 'billing/success.html', {
+                            'studio': studio,
+                            'errore': 'Il checkout precedente richiede una verifica. Contatta il supporto.',
+                        })
+                    if pending['payload'].get('customer'):
+                        try:
+                            stripe.Customer.modify(
+                                pending['payload']['customer'],
+                                email=email_checkout,
+                                name=studio.nome,
+                            )
+                        except stripe.error.StripeError:
+                            pass
+                    session = stripe.checkout.Session.create(
+                        **pending['payload'], idempotency_key=pending['key'],
+                    )
+                    pending['session_id'] = session.id
+                    studio.save(update_fields=['stripe_checkout_pending'])
+
+                if session.status == 'expired':
+                    studio.stripe_checkout_pending = {}
+                    studio.save(update_fields=['stripe_checkout_pending'])
+                    continue
+                break
+    except stripe.error.StripeError:
+        return render(request, 'billing/success.html', {
+            'studio': studio,
+            'errore': 'Il servizio di pagamento non è disponibile. Riprova più tardi.',
+        })
+
+    if session.status != 'open' or not session.url:
+        return redirect(reverse('checkout_success', query={'session_id': session.id}))
 
     return redirect(
         session.url,
@@ -437,8 +506,11 @@ def checkout_success(request):
     Pagina di ritorno dopo Stripe Checkout.
 
     Verifica la sessione direttamente con Stripe usando session_id.
-    Compatibile anche con versioni Stripe meno recenti. 
+    La pagina e informativa: non modifica mai lo stato del piano.
     """
+
+    if not puo_gestire_abbonamento(request):
+        return render(request, 'errors/accesso_negato.html', status=403)
 
     studio = get_studio_utente(request)
 
@@ -523,12 +595,6 @@ def checkout_success(request):
             None
         )
 
-        customer_id = getattr(
-            session,
-            'customer',
-            None
-        )
-
         if (
             str(studio.id) == str(studio_id) and
             mode == 'subscription' and
@@ -537,35 +603,28 @@ def checkout_success(request):
             subscription_id
         ):
 
-            attiva_piano_pro(
-                studio=studio,
-                customer_id=customer_id,
-                subscription_id=subscription_id
-            )
-
+            # Una vecchia sessione pagata non prova che l'abbonamento sia
+            # ancora attivo: soltanto i webhook firmati aggiornano lo studio.
             messaggio = (
-                'Pagamento verificato correttamente. '
-                'Il piano PRO è stato attivato.'
+                'Pagamento verificato. Il piano PRO risulta attivo.'
+                if studio.is_pro() else
+                'Pagamento verificato. Lo stato del piano viene aggiornato '
+                'dalle notifiche sicure del servizio di pagamento. '
+                'Se il piano non si aggiorna, contatta il supporto.'
             )
 
         else:
 
             errore = (
-                'Pagamento ricevuto, ma i dati Stripe non coincidono ancora '
-                'con lo studio corrente. '
-                f'Studio gestionale: {studio.id} - '
-                f'Studio Stripe: {studio_id} - '
-                f'Mode: {mode} - '
-                f'Stato sessione: {status} - '
-                f'Pagamento: {payment_status} - '
-                f'Subscription: {subscription_id}'
+                'Non è stato possibile confermare un pagamento completato per questo studio. '
+                'Controlla il piano o contatta il supporto.'
             )
 
-    except Exception as e:
+    except stripe.error.StripeError:
 
         errore = (
-            'Non è stato possibile verificare automaticamente il pagamento: '
-            f'{str(e)}'
+            'Non è stato possibile verificare il pagamento. '
+            'Riprova più tardi o contatta il supporto.'
         )
 
     return render(

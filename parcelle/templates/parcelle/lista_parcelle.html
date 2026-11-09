@@ -217,6 +217,22 @@ Parcelle e pagamenti
 
 </div>
 
+{% if scadenze_incasso %}
+    <section class="table-card" style="padding: 1rem; margin-bottom: 1rem">
+        <h2>Incassi scaduti o nei prossimi 7 giorni</h2>
+        <ul>
+            {% for documento in scadenze_incasso %}
+                <li>
+                    <a href="{% url 'storico_incassi' documento.pk %}">{{ documento.numero_documento }}</a>
+                    · {{ documento.data_scadenza|date:"d/m/Y" }}
+                    · € {{ documento.saldo_residuo|floatformat:2 }} da incassare
+                    {% if documento.data_scadenza < oggi %}<strong>· Scaduto</strong>{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endif %}
+
 <div class="table-card">
 
     <table>
@@ -293,6 +309,9 @@ Parcelle e pagamenti
                     <td>
                         <div class="actions">
 
+                            {% if parcella.tipo_documento != 'PREVENTIVO' %}
+                                <a class="action-btn" href="{% url 'storico_incassi' parcella.id %}">Incassi</a>
+                            {% endif %}
                             <a class="action-btn edit-btn" href="/parcelle/{{ parcella.id }}/modifica/">
                                 <i class="fa-solid fa-pen"></i>
                                 Modifica

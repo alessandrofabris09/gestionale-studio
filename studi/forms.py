@@ -1,3 +1,4 @@
+from .passwords import validate_form_password
 from django import forms
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -175,6 +176,7 @@ class NuovoUtenteStudioForm(forms.Form):
                 'Le due password non coincidono.'
             )
 
+        validate_form_password(self, cleaned_data, 'password1')
         return cleaned_data
 
     @transaction.atomic

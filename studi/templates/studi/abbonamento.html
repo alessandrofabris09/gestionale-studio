@@ -171,12 +171,12 @@
 
         <div class="box">
             <div class="label">Limite pratiche</div>
-            <div class="value">{{ studio.limite_pratiche }}</div>
+            <div class="value">{% if studio.is_pro and studio.limite_pratiche == 999999 %}Illimitate{% else %}{{ studio.limite_pratiche }}{% endif %}</div>
         </div>
 
         <div class="box">
             <div class="label">Limite utenti</div>
-            <div class="value">{{ studio.limite_utenti }}</div>
+            <div class="value">{% if studio.is_pro and studio.limite_utenti == 999999 %}Illimitati{% else %}{{ studio.limite_utenti }}{% endif %}</div>
         </div>
 
         <div class="box">
@@ -215,7 +215,7 @@
             </p>
 
             <ul>
-                <li>✓ 10/20 pratiche secondo configurazione studio</li>
+                <li>✓ 20 pratiche per i nuovi studi</li>
                 <li>✓ 1 utente</li>
                 <li>✓ Storage limitato</li>
                 <li>✓ Funzioni essenziali</li>
@@ -252,18 +252,22 @@
                 <li>✓ PDF pratiche e parcelle</li>
             </ul>
 
-            {% if studio.piano == 'PRO' and studio.stato_abbonamento == 'ATTIVO' %}
+            {% if studio.is_pro %}
 
                 <span class="btn btn-secondary">
                     Piano PRO attivo
                 </span>
 
+            {% elif studio.stripe_subscription_id %}
+
+                <p>Hai già un abbonamento Stripe. Se il pagamento non è riuscito, contatta il supporto per riattivarlo.</p>
+
             {% else %}
 
-                <a href="/billing/checkout/pro/" class="btn">
+                <form method="post" action="/billing/checkout/pro/">{% csrf_token %}<button type="submit" class="btn" style="border:0; cursor:pointer; font:inherit;">
                     <i class="fa-solid fa-crown"></i>
                     Passa al piano PRO
-                </a>
+                </button></form>
 
             {% endif %}
         </div>

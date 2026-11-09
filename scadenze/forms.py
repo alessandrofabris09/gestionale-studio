@@ -9,7 +9,7 @@ class ScadenzaForm(forms.ModelForm):
 
     class Meta:
         model = Scadenza
-        fields = '__all__'
+        fields = ['pratica', 'titolo', 'descrizione', 'data_scadenza', 'priorita', 'completata']
 
         widgets = {
             'data_scadenza': forms.DateInput(attrs={'type': 'date'}),

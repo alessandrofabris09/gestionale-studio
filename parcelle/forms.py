@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django import forms
+from django.utils import timezone
 
 from pratiche.models import Pratica
 
@@ -8,6 +9,16 @@ from .models import (
     Parcella,
     ALIQUOTE_CASSA_STANDARD,
 )
+
+
+class IncassoForm(forms.Form):
+    chiave = forms.UUIDField(widget=forms.HiddenInput)
+    importo = forms.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))
+    data = forms.DateField(
+        label='Data incasso', initial=timezone.localdate,
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+    )
+    riferimento = forms.CharField(max_length=255, required=False)
 
 
 class ParcellaForm(forms.ModelForm):
@@ -47,6 +58,7 @@ class ParcellaForm(forms.ModelForm):
                 }
             ),
             'data_scadenza': forms.DateInput(
+                format='%Y-%m-%d',
                 attrs={
                     'type': 'date'
                 }
@@ -161,6 +173,25 @@ class ParcellaForm(forms.ModelForm):
 
             self.fields['pratica'].queryset = Pratica.objects.none()
 
+        if self.instance.pk and self.instance.voci_ore.exists():
+            self.fields['pratica'].disabled = True
+            self.fields['pratica'].help_text = 'La pratica è vincolata alle ore collegate.'
+            self.fields['tipo_documento'].choices = [
+                (valore, etichetta)
+                for valore, etichetta in self.fields['tipo_documento'].choices
+                if valore != 'PREVENTIVO'
+            ]
+
+        if self.instance.pk:
+            for campo in ('importo_pagato', 'data_pagamento', 'stato'):
+                self.fields[campo].disabled = True
+            if self.instance.incassi.exists():
+                self.fields['tipo_documento'].choices = [
+                    (valore, etichetta)
+                    for valore, etichetta in self.fields['tipo_documento'].choices
+                    if valore != 'PREVENTIVO'
+                ]
+
         self.fields['numero_documento'].required = False
         self.fields['importo_pagato'].required = False
         self.fields['data_emissione'].required = False
@@ -237,4 +268,13 @@ class ParcellaForm(forms.ModelForm):
             if importo_bollo is None:
                 cleaned_data['importo_bollo'] = Decimal('2.00')
 
+        numero = (cleaned_data.get('numero_documento') or '').strip()
+        pratica = cleaned_data.get('pratica')
+        if numero and pratica:
+            duplicati = Parcella.objects.filter(
+                pratica__studio=pratica.studio,
+                numero_documento=numero,
+            ).exclude(pk=self.instance.pk)
+            if duplicati.exists():
+                self.add_error('numero_documento', 'Questo numero documento è già utilizzato nello studio.')
         return cleaned_data

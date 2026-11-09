@@ -1,3 +1,4 @@
+from django.db import transaction
 from datetime import timedelta
 
 from django.contrib import messages
@@ -19,6 +20,7 @@ class CustomLogoutView(LogoutView):
     pass
 
 
+@transaction.atomic
 def registrazione_studio(request):
     """
     Registrazione pubblica di un nuovo studio.
@@ -67,7 +69,6 @@ def registrazione_studio(request):
                 piano='FREE',
                 stato_abbonamento='TRIAL',
                 trial_fino_al=timezone.now().date() + timedelta(days=14),
-                limite_pratiche=10,
                 limite_utenti=1,
                 limite_storage_mb=500,
                 attivo=True,

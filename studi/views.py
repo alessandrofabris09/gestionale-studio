@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 
 from django.utils import timezone
 
-from .utils import get_studio_utente
+from .utils import get_studio_utente, is_admin_piattaforma
 
 from .models import ProfiloUtente
 from .forms import StudioForm, ProfiloUtenteRuoloForm, NuovoUtenteStudioForm
@@ -230,7 +230,7 @@ def nuovo_utente_studio(request):
         utenti_attuali >= studio.limite_utenti
     )
 
-    if limite_raggiunto and not request.user.is_superuser:
+    if limite_raggiunto and not is_admin_piattaforma(request):
 
         messages.error(
             request,

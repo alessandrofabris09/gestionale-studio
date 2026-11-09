@@ -1,3 +1,5 @@
+from .utils import is_admin_piattaforma
+
 def get_profilo(request):
     """
     Recupera il profilo studio dell'utente loggato.
@@ -34,18 +36,8 @@ def get_ruolo(request):
 
 
 def is_superuser(request):
-    """
-    Controlla se l'utente è superuser Django.
-    Il superuser deve poter accedere a tutto.
-    """
-
-    if not request:
-        return False
-
-    if not hasattr(request, "user"):
-        return False
-
-    return request.user.is_authenticated and request.user.is_superuser
+    """Accesso amministrativo globale solo all'admin senza profilo studio."""
+    return is_admin_piattaforma(request)
 
 
 def is_titolare(request):

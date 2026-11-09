@@ -12,9 +12,9 @@ Backup database
 
 <div style="background:white; padding:30px; border-radius:18px; box-shadow:0 8px 22px rgba(0,0,0,0.08);">
 
-    <a href="{% url 'crea_backup' %}" style="display:inline-block; background:#111827; color:white; padding:12px 18px; border-radius:8px; text-decoration:none; margin-bottom:20px;">
+    <form method="post" action="{% url 'crea_backup' %}">{% csrf_token %}<button type="submit" style="display:inline-block; background:#111827; color:white; padding:12px 18px; border-radius:8px; text-decoration:none; margin-bottom:20px; border:0; cursor:pointer; font:inherit;">
         Crea backup adesso
-    </a>
+    </button></form>
 
     <table style="width:100%; border-collapse:collapse;">
         <thead>

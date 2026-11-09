@@ -16,3 +16,18 @@ media/
 staticfiles/
 
 venv/
+# Ambiente di prova: dati e impostazioni solo locali
+.venv/
+.local-test/
+gestionale/settings_local_test.py
+manage_local_test.py
+
+# Archivi riservati: non aggiungere copie di database o dump al repository
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+backup_render.json
+dati_backup.json
+*.dump
+*.sql

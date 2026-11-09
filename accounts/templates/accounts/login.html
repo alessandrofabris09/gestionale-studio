@@ -1,7 +1,9 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login - Gestionale Studio Tecnico</title>
 
     <link
@@ -16,7 +18,7 @@
 
         body{
             margin:0;
-            font-family:Arial, sans-serif;
+            font-family:var(--studio-font);
             background:linear-gradient(135deg,#111827,#1f2937,#2563eb);
             min-height:100vh;
             display:flex;
@@ -211,9 +213,10 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="{% static 'css/studio-ui.css' %}">
 </head>
 
-<body>
+<body class="studio-ui">
 
     <div class="login-wrapper">
 

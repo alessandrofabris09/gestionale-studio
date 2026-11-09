@@ -1,19 +1,16 @@
-import shutil
+from datetime import timedelta
 
-from pathlib import Path
-from datetime import datetime, timedelta
-
-from django.conf import settings
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Sum, Count
 from django.shortcuts import render, redirect
-from django.utils.timezone import now
+from django.utils.timezone import now, localdate
 
 from workflow.models import FasePratica, ChecklistPratica
 
 from studi.utils import (
     get_studio_utente,
+    is_admin_piattaforma,
     studio_deve_upgrade,
 )
 
@@ -65,7 +62,7 @@ def puo_vedere_area_pratiche(request):
     """
 
     return (
-        request.user.is_superuser or
+        is_admin_piattaforma(request) or
         puo_creare_pratiche(request) or
         puo_gestire_documenti(request)
     )
@@ -76,16 +73,16 @@ def home(request):
 
     studio = get_studio_sicuro(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         logout(request)
         return redirect('login')
 
     if studio and studio_deve_upgrade(studio):
         return redirect('abbonamento')
 
-    if request.user.is_superuser and not studio:
+    if is_admin_piattaforma(request) and not studio:
         pratiche = Pratica.objects.all()
-        scadenze = Scadenza.objects.all()
+        scadenze = Scadenza.objects.filter(archiviata=False)
         parcelle = Parcella.objects.all()
         eventi = EventoAgenda.objects.all()
         clienti_qs = Cliente.objects.all()
@@ -100,6 +97,7 @@ def home(request):
         )
 
         scadenze = Scadenza.objects.filter(
+            archiviata=False,
             pratica__studio=studio
         )
 
@@ -145,7 +143,8 @@ def home(request):
     ).order_by('-data')[:10]
 
     scadenze_imminenti = scadenze.filter(
-        data_scadenza__lte=now().date() + timedelta(days=30),
+        data_scadenza__gte=localdate(),
+        data_scadenza__lte=localdate() + timedelta(days=7),
         completata=False
     ).count()
 
@@ -168,9 +167,9 @@ def home(request):
 
     ultime_pratiche = pratiche.order_by('-id')[:5]
 
-    ultime_scadenze = scadenze.order_by(
-        'data_scadenza'
-    )[:5]
+    ultime_scadenze = scadenze.filter(
+        completata=False, data_scadenza__gte=localdate(),
+    ).order_by('data_scadenza', 'pk')[:5]
 
     eventi_oggi = eventi.filter(
         data=now().date(),
@@ -335,7 +334,7 @@ def ricerca_globale(request):
 
     studio = get_studio_sicuro(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         logout(request)
         return redirect('login')
 
@@ -351,12 +350,12 @@ def ricerca_globale(request):
 
     if query:
 
-        if request.user.is_superuser and not studio:
+        if is_admin_piattaforma(request) and not studio:
 
             clienti_base = Cliente.objects.all()
             immobili_base = Immobile.objects.all()
             pratiche_base = Pratica.objects.all()
-            scadenze_base = Scadenza.objects.all()
+            scadenze_base = Scadenza.objects.filter(archiviata=False)
             documenti_base = Documento.objects.all()
             parcelle_base = Parcella.objects.all()
             eventi_base = EventoAgenda.objects.all()
@@ -376,6 +375,7 @@ def ricerca_globale(request):
             )
 
             scadenze_base = Scadenza.objects.filter(
+                archiviata=False,
                 pratica__studio=studio
             )
 
@@ -462,39 +462,11 @@ def ricerca_globale(request):
 
 @login_required
 def backup_manuale(request):
-
+    """Compatibilita con il vecchio indirizzo, senza creare backup incompleti."""
     if not puo_gestire_backup(request):
         return accesso_negato(request)
+    return redirect('lista_backup')
 
-    base_dir = Path(settings.BASE_DIR)
-
-    db_file = base_dir / 'db.sqlite3'
-    backup_dir = base_dir / 'backup'
-
-    timestamp = datetime.now().strftime(
-        '%Y-%m-%d_%H-%M-%S'
-    )
-
-    backup_folder = backup_dir / f'backup_manuale_{timestamp}'
-
-    backup_folder.mkdir(
-        parents=True,
-        exist_ok=True
-    )
-
-    if db_file.exists():
-        shutil.copy2(
-            db_file,
-            backup_folder / 'db.sqlite3'
-        )
-
-    return render(
-        request,
-        'dashboard/backup_ok.html',
-        {
-            'backup_folder': backup_folder
-        }
-    )
 
 def privacy_policy(request):
     return render(request, "landing/privacy.html")

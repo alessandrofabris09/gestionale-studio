@@ -471,12 +471,20 @@ Ore lavorate
                                     </span>
                                 {% endif %}
 
-                                {% if voce.inserita_in_parcella %}
+                                {% if voce.parcella_id %}
+                                    {% if puo_vedere_parcelle %}
+                                        <a class="badge badge-type" href="{% url 'pdf_parcella' voce.parcella_id %}">
+                                            {{ voce.parcella.numero_documento }}
+                                        </a>
+                                    {% else %}
+                                        <span class="badge badge-type">In parcella</span>
+                                    {% endif %}
+                                {% elif voce.fatturazione_storica %}
                                     <span class="badge badge-type">
                                         <i class="fa-solid fa-file-invoice"></i>
-                                        In parcella
+                                        Fatturazione storica
                                     </span>
-                                {% else %}
+                                {% elif voce.fatturabile %}
                                     <span class="badge badge-warn">
                                         <i class="fa-solid fa-clock"></i>
                                         Da fatturare
@@ -485,6 +493,7 @@ Ore lavorate
                             </td>
 
                             <td class="text-end">
+                                {% if not voce.parcella_id %}
                                 <a class="action-btn" href="{% url 'modifica_voce_ora' voce.id %}">
                                     <i class="fa-solid fa-pen"></i>
                                     Modifica
@@ -494,6 +503,7 @@ Ore lavorate
                                     <i class="fa-solid fa-trash"></i>
                                     Elimina
                                 </a>
+                                {% endif %}
                             </td>
                         </tr>
                     {% endfor %}

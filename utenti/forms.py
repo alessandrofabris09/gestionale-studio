@@ -1,3 +1,4 @@
+from studi.passwords import validate_form_password
 from django import forms
 from django.contrib.auth.models import User
 
@@ -44,7 +45,7 @@ class RegistrazioneStudioForm(forms.Form):
 
         username = self.cleaned_data.get('username')
 
-        if User.objects.filter(username=username).exists():
+        if User.objects.filter(username__iexact=username).exists():
 
             raise forms.ValidationError(
                 'Questo username è già stato utilizzato.'
@@ -56,7 +57,7 @@ class RegistrazioneStudioForm(forms.Form):
 
         email = self.cleaned_data.get('email')
 
-        if User.objects.filter(email=email).exists():
+        if User.objects.filter(email__iexact=email).exists():
 
             raise forms.ValidationError(
                 'Questa email è già registrata.'
@@ -78,6 +79,7 @@ class RegistrazioneStudioForm(forms.Form):
                 'Le password non coincidono.'
             )
 
+        validate_form_password(self, cleaned_data, 'password')
         return cleaned_data
     
 from studi.models import ProfiloUtente
@@ -123,7 +125,7 @@ class NuovoUtenteStudioForm(forms.Form):
 
         username = self.cleaned_data.get('username')
 
-        if User.objects.filter(username=username).exists():
+        if User.objects.filter(username__iexact=username).exists():
             raise forms.ValidationError(
                 'Questo username è già stato utilizzato.'
             )
@@ -134,12 +136,18 @@ class NuovoUtenteStudioForm(forms.Form):
 
         email = self.cleaned_data.get('email')
 
-        if User.objects.filter(email=email).exists():
+        if User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError(
                 'Questa email è già registrata.'
             )
 
         return email
+
+
+    def clean(self):
+        cleaned_data = super().clean()
+        validate_form_password(self, cleaned_data, 'password')
+        return cleaned_data
 
 
 class ModificaRuoloUtenteForm(forms.ModelForm):

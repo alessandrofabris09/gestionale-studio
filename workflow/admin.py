@@ -25,6 +25,7 @@ class TipoWorkflowAdmin(admin.ModelAdmin):
 
     list_display = (
         'nome',
+        'studio',
         'categoria',
         'attivo',
         'ordine',

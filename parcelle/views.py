@@ -1,26 +1,30 @@
 from io import BytesIO
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
+from uuid import uuid4
 
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.http import FileResponse
+from django.utils.timezone import localdate
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import mm
 
-from studi.utils import get_studio_utente
+from studi.utils import get_studio_utente, is_admin_piattaforma
 from studi.permessi import (
     puo_vedere_parcelle,
     puo_modificare_parcelle,
     puo_eliminare_parcelle,
 )
 
-from .models import Parcella
-from .forms import ParcellaForm
+from .models import Incasso, NumeroDocumentoDuplicato, Parcella
+from .forms import IncassoForm, ParcellaForm
 
 from attivita.models import Attivita
 
@@ -50,7 +54,7 @@ def get_parcelle_queryset(request):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         return Parcella.objects.all()
 
     return Parcella.objects.filter(
@@ -66,10 +70,12 @@ def lista_parcelle(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         return redirect('login')
 
     parcelle = get_parcelle_queryset(request).order_by('-id')
+    oggi = localdate()
+    scadenze_incasso = scadenze_incasso_aperte(request, entro=oggi + timedelta(days=7))
 
     ricerca = request.GET.get('ricerca')
 
@@ -88,6 +94,8 @@ def lista_parcelle(request):
         {
             'parcelle': parcelle,
             'ricerca': ricerca,
+            'scadenze_incasso': scadenze_incasso,
+            'oggi': oggi,
         }
     )
 
@@ -100,8 +108,8 @@ def nuova_parcella(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
-        return redirect('login')
+    if not studio:
+        return accesso_negato(request)
 
     if request.method == 'POST':
 
@@ -114,33 +122,47 @@ def nuova_parcella(request):
 
             parcella = form.save(commit=False)
 
-            if not request.user.is_superuser:
+            if not is_admin_piattaforma(request):
                 if parcella.pratica.studio != studio:
                     return accesso_negato(request)
 
-            parcella.save()
-
-            Attivita.objects.create(
-                pratica=parcella.pratica,
-                utente=request.user,
-                tipo='PARCELLA',
-                descrizione=(
-                    f'Creata {parcella.get_tipo_documento_display()}: '
-                    f'{parcella.numero_documento}'
+            try:
+                parcella.save()
+            except NumeroDocumentoDuplicato as errore:
+                form.add_error('numero_documento', errore)
+            else:
+                Attivita.objects.create(
+                    pratica=parcella.pratica,
+                    utente=request.user,
+                    tipo='PARCELLA',
+                    descrizione=(
+                        f'Creata {parcella.get_tipo_documento_display()}: '
+                        f'{parcella.numero_documento}'
+                    )
                 )
-            )
 
-            return redirect('lista_parcelle')
+                return redirect('lista_parcelle')
 
         else:
 
             print(form.errors)
 
     else:
-
-        form = ParcellaForm(
-            studio=studio
-        )
+        form = ParcellaForm(studio=studio)
+        pratica_id = request.GET.get('pratica')
+        if pratica_id:
+            try:
+                pratica = form.fields['pratica'].clean(pratica_id)
+            except ValidationError:
+                pass
+            else:
+                form.initial['pratica'] = pratica.pk
+                if not pratica.parcelle.exclude(tipo_documento='PREVENTIVO').exists():
+                    form.initial.update({
+                        'importo': pratica.compenso,
+                        'data_scadenza': pratica.scadenza_compenso,
+                        'descrizione': pratica.oggetto,
+                    })
 
     return render(
         request,
@@ -152,15 +174,16 @@ def nuova_parcella(request):
 
 
 @login_required
+@transaction.atomic
 def modifica_parcella(request, parcella_id):
 
     if not puo_modificare_parcelle(request):
         return accesso_negato(request)
 
-    parcella = get_object_or_404(
-        get_parcelle_queryset(request),
-        id=parcella_id
-    )
+    parcelle = get_parcelle_queryset(request)
+    if request.method == 'POST':
+        parcelle = parcelle.select_for_update(of=('self',))
+    parcella = get_object_or_404(parcelle, id=parcella_id)
 
     studio = get_studio_utente(request)
 
@@ -176,23 +199,26 @@ def modifica_parcella(request, parcella_id):
 
             parcella = form.save(commit=False)
 
-            if not request.user.is_superuser:
+            if not is_admin_piattaforma(request):
                 if parcella.pratica.studio != studio:
                     return accesso_negato(request)
 
-            parcella.save()
-
-            Attivita.objects.create(
-                pratica=parcella.pratica,
-                utente=request.user,
-                tipo='MODIFICA',
-                descrizione=(
-                    f'Modificata parcella: '
-                    f'{parcella.numero_documento}'
+            try:
+                parcella.save()
+            except NumeroDocumentoDuplicato as errore:
+                form.add_error('numero_documento', errore)
+            else:
+                Attivita.objects.create(
+                    pratica=parcella.pratica,
+                    utente=request.user,
+                    tipo='MODIFICA',
+                    descrizione=(
+                        f'Modificata parcella: '
+                        f'{parcella.numero_documento}'
+                    )
                 )
-            )
 
-            return redirect('lista_parcelle')
+                return redirect('lista_parcelle')
 
     else:
 
@@ -245,6 +271,64 @@ def elimina_parcella(request, parcella_id):
             'parcella': parcella
         }
     )
+
+
+@login_required
+@transaction.atomic
+def storico_incassi(request, parcella_id):
+    if not puo_vedere_parcelle(request):
+        return accesso_negato(request)
+    puo_registrare = puo_modificare_parcelle(request)
+    parcelle = get_parcelle_queryset(request).exclude(tipo_documento='PREVENTIVO')
+    if request.method == 'POST':
+        if not puo_registrare:
+            return accesso_negato(request)
+        parcelle = parcelle.select_for_update(of=('self',))
+    parcella = get_object_or_404(parcelle, pk=parcella_id)
+    form = IncassoForm(request.POST if request.method == 'POST' else None, initial={'chiave': uuid4()})
+    if request.method == 'POST' and form.is_valid():
+        dati = form.cleaned_data
+        if parcella.incassi.filter(chiave=dati['chiave']).exists():
+            return redirect('storico_incassi', parcella_id=parcella.pk)
+        if Incasso.objects.filter(chiave=dati['chiave']).exists():
+            form.add_error(None, 'Riapri lo storico per iniziare una nuova registrazione.')
+        elif dati['importo'] > parcella.saldo_residuo:
+            form.add_error('importo', 'L’importo supera il saldo residuo.')
+        else:
+            _, creato = Incasso.objects.get_or_create(
+                chiave=dati['chiave'],
+                defaults={'parcella': parcella, 'importo': dati['importo'],
+                          'data': dati['data'], 'riferimento': dati['riferimento']},
+            )
+            if not creato:
+                form.add_error(None, 'Riapri lo storico per iniziare una nuova registrazione.')
+            else:
+                parcella.importo_pagato += dati['importo']
+                parcella.data_pagamento = max(parcella.data_pagamento or dati['data'], dati['data'])
+                parcella.aggiorna_stato_pagamento()
+                Parcella.objects.filter(pk=parcella.pk).update(
+                    importo_pagato=parcella.importo_pagato,
+                    data_pagamento=parcella.data_pagamento, stato=parcella.stato,
+                )
+                return redirect('storico_incassi', parcella_id=parcella.pk)
+
+    incassi = list(parcella.incassi.all())
+    return render(request, 'parcelle/storico_incassi.html', {
+        'parcella': parcella, 'incassi': incassi,
+        'saldo_storico': parcella.importo_pagato - sum(incasso.importo for incasso in incassi),
+        'form': form if puo_registrare and parcella.saldo_residuo > 0 else None,
+    })
+
+
+def scadenze_incasso_aperte(request, *, entro=None):
+    if not puo_vedere_parcelle(request):
+        return []
+    parcelle = get_parcelle_queryset(request).filter(
+        tipo_documento__in=('PARCELLA', 'FATTURA'), data_scadenza__isnull=False,
+    ).order_by('data_scadenza', 'pk')
+    if entro is not None:
+        parcelle = parcelle.filter(data_scadenza__lte=entro)
+    return [parcella for parcella in parcelle if parcella.saldo_residuo > 0]
 
 
 def euro(value):

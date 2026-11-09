@@ -1,3 +1,4 @@
+from django.db import transaction
 from datetime import timedelta
 
 from django.contrib.auth import login
@@ -9,6 +10,7 @@ from django.utils import timezone
 from studi.models import Studio, ProfiloUtente
 from studi.utils import (
     get_studio_utente,
+    is_admin_piattaforma,
     studio_puo_aggiungere_utenti,
 )
 from studi.permessi import puo_gestire_utenti
@@ -39,10 +41,10 @@ def lista_utenti(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
+    if not studio and not is_admin_piattaforma(request):
         return redirect('login')
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         profili = ProfiloUtente.objects.all().select_related(
             'user',
             'studio'
@@ -72,6 +74,7 @@ def lista_utenti(request):
 
 
 @login_required
+@transaction.atomic
 def nuovo_utente(request):
 
     if not puo_gestire_utenti(request):
@@ -79,10 +82,10 @@ def nuovo_utente(request):
 
     studio = get_studio_utente(request)
 
-    if not studio and not request.user.is_superuser:
-        return redirect('login')
+    if not studio:
+        return accesso_negato(request)
 
-    if not request.user.is_superuser:
+    if not is_admin_piattaforma(request):
 
         if not studio_puo_aggiungere_utenti(studio):
 
@@ -139,6 +142,7 @@ def nuovo_utente(request):
     )
 
 
+@transaction.atomic
 def registrazione_studio(request):
 
     if request.user.is_authenticated:
@@ -176,7 +180,6 @@ def registrazione_studio(request):
                 piano='FREE',
                 stato_abbonamento='TRIAL',
                 trial_fino_al=timezone.now().date() + timedelta(days=14),
-                limite_pratiche=20,
                 limite_utenti=1,
                 limite_storage_mb=500
             )
@@ -191,9 +194,6 @@ def registrazione_studio(request):
 
             return redirect('home')
 
-        else:
-
-            print(form.errors)
 
     else:
 

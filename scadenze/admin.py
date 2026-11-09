@@ -11,12 +11,16 @@ class ScadenzaAdmin(admin.ModelAdmin):
         'data_scadenza',
         'priorita',
         'completata',
+        'archiviata',
     )
 
     list_filter = (
         'priorita',
         'completata',
+        'archiviata',
     )
+
+    readonly_fields = ('workflow_origine', 'archiviata')
 
     search_fields = (
         'titolo',

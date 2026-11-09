@@ -94,7 +94,7 @@ class RegistrazioneStudioForm(UserCreationForm):
             'email'
         )
 
-        if User.objects.filter(email=email).exists():
+        if User.objects.filter(email__iexact=email).exists():
 
             raise forms.ValidationError(
                 'Esiste già un account con questa email.'

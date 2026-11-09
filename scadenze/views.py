@@ -1,3 +1,8 @@
+from urllib.parse import urlencode
+from django.core.paginator import Paginator
+from django.core.exceptions import ValidationError
+from django.db.models import Q, Count
+from django.utils.timezone import localdate
 from datetime import date, timedelta
 
 import os
@@ -15,9 +20,10 @@ from django.views.decorators.http import require_POST
 from attivita.models import Attivita
 from agenda.models import EventoAgenda
 from agenda.views import invia_email_agenda_giornaliera
+from parcelle.views import scadenze_incasso_aperte
 
 from studi.models import Studio
-from studi.utils import get_studio_utente
+from studi.utils import get_studio_utente, is_admin_piattaforma
 from studi.email_templates import layout_email_base, tabella_email
 from studi.notifiche import get_email_notifiche_studio
 from studi.permessi import (
@@ -44,7 +50,7 @@ def accesso_negato(request):
     )
 
 
-def get_scadenze_queryset(request):
+def get_scadenze_queryset(request, *, archiviate=False):
     """
     Restituisce le scadenze visibili dall'utente.
 
@@ -57,10 +63,11 @@ def get_scadenze_queryset(request):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
-        return Scadenza.objects.all()
+    if is_admin_piattaforma(request):
+        return Scadenza.objects.filter(archiviata=archiviate)
 
     return Scadenza.objects.filter(
+        archiviata=archiviate,
         pratica__studio=studio
     )
 
@@ -72,7 +79,7 @@ def get_eventi_agenda_queryset(request):
 
     studio = get_studio_utente(request)
 
-    if request.user.is_superuser:
+    if is_admin_piattaforma(request):
         return EventoAgenda.objects.all()
 
     return EventoAgenda.objects.filter(
@@ -82,31 +89,65 @@ def get_eventi_agenda_queryset(request):
 
 @login_required
 def lista_scadenze(request):
-
     if not puo_usare_agenda(request):
         return accesso_negato(request)
-
-    studio = get_studio_utente(request)
-
-    if not studio and not request.user.is_superuser:
+    if not get_studio_utente(request) and not is_admin_piattaforma(request):
         return redirect('login')
 
-    scadenze = get_scadenze_queryset(request).filter(
-        completata=False
-    ).order_by(
-        'data_scadenza'
-    )
+    oggi = localdate()
+    stato = request.GET.get('stato', 'aperte')
+    if stato not in {'aperte', 'scadute', 'completate', 'archivio'}:
+        stato = 'aperte'
+    ricerca = request.GET.get('q', '').strip()[:200]
+    priorita = request.GET.get('priorita', '')
+    if priorita not in {'ALTA', 'MEDIA', 'BASSA'}:
+        priorita = ''
 
-    context = {
-        'scadenze': scadenze,
-        'oggi': date.today(),
-    }
-
-    return render(
-        request,
-        'scadenze/lista_scadenze.html',
-        context
+    attive = get_scadenze_queryset(request)
+    conteggi = attive.aggregate(
+        aperte=Count('pk', filter=Q(completata=False)),
+        scadute=Count('pk', filter=Q(completata=False, data_scadenza__lt=oggi)),
+        completate=Count('pk', filter=Q(completata=True)),
     )
+    archiviate = get_scadenze_queryset(request, archiviate=True)
+    conteggi['archivio'] = archiviate.count()
+    if stato == 'archivio':
+        scadenze = archiviate
+    elif stato == 'completate':
+        scadenze = attive.filter(completata=True)
+    else:
+        scadenze = attive.filter(completata=False)
+        if stato == 'scadute':
+            scadenze = scadenze.filter(data_scadenza__lt=oggi)
+    if ricerca:
+        scadenze = scadenze.filter(
+            Q(titolo__icontains=ricerca) | Q(descrizione__icontains=ricerca) |
+            Q(pratica__oggetto__icontains=ricerca) | Q(pratica__cliente__nome__icontains=ricerca)
+        )
+    if priorita:
+        scadenze = scadenze.filter(priorita=priorita)
+    ordinamento = ('-data_scadenza', '-pk') if stato in {'completate', 'archivio'} else ('data_scadenza', 'pk')
+    page = Paginator(scadenze.select_related('pratica').order_by(*ordinamento), 25).get_page(request.GET.get('page'))
+
+    def query(**changes):
+        params = {'stato': stato, 'q': ricerca, 'priorita': priorita}
+        params.update(changes)
+        return urlencode({key: value for key, value in params.items() if value})
+
+    return render(request, 'scadenze/lista_scadenze.html', {
+        'scadenze': page,
+        'page_obj': page,
+        'oggi': oggi,
+        'stato': stato,
+        'ricerca': ricerca,
+        'priorita': priorita,
+        'conteggi': conteggi,
+        'query_pagine': query(),
+        'url_aperte': query(stato='aperte'),
+        'url_scadute': query(stato='scadute'),
+        'url_completate': query(stato='completate'),
+        'url_archivio': query(stato='archivio'),
+    })
 
 
 @login_required
@@ -170,6 +211,14 @@ def nuova_scadenza(request):
         form = ScadenzaForm(
             studio=studio
         )
+        pratica_id = request.GET.get('pratica')
+        if pratica_id:
+            try:
+                pratica = form.fields['pratica'].clean(pratica_id)
+            except ValidationError:
+                pass
+            else:
+                form.initial['pratica'] = pratica.pk
 
     return render(
         request,
@@ -195,6 +244,8 @@ def modifica_scadenza(request, scadenza_id):
         get_scadenze_queryset(request),
         id=scadenza_id
     )
+    if scadenza.da_pratica:
+        return redirect('dettaglio_pratica', pratica_id=scadenza.pratica_id)
 
     if request.method == 'POST':
 
@@ -256,6 +307,8 @@ def elimina_scadenza(request, scadenza_id):
         get_scadenze_queryset(request),
         id=scadenza_id
     )
+    if scadenza.da_pratica:
+        return redirect('dettaglio_pratica', pratica_id=scadenza.pratica_id)
 
     if request.method == 'POST':
 
@@ -302,6 +355,8 @@ def completa_scadenza(request, scadenza_id):
         get_scadenze_queryset(request),
         id=scadenza_id
     )
+    if scadenza.da_pratica:
+        return redirect('dettaglio_pratica', pratica_id=scadenza.pratica_id)
 
     if scadenza.pratica:
 
@@ -437,6 +492,16 @@ def eventi_calendario(request):
             'url': url,
         })
 
+    oggi = localdate()
+    for parcella in scadenze_incasso_aperte(request):
+        eventi.append({
+            'title': f'Incasso · {parcella.numero_documento}',
+            'start': parcella.data_scadenza.isoformat(),
+            'allDay': True,
+            'color': '#b91c1c' if parcella.data_scadenza < oggi else '#047857',
+            'url': reverse('storico_incassi', args=[parcella.pk]),
+        })
+
     eventi_agenda = get_eventi_agenda_queryset(request)
 
     for evento in eventi_agenda:
@@ -475,6 +540,7 @@ def invia_email_scadenze_leggera(studio):
     limite = oggi + timedelta(days=7)
 
     scadenze = Scadenza.objects.filter(
+        archiviata=False,
         pratica__studio=studio,
         completata=False,
         data_scadenza__gte=oggi,
@@ -607,6 +673,7 @@ def invia_email_scadenze_leggera(studio):
 
 
 @login_required
+@require_POST
 def invia_alert_email_manuale(request):
     """
     Invia solo la mail delle scadenze.
@@ -663,12 +730,13 @@ def invia_alert_email_manuale(request):
         request,
         'scadenze/alert_email_inviato.html',
         {
-            'messaggio': '<br>'.join(messaggi)
+            'messaggio': '\n'.join(messaggi)
         }
     )
 
 
 @login_required
+@require_POST
 def invia_alert_giornalieri_manuale(request):
     """
     Invia con un solo comando:
@@ -742,7 +810,7 @@ def invia_alert_giornalieri_manuale(request):
         request,
         'scadenze/alert_email_inviato.html',
         {
-            'messaggio': '<br>'.join(messaggi)
+            'messaggio': '\n'.join(messaggi)
         }
     )
 
@@ -788,6 +856,6 @@ def invia_alert_email_cron(request, codice):
         request,
         'scadenze/alert_email_inviato.html',
         {
-            'messaggio': '<br>'.join(messaggi)
+            'messaggio': '\n'.join(messaggi)
         }
     )

@@ -1,0 +1,17 @@
+{% load static %}
+<div class="selettore-workflow" data-selettore-workflow>
+    <div class="selettore-workflow-filtri" hidden>
+        <div class="selettore-categorie">
+            <button type="button" data-apri-categorie aria-expanded="false">Categoria <strong data-categoria-attiva>Tutte le categorie</strong></button>
+            <div class="selettore-categorie-opzioni" data-categorie role="group" aria-label="Filtra per categoria" hidden></div>
+        </div>
+        <label>Cerca per nome o sigla
+            <input type="search" data-ricerca placeholder="Es. CILA, DOCFA, ENEA">
+        </label>
+    </div>
+    {% include 'django/forms/widgets/select.html' %}
+    <div class="selettore-modelli" data-modelli hidden role="group" aria-label="Modelli disponibili"></div>
+    <button type="button" class="selettore-modello-scelto" data-modello-scelto hidden></button>
+    <p data-risultati role="status" hidden></p>
+</div>
+<script src="{% static 'js/selettore-workflow.js' %}" defer></script>
