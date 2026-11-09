@@ -5,6 +5,7 @@ import stripe
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
@@ -160,15 +161,15 @@ def stripe_webhook(request):
 
             try:
 
-                studio = Studio.objects.get(
-                    id=studio_id
-                )
-
-                attiva_piano_pro(
-                    studio=studio,
-                    customer_id=customer_id,
-                    subscription_id=subscription_id
-                )
+                with transaction.atomic():
+                    studio = Studio.objects.select_for_update().get(id=studio_id)
+                    # I rinnovi aggiornano lo stato tramite gli eventi di fattura.
+                    if not studio.stripe_subscription_id:
+                        attiva_piano_pro(
+                            studio=studio,
+                            customer_id=customer_id,
+                            subscription_id=subscription_id,
+                        )
 
             except Studio.DoesNotExist:
 

@@ -115,6 +115,24 @@ class CheckoutProtezioneTests(TestCase):
         self.assertEqual(self.studio.stato_abbonamento, 'ATTIVO')
         self.assertEqual(self.studio.stripe_subscription_id, 'sub_fittizia')
 
+        self.studio.stato_abbonamento = 'SCADUTO'
+        self.studio.save(update_fields=['stato_abbonamento'])
+        for subscription in ('sub_fittizia', 'sub_diversa'):
+            with self.subTest(subscription=subscription):
+                event['data']['object']['subscription'] = subscription
+                body = json.dumps(event)
+                signature = hmac.new(
+                    b'whsec_fittizio', f'{timestamp}.{body}'.encode(), hashlib.sha256
+                ).hexdigest()
+                response = self.client.post(
+                    '/billing/webhook/', body, content_type='application/json',
+                    HTTP_STRIPE_SIGNATURE=f't={timestamp},v1={signature}',
+                )
+                self.assertEqual(response.status_code, 200)
+                self.studio.refresh_from_db()
+                self.assertEqual(self.studio.stato_abbonamento, 'SCADUTO')
+                self.assertEqual(self.studio.stripe_subscription_id, 'sub_fittizia')
+
     def test_token_valido_consente_checkout(self):
         client = Client(enforce_csrf_checks=True)
         client.force_login(self.owner)
