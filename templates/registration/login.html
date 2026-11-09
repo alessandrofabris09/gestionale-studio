@@ -1,320 +1,83 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login - Gestionale Studio Tecnico</title>
+{% extends "registration/base_accesso.html" %}
 
+{% block titolo %}Login - Gestionale Studio Tecnico{% endblock %}
+{% block metadati %}
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     >
+{% endblock %}
 
-    <style>
-        *{
-            box-sizing:border-box;
-        }
+{% block descrizione %}
+    <p>
+        Organizza pratiche, clienti, immobili, scadenze, documenti,
+        agenda e parcelle in un unico ambiente professionale.
+    </p>
 
-        body{
-            margin:0;
-            font-family:var(--studio-font);
-            background:linear-gradient(135deg,#111827,#1f2937,#2563eb);
-            min-height:100vh;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            padding:25px;
-        }
+    <div class="features">
 
-        .login-wrapper{
-            width:100%;
-            max-width:1050px;
-            display:grid;
-            grid-template-columns:1.1fr .9fr;
-            background:white;
-            border-radius:30px;
-            overflow:hidden;
-            box-shadow:0 25px 60px rgba(0,0,0,0.30);
-        }
-
-        .brand-panel{
-            background:#111827;
-            color:white;
-            padding:55px;
-            display:flex;
-            flex-direction:column;
-            justify-content:space-between;
-            min-height:620px;
-        }
-
-        .logo-box{
-            width:76px;
-            height:76px;
-            border-radius:22px;
-            background:#2563eb;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:32px;
-            margin-bottom:28px;
-        }
-
-        .brand-panel h1{
-            font-size:38px;
-            line-height:1.15;
-            margin:0 0 18px 0;
-        }
-
-        .brand-panel p{
-            color:#d1d5db;
-            font-size:16px;
-            line-height:1.7;
-            margin:0;
-        }
-
-        .features{
-            display:grid;
-            gap:14px;
-            margin-top:35px;
-        }
-
-        .feature{
-            display:flex;
-            align-items:center;
-            gap:12px;
-            color:#e5e7eb;
-            font-weight:bold;
-        }
-
-        .feature i{
-            color:#60a5fa;
-        }
-
-        .login-panel{
-            padding:55px;
-            display:flex;
-            align-items:center;
-        }
-
-        .login-box{
-            width:100%;
-        }
-
-        .login-box h2{
-            font-size:32px;
-            color:#111827;
-            margin:0 0 8px 0;
-        }
-
-        .subtitle{
-            color:#6b7280;
-            font-size:15px;
-            margin-bottom:30px;
-            line-height:1.6;
-        }
-
-        .error{
-            background:#fee2e2;
-            color:#991b1b;
-            padding:14px;
-            border-radius:14px;
-            margin-bottom:20px;
-            font-weight:bold;
-        }
-
-        p{
-            margin-bottom:18px;
-        }
-
-        label{
-            display:block;
-            font-weight:800;
-            margin-bottom:8px;
-            color:#374151;
-            font-size:14px;
-        }
-
-        input{
-            width:100%;
-            padding:15px 16px;
-            border:1px solid #d1d5db;
-            border-radius:14px;
-            background:#f9fafb;
-            font-size:15px;
-        }
-
-        input:focus{
-            outline:none;
-            border-color:#2563eb;
-            background:white;
-            box-shadow:0 0 0 4px rgba(37,99,235,0.12);
-        }
-
-        .btn{
-            width:100%;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:9px;
-            background:#111827;
-            color:white;
-            border:0;
-            padding:15px;
-            border-radius:14px;
-            cursor:pointer;
-            font-size:16px;
-            font-weight:800;
-            margin-top:8px;
-            text-decoration:none;
-            transition:.2s;
-        }
-
-        .btn:hover{
-            background:#1f2937;
-            transform:translateY(-1px);
-        }
-
-        .register-link{
-            margin-top:24px;
-            padding-top:24px;
-            border-top:1px solid #e5e7eb;
-            text-align:center;
-        }
-
-        .register-link p{
-            color:#6b7280;
-            margin-bottom:14px;
-            font-size:14px;
-        }
-
-        .btn-secondary{
-            background:#f3f4f6;
-            color:#111827;
-            border:1px solid #d1d5db;
-        }
-
-        .btn-secondary:hover{
-            background:#e5e7eb;
-        }
-
-        @media(max-width:900px){
-            .login-wrapper{
-                grid-template-columns:1fr;
-            }
-
-            .brand-panel{
-                min-height:auto;
-                padding:35px;
-            }
-
-            .login-panel{
-                padding:35px;
-            }
-        }
-    </style>
-    <link rel="stylesheet" href="{% static 'css/studio-ui.css' %}">
-</head>
-
-<body class="studio-ui">
-
-    <div class="login-wrapper">
-
-        <div class="brand-panel">
-
-            <div>
-
-                <div class="logo-box">
-                    <i class="fa-solid fa-building-columns"></i>
-                </div>
-
-                <h1>
-                    Gestionale Studio Tecnico
-                </h1>
-
-                <p>
-                    Organizza pratiche, clienti, immobili, scadenze, documenti,
-                    agenda e parcelle in un unico ambiente professionale.
-                </p>
-
-                <div class="features">
-
-                    <div class="feature">
-                        <i class="fa-solid fa-check"></i>
-                        Pratiche edilizie e catastali
-                    </div>
-
-                    <div class="feature">
-                        <i class="fa-solid fa-check"></i>
-                        Documenti, P7M e archivio cloud
-                    </div>
-
-                    <div class="feature">
-                        <i class="fa-solid fa-check"></i>
-                        Agenda, scadenze e workflow
-                    </div>
-
-                    <div class="feature">
-                        <i class="fa-solid fa-check"></i>
-                        Dashboard e controllo economico
-                    </div>
-
-                </div>
-
-            </div>
-
+        <div class="feature">
+            <i class="fa-solid fa-check"></i>
+            Pratiche edilizie e catastali
         </div>
 
-        <div class="login-panel">
+        <div class="feature">
+            <i class="fa-solid fa-check"></i>
+            Documenti, P7M e archivio cloud
+        </div>
 
-            <div class="login-box">
+        <div class="feature">
+            <i class="fa-solid fa-check"></i>
+            Agenda, scadenze e workflow
+        </div>
 
-                <h2>
-                    Accedi
-                </h2>
-
-                <div class="subtitle">
-                    Inserisci le tue credenziali per entrare nel gestionale.
-                </div>
-
-                {% if form.errors %}
-                    <div class="error">
-                        Username o password non corretti.
-                    </div>
-                {% endif %}
-
-                <form method="post">
-
-                    {% csrf_token %}
-
-                    {{ form.as_p }}
-
-                    <button class="btn" type="submit">
-                        <i class="fa-solid fa-right-to-bracket"></i>
-                        Accedi
-                    </button>
-
-                </form>
-
-                <div class="register-link">
-                    <p><a href="{% url 'password_reset' %}">Password dimenticata?</a></p>
-
-                    <p>
-                        Non hai ancora uno studio registrato?
-                    </p>
-
-                    <a class="btn btn-secondary" href="/utenti/registrazione/">
-                        <i class="fa-solid fa-user-plus"></i>
-                        Crea nuovo studio
-                    </a>
-
-                </div>
-
-            </div>
-
+        <div class="feature">
+            <i class="fa-solid fa-check"></i>
+            Dashboard e controllo economico
         </div>
 
     </div>
+{% endblock %}
 
-</body>
-</html>
+{% block contenuto %}
+    <h2>
+        Accedi
+    </h2>
+
+    <div class="subtitle">
+        Inserisci le tue credenziali per entrare nel gestionale.
+    </div>
+
+    {% if form.errors %}
+        <div class="error">
+            Username o password non corretti.
+        </div>
+    {% endif %}
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button class="btn" type="submit">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            Accedi
+        </button>
+
+    </form>
+
+    <div class="register-link">
+        <p><a href="{% url 'password_reset' %}">Password dimenticata?</a></p>
+
+        <p>
+            Non hai ancora uno studio registrato?
+        </p>
+
+        <a class="btn btn-secondary" href="/utenti/registrazione/">
+            <i class="fa-solid fa-user-plus"></i>
+            Crea nuovo studio
+        </a>
+
+    </div>
+{% endblock %}
