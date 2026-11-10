@@ -70,6 +70,22 @@ def aggiorna_stato_abbonamento(studio, stato):
     studio.save()
 
 
+def offerta_pro_live_valida(price_id, coupon_id):
+    prezzo = stripe.Price.retrieve(price_id)
+    coupon = stripe.Coupon.retrieve(coupon_id, expand=['applies_to'])
+    ricorrenza = prezzo.recurring
+    prodotti = getattr(getattr(coupon, 'applies_to', None), 'products', [])
+    return (
+        prezzo.livemode and prezzo.active
+        and prezzo.currency == 'eur' and prezzo.unit_amount == 2900
+        and ricorrenza and ricorrenza.interval == 'month' and ricorrenza.interval_count == 1
+        and coupon.livemode and coupon.valid
+        and coupon.currency == 'eur' and coupon.amount_off == 1000
+        and coupon.duration == 'repeating' and coupon.duration_in_months == 12
+        and (not prodotti or prezzo.product in prodotti)
+    )
+
+
 def abbonamento_da_fattura(invoice):
     parent = invoice.get('parent') or {}
     details = parent.get('subscription_details') or {}
@@ -337,12 +353,27 @@ def checkout_pro(request):
         ]
 
     try:
+        if modalita_live and not offerta_pro_live_valida(
+            settings.STRIPE_PRICE_PRO_MONTHLY, coupon_primo_anno,
+        ):
+            return render(request, 'billing/success.html', {
+                'studio': studio,
+                'errore': 'L’offerta PRO non è disponibile al momento. Contatta il supporto.',
+            })
         while True:
             with transaction.atomic():
                 studio = Studio.objects.select_for_update().get(pk=studio.pk)
                 if studio.is_pro() or studio.stripe_subscription_id:
                     return redirect('abbonamento')
                 pending = studio.stripe_checkout_pending
+                if modalita_live and pending and any(
+                    pending['payload'].get(campo) != checkout_data[campo]
+                    for campo in ('line_items', 'discounts')
+                ):
+                    return render(request, 'billing/success.html', {
+                        'studio': studio,
+                        'errore': 'Il checkout precedente richiede una verifica. Contatta il supporto.',
+                    })
                 if not pending:
                     pending = {
                         'key': str(uuid4()),

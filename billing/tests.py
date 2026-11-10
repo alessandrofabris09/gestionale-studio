@@ -63,10 +63,25 @@ class CheckoutProtezioneTests(TestCase):
     @override_settings(STRIPE_SECRET_KEY='sk_live_fittizia')
     def test_checkout_live_applica_lo_sconto_configurato(self):
         sessione = SimpleNamespace(id='cs_qa', status='open', url='https://checkout.stripe.com/qa')
+        prezzo = SimpleNamespace(
+            livemode=True, active=True, currency='eur', unit_amount=2900, product='prod_pro',
+            recurring=SimpleNamespace(interval='month', interval_count=1),
+        )
+        coupon = SimpleNamespace(
+            livemode=True, valid=True, currency='eur', amount_off=1000,
+            duration='repeating', duration_in_months=12,
+        )
         with (
             patch.dict('os.environ', {'STRIPE_COUPON_PRO_FIRST_YEAR': 'coupon_fittizio'}),
+            patch('billing.views.stripe.Price.retrieve', return_value=prezzo),
+            patch('billing.views.stripe.Coupon.retrieve', return_value=coupon),
             patch('billing.views.stripe.checkout.Session.create', return_value=sessione) as create,
         ):
+            coupon.duration_in_months = 1
+            risposta = self.client.post('/billing/checkout/pro/')
+            self.assertContains(risposta, 'Contatta il supporto.')
+            create.assert_not_called()
+            coupon.duration_in_months = 12
             risposta = self.client.post('/billing/checkout/pro/')
         self.assertEqual(risposta.status_code, 302)
         self.assertEqual(create.call_args.kwargs['discounts'], [{'coupon': 'coupon_fittizio'}])
