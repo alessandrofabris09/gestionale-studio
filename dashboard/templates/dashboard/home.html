@@ -35,7 +35,7 @@ Dashboard gestionale
 
     .cards{
         display:grid;
-        grid-template-columns:repeat(5,1fr);
+        grid-template-columns:repeat(3,minmax(0,1fr));
         gap:18px;
     }
 
@@ -103,6 +103,24 @@ Dashboard gestionale
         border-bottom:1px solid #e5e7eb;
         font-size:15px;
         line-height:1.45;
+    }
+
+    .pratica-operativa,
+    .pratica-operativa-dati,
+    .operative-pagine{
+        display:flex;
+        flex-wrap:wrap;
+        align-items:center;
+        gap:8px 16px;
+    }
+
+    .pratica-operativa{
+        justify-content:space-between;
+    }
+
+    .operative-pagine,
+    .operative-altre{
+        margin-top:18px;
     }
 
     .item:last-child{
@@ -198,12 +216,6 @@ Dashboard gestionale
         height:300px;
     }
 
-    @media(max-width:1400px){
-        .cards{
-            grid-template-columns:repeat(3,1fr);
-        }
-    }
-
     @media(max-width:1000px){
         .cards{
             grid-template-columns:repeat(2,1fr);
@@ -240,15 +252,88 @@ Dashboard gestionale
     </div>
 
 
-    {% if notifiche and request.user|can_use_agenda %}
+    {% if puo_vedere_pratiche or request.user|can_use_agenda or request.user|can_view_parcelle %}
+    <div class="cards">
+        {% if puo_vedere_pratiche %}
+            <div class="card yellow">
+                <div class="card-title">Pratiche aperte</div>
+                <div class="number">{{ pratiche_operative.paginator.count }}</div>
+            </div>
+        {% endif %}
+        {% if request.user|can_use_agenda %}
+            <div class="card red">
+                <div class="card-title">Scadenze nei prossimi 7 giorni</div>
+                <div class="number">{{ scadenze_imminenti }}</div>
+            </div>
+        {% endif %}
+        {% if request.user|can_view_parcelle %}
+            <div class="card">
+                <div class="card-title">Da incassare</div>
+                <div class="number">€ {{ totale_da_incassare }}</div>
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
 
-        <div class="section">
+    {% if puo_vedere_pratiche or notifiche %}
+
+        <div class="section" id="notifiche-operative">
 
             <h2>
                 <i class="fa-solid fa-bell"></i>
                 Centro notifiche operative
             </h2>
 
+            {% if puo_vedere_pratiche %}
+                <h3>Pratiche aperte</h3>
+                <p class="muted">Prima le scadenze aperte più vicine, incluse quelle già passate. A parità di data viene prima la priorità più alta.</p>
+
+                {% for pratica in pratiche_operative %}
+                    <div class="item pratica-operativa">
+                        <div>
+                            <a href="{% url 'dettaglio_pratica' pratica.pk %}">{{ pratica.oggetto }}</a>
+                            <div class="muted">{{ pratica.cliente.nome }} · {{ pratica.get_stato_display }}</div>
+                        </div>
+                        <div class="pratica-operativa-dati">
+                            {% if pratica.scadenza_operativa %}
+                                <span class="badge {% if pratica.scadenza_operativa < oggi %}badge-red{% elif pratica.scadenza_operativa == oggi %}badge-yellow{% endif %}">
+                                    {% if pratica.scadenza_operativa < oggi %}Scaduta il
+                                    {% elif pratica.scadenza_operativa == oggi %}Scade oggi ·
+                                    {% else %}Scadenza{% endif %}
+                                    {{ pratica.scadenza_operativa|date:"d/m/Y" }}
+                                </span>
+                                {% if pratica.priorita_operativa == 'ALTA' %}
+                                    <span class="badge badge-red">Priorità alta</span>
+                                {% elif pratica.priorita_operativa == 'MEDIA' %}
+                                    <span class="badge badge-yellow">Priorità media</span>
+                                {% else %}
+                                    <span class="badge">Priorità bassa</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge">Nessuna scadenza aperta</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="muted">Nessuna pratica aperta.</p>
+                {% endfor %}
+
+                {% if pratiche_operative.has_other_pages %}
+                    <nav class="operative-pagine" aria-label="Pagine delle pratiche aperte">
+                        {% if pratiche_operative.has_previous %}
+                            <a class="action-btn" href="?operative={{ pratiche_operative.previous_page_number }}#notifiche-operative">Precedente</a>
+                        {% endif %}
+                        <span class="muted">Pagina {{ pratiche_operative.number }} di {{ pratiche_operative.paginator.num_pages }}</span>
+                        {% if pratiche_operative.has_next %}
+                            <a class="action-btn" href="?operative={{ pratiche_operative.next_page_number }}#notifiche-operative">Successiva</a>
+                        {% endif %}
+                    </nav>
+                {% endif %}
+            {% endif %}
+
+            {% if puo_vedere_pratiche and notifiche %}
+                <h3 class="operative-altre">Altri avvisi</h3>
+            {% endif %}
             {% for n in notifiche %}
 
                 <div class="item">
@@ -309,70 +394,6 @@ Dashboard gestionale
         </div>
 
     {% endif %}
-
-
-    <div class="cards">
-
-        {% if request.user|can_use_pratiche %}
-
-            <div class="card">
-                <div class="card-title">Clienti</div>
-                <div class="number">{{ tot_clienti }}</div>
-            </div>
-
-            <div class="card green">
-                <div class="card-title">Immobili</div>
-                <div class="number">{{ tot_immobili }}</div>
-            </div>
-
-            <div class="card yellow">
-                <div class="card-title">Pratiche aperte</div>
-                <div class="number">{{ pratiche_aperte }}</div>
-            </div>
-
-            <div class="card purple">
-                <div class="card-title">Pratiche concluse</div>
-                <div class="number">{{ pratiche_chiuse }}</div>
-            </div>
-
-        {% endif %}
-
-
-        {% if request.user|can_use_agenda %}
-
-            <div class="card red">
-                <div class="card-title">Scadenze nei prossimi 7 giorni</div>
-                <div class="number">{{ scadenze_imminenti }}</div>
-            </div>
-
-        {% endif %}
-
-
-        {% if request.user|can_view_parcelle %}
-
-            <div class="card">
-                <div class="card-title">Totale fatturato</div>
-                <div class="number">€ {{ totale_parcelle }}</div>
-            </div>
-
-            <div class="card green">
-                <div class="card-title">Totale incassato</div>
-                <div class="number">€ {{ totale_incassato }}</div>
-            </div>
-
-            <div class="card red">
-                <div class="card-title">Da incassare</div>
-                <div class="number">€ {{ totale_da_incassare }}</div>
-            </div>
-
-            <div class="card yellow">
-                <div class="card-title">Parcelle scadute</div>
-                <div class="number">{{ parcelle_scadute }}</div>
-            </div>
-
-        {% endif %}
-
-    </div>
 
 
     {% if request.user|can_use_agenda %}

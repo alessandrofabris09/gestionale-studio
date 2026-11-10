@@ -2,11 +2,10 @@ from datetime import timedelta
 
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Sum, Count
+from django.core.paginator import Paginator
+from django.db.models import Case, F, OuterRef, Q, Subquery, Sum, Value, When
 from django.shortcuts import render, redirect
 from django.utils.timezone import now, localdate
-
-from workflow.models import FasePratica, ChecklistPratica
 
 from studi.utils import (
     get_studio_utente,
@@ -85,11 +84,7 @@ def home(request):
         scadenze = Scadenza.objects.filter(archiviata=False)
         parcelle = Parcella.objects.all()
         eventi = EventoAgenda.objects.all()
-        clienti_qs = Cliente.objects.all()
-        immobili_qs = Immobile.objects.all()
         attivita_qs = Attivita.objects.all()
-        fasi_qs = FasePratica.objects.all()
-        checklist_qs = ChecklistPratica.objects.all()
 
     else:
         pratiche = Pratica.objects.filter(
@@ -109,33 +104,32 @@ def home(request):
             studio=studio
         )
 
-        clienti_qs = Cliente.objects.filter(
-            studio=studio
-        )
-
-        immobili_qs = Immobile.objects.filter(
-            studio=studio
-        )
-
         attivita_qs = Attivita.objects.filter(
             pratica__studio=studio
         )
 
-        fasi_qs = FasePratica.objects.filter(
-            workflow_pratica__pratica__studio=studio
+    puo_vedere_pratiche = puo_vedere_area_pratiche(request)
+    pratiche_operative = None
+    if puo_vedere_pratiche:
+        prima_scadenza = scadenze.filter(
+            pratica_id=OuterRef('pk'), completata=False,
+        ).annotate(
+            ordine_priorita=Case(
+                When(priorita='ALTA', then=Value(0)),
+                When(priorita='MEDIA', then=Value(1)),
+                default=Value(2),
+            ),
+        ).order_by('data_scadenza', 'ordine_priorita', 'pk')
+        aperte = pratiche.exclude(stato='CONCLUSA').select_related('cliente').annotate(
+            scadenza_operativa=Subquery(prima_scadenza.values('data_scadenza')[:1]),
+            priorita_operativa=Subquery(prima_scadenza.values('priorita')[:1]),
+            ordine_priorita=Subquery(prima_scadenza.values('ordine_priorita')[:1]),
+        ).order_by(
+            F('scadenza_operativa').asc(nulls_last=True),
+            F('ordine_priorita').asc(nulls_last=True),
+            'pk',
         )
-
-        checklist_qs = ChecklistPratica.objects.filter(
-            workflow_pratica__pratica__studio=studio
-        )
-
-    pratiche_aperte = pratiche.exclude(
-        stato='CONCLUSA'
-    ).count()
-
-    pratiche_chiuse = pratiche.filter(
-        stato='CONCLUSA'
-    ).count()
+        pratiche_operative = Paginator(aperte, 12).get_page(request.GET.get('operative'))
 
     attivita_recenti = attivita_qs.select_related(
         'utente',
@@ -229,36 +223,6 @@ def home(request):
                 'link': '/agenda/oggi/',
             })
 
-    if puo_vedere_area_pratiche(request):
-
-        fasi_scadute_qs = fasi_qs.filter(
-            completata=False,
-            data_scadenza__lt=oggi
-        )
-
-        if fasi_scadute_qs.exists():
-            notifiche.append({
-                'tipo': 'danger',
-                'icona': 'fa-diagram-project',
-                'titolo': 'Workflow in ritardo',
-                'testo': f'Hai {fasi_scadute_qs.count()} fasi workflow scadute.',
-                'link': '/pratiche/',
-            })
-
-        checklist_incomplete_qs = checklist_qs.filter(
-            obbligatorio=True,
-            completato=False
-        )
-
-        if checklist_incomplete_qs.exists():
-            notifiche.append({
-                'tipo': 'info',
-                'icona': 'fa-list-check',
-                'titolo': 'Checklist incomplete',
-                'testo': f'Hai {checklist_incomplete_qs.count()} voci obbligatorie ancora da completare.',
-                'link': '/pratiche/',
-            })
-
     labels_pratiche = []
 
     dati_pratiche = []
@@ -292,13 +256,9 @@ def home(request):
     context = {
         'studio_corrente': studio,
 
-        'tot_clienti': clienti_qs.count(),
-        'tot_immobili': immobili_qs.count(),
-        'tot_pratiche': pratiche.count(),
-        'tot_scadenze': scadenze.count(),
-
-        'pratiche_aperte': pratiche_aperte,
-        'pratiche_chiuse': pratiche_chiuse,
+        'puo_vedere_pratiche': puo_vedere_pratiche,
+        'pratiche_operative': pratiche_operative,
+        'oggi': localdate(),
         'scadenze_imminenti': scadenze_imminenti,
 
         'totale_parcelle': totale_parcelle,
