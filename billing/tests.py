@@ -9,7 +9,11 @@ from django.test import Client, TestCase, override_settings
 from studi.models import Studio, ProfiloUtente
 
 
-@override_settings(STRIPE_SECRET_KEY='sk_test_fittizia', STRIPE_PRICE_PRO_MONTHLY='price_fittizio')
+@override_settings(
+    STRIPE_SECRET_KEY='sk_test_fittizia',
+    STRIPE_PRICE_PRO_MONTHLY='price_fittizio',
+    STRIPE_WEBHOOK_SECRET='whsec_fittizio',
+)
 class CheckoutProtezioneTests(TestCase):
     def setUp(self):
         self.owner = User.objects.create_user('qa_checkout')
@@ -36,6 +40,15 @@ class CheckoutProtezioneTests(TestCase):
             self.assertEqual(response.status_code, 302)
             self.assertEqual(response['Location'], 'https://checkout.stripe.com/qa')
             self.assertEqual(create.call_args.kwargs['metadata']['studio_id'], str(self.studio.pk))
+
+    @override_settings(STRIPE_WEBHOOK_SECRET='')
+    def test_checkout_bloccato_senza_verifica_webhook(self):
+        with patch('billing.views.stripe.checkout.Session.create') as create:
+            risposta = self.client.post('/billing/checkout/pro/')
+        self.assertContains(risposta, 'Contatta il supporto.')
+        create.assert_not_called()
+        self.studio.refresh_from_db()
+        self.assertEqual(self.studio.stripe_checkout_pending, {})
 
     def test_altri_ruoli_non_avviano_checkout(self):
         for role in ['TECNICO', 'SEGRETERIA', 'COLLABORATORE']:
