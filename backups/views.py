@@ -9,6 +9,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from django.conf import settings
+from django.db import transaction
 from django.contrib.auth.decorators import login_required
 from django.core.files.base import File
 from django.core.files.storage import default_storage
@@ -115,7 +116,8 @@ def esegui_backup_database():
     filename_db = f'backup_database_{timestamp}.json'
     filepath_db = backup_dir / filename_db
 
-    with open(filepath_db, 'w', encoding='utf-8') as file:
+    # Il pool deve mantenere la stessa connessione finché dumpdata legge il cursore.
+    with open(filepath_db, 'w', encoding='utf-8') as file, transaction.atomic():
 
         call_command(
             'dumpdata',
@@ -836,7 +838,15 @@ def crea_backup_cron(request, codice):
 
     except Exception as exc:
 
-        logger.error('Backup automatico non riuscito (%s).', type(exc).__name__)
+        causa = exc
+        while causa.__cause__ is not None:
+            causa = causa.__cause__
+        logger.error(
+            'Backup automatico non riuscito (%s; causa: %s; SQLSTATE: %s).',
+            type(exc).__name__,
+            type(causa).__name__,
+            getattr(causa, 'sqlstate', None) or getattr(causa, 'pgcode', None) or '-',
+        )
         messaggio = 'Backup non completato. Consultare i log operativi.'
 
         return HttpResponse(
