@@ -386,7 +386,11 @@ class WebhookQA(BaseQA):
         for event_type in ['invoice.payment_failed','customer.subscription.deleted']:
             self.studio.piano='PRO'; self.studio.stato_abbonamento='ATTIVO'; self.studio.stripe_subscription_id='sub_qa'; self.studio.save()
             obj={'id':'sub_qa','subscription':'sub_qa'}
-            self.send({'type':event_type,'data':{'object':obj}})
+            with patch(
+                'billing.views.stripe.Subscription.retrieve',
+                return_value=SimpleNamespace(status='past_due'),
+            ):
+                self.send({'type':event_type,'data':{'object':obj}})
             self.studio.refresh_from_db(); self.assertFalse(self.studio.is_pro())
 
     def test_fattura_con_abbonamento_nel_parent(self):
@@ -403,14 +407,38 @@ class WebhookQA(BaseQA):
             },
         }
 
-        self.send({'type': 'invoice.payment_failed', 'data': {'object': invoice}})
+        with patch(
+            'billing.views.stripe.Subscription.retrieve',
+            return_value=SimpleNamespace(status='past_due'),
+        ):
+            self.send({'type': 'invoice.payment_failed', 'data': {'object': invoice}})
         self.studio.refresh_from_db()
         self.assertEqual(self.studio.stato_abbonamento, 'SCADUTO')
 
-        self.send({'type': 'invoice.paid', 'data': {'object': invoice}})
+        with patch(
+            'billing.views.stripe.Subscription.retrieve',
+            return_value=SimpleNamespace(status='active', customer='cus_qa'),
+        ):
+            self.send({'type': 'invoice.paid', 'data': {'object': invoice}})
+            self.send({'type': 'invoice.payment_failed', 'data': {'object': invoice}})
         self.studio.refresh_from_db()
         self.assertTrue(self.studio.is_pro())
         self.assertEqual(self.studio.stato_abbonamento, 'ATTIVO')
+
+    def test_webhook_riprova_se_stripe_non_risponde(self):
+        from stripe import StripeError
+
+        self.studio.piano = 'PRO'
+        self.studio.stato_abbonamento = 'ATTIVO'
+        self.studio.stripe_subscription_id = 'sub_qa'
+        self.studio.save()
+        with patch('billing.views.stripe.Subscription.retrieve', side_effect=StripeError()):
+            self.send(
+                {'type': 'invoice.payment_failed', 'data': {'object': {'subscription': 'sub_qa'}}},
+                expected_status=503,
+            )
+        self.studio.refresh_from_db()
+        self.assertTrue(self.studio.is_pro())
 
     def test_evento_sconosciuto_non_modifica_studio(self):
         self.send({'type':'qa.evento.sconosciuto','data':{'object':{}}})

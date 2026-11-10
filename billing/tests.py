@@ -50,6 +50,27 @@ class CheckoutProtezioneTests(TestCase):
         self.studio.refresh_from_db()
         self.assertEqual(self.studio.stripe_checkout_pending, {})
 
+    @override_settings(STRIPE_SECRET_KEY='sk_live_fittizia')
+    def test_checkout_live_richiede_lo_sconto_pubblicizzato(self):
+        with (
+            patch.dict('os.environ', {'STRIPE_COUPON_PRO_FIRST_YEAR': '  '}),
+            patch('billing.views.stripe.checkout.Session.create') as create,
+        ):
+            risposta = self.client.post('/billing/checkout/pro/')
+        self.assertContains(risposta, 'Contatta il supporto.')
+        create.assert_not_called()
+
+    @override_settings(STRIPE_SECRET_KEY='sk_live_fittizia')
+    def test_checkout_live_applica_lo_sconto_configurato(self):
+        sessione = SimpleNamespace(id='cs_qa', status='open', url='https://checkout.stripe.com/qa')
+        with (
+            patch.dict('os.environ', {'STRIPE_COUPON_PRO_FIRST_YEAR': 'coupon_fittizio'}),
+            patch('billing.views.stripe.checkout.Session.create', return_value=sessione) as create,
+        ):
+            risposta = self.client.post('/billing/checkout/pro/')
+        self.assertEqual(risposta.status_code, 302)
+        self.assertEqual(create.call_args.kwargs['discounts'], [{'coupon': 'coupon_fittizio'}])
+
     def test_altri_ruoli_non_avviano_checkout(self):
         for role in ['TECNICO', 'SEGRETERIA', 'COLLABORATORE']:
             self.profile.ruolo = role
@@ -141,10 +162,14 @@ class CheckoutProtezioneTests(TestCase):
         signature = hmac.new(
             b'whsec_fittizio', f'{timestamp}.{payload}'.encode(), hashlib.sha256
         ).hexdigest()
-        response = self.client.post(
-            '/billing/webhook/', payload, content_type='application/json',
-            HTTP_STRIPE_SIGNATURE=f't={timestamp},v1={signature}',
-        )
+        with patch(
+            'billing.views.stripe.Subscription.retrieve',
+            return_value=SimpleNamespace(status='active'),
+        ):
+            response = self.client.post(
+                '/billing/webhook/', payload, content_type='application/json',
+                HTTP_STRIPE_SIGNATURE=f't={timestamp},v1={signature}',
+            )
         self.assertEqual(response.status_code, 200)
         self.studio.refresh_from_db()
         self.assertEqual(self.studio.piano, 'PRO')

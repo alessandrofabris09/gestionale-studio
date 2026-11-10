@@ -79,6 +79,34 @@ def abbonamento_da_fattura(invoice):
     return subscription
 
 
+def allinea_abbonamento_stripe(subscription_id, *, cancellato=False):
+    if not subscription_id:
+        return
+
+    with transaction.atomic():
+        studio = Studio.objects.select_for_update().filter(
+            stripe_subscription_id=subscription_id
+        ).first()
+        if studio is None:
+            return
+
+        if cancellato:
+            disattiva_piano_pro(studio)
+            return
+
+        # Gli eventi possono arrivare duplicati o fuori ordine. Leggere Stripe
+        # dopo aver bloccato la riga impedisce di applicare uno stato arretrato.
+        subscription = stripe.Subscription.retrieve(subscription_id)
+        if subscription.status in ('active', 'trialing'):
+            attiva_piano_pro(studio, subscription.customer, subscription_id)
+        elif subscription.status == 'canceled':
+            disattiva_piano_pro(studio)
+        elif subscription.status in (
+            'past_due', 'unpaid', 'incomplete', 'incomplete_expired', 'paused',
+        ):
+            aggiorna_stato_abbonamento(studio, 'SCADUTO')
+
+
 @csrf_exempt
 @require_POST
 def stripe_webhook(request):
@@ -169,6 +197,9 @@ def stripe_webhook(request):
                     studio = Studio.objects.select_for_update().get(id=studio_id)
                     # I rinnovi aggiornano lo stato tramite gli eventi di fattura.
                     if not studio.stripe_subscription_id:
+                        subscription = stripe.Subscription.retrieve(subscription_id)
+                        if subscription.status not in ('active', 'trialing'):
+                            return HttpResponse(status=200)
                         studio.stripe_checkout_pending = {}
                         attiva_piano_pro(
                             studio=studio,
@@ -180,156 +211,29 @@ def stripe_webhook(request):
 
                 pass
 
-    # =========================
-    # FATTURA PAGATA
-    # =========================
+            except stripe.error.StripeError:
+                return HttpResponse(status=503)
 
-    elif event_type == 'invoice.paid':
-
-        invoice = event['data']['object']
-
-        subscription_id = abbonamento_da_fattura(invoice)
-
-        customer_id = invoice.get(
-            'customer'
+    elif event_type in (
+        'invoice.paid',
+        'invoice.payment_failed',
+        'customer.subscription.updated',
+        'customer.subscription.deleted',
+    ):
+        oggetto = event['data']['object']
+        subscription_id = (
+            abbonamento_da_fattura(oggetto)
+            if event_type.startswith('invoice.')
+            else oggetto.get('id')
         )
-
-        if subscription_id:
-
-            try:
-
-                studio = Studio.objects.get(
-                    stripe_subscription_id=subscription_id
-                )
-
-                attiva_piano_pro(
-                    studio=studio,
-                    customer_id=customer_id,
-                    subscription_id=subscription_id
-                )
-
-            except Studio.DoesNotExist:
-
-                pass
-
-    # =========================
-    # PAGAMENTO FALLITO
-    # =========================
-
-    elif event_type == 'invoice.payment_failed':
-
-        invoice = event['data']['object']
-
-        subscription_id = abbonamento_da_fattura(invoice)
-
-        if subscription_id:
-
-            try:
-
-                studio = Studio.objects.get(
-                    stripe_subscription_id=subscription_id
-                )
-
-                aggiorna_stato_abbonamento(
-                    studio,
-                    'SCADUTO'
-                )
-
-            except Studio.DoesNotExist:
-
-                pass
-
-    # =========================
-    # SUBSCRIPTION AGGIORNATA
-    # =========================
-
-    elif event_type == 'customer.subscription.updated':
-
-        subscription = event['data']['object']
-
-        subscription_id = subscription.get(
-            'id'
-        )
-
-        customer_id = subscription.get(
-            'customer'
-        )
-
-        status = subscription.get(
-            'status'
-        )
-
-        if subscription_id:
-
-            try:
-
-                studio = Studio.objects.get(
-                    stripe_subscription_id=subscription_id
-                )
-
-                if status in [
-                    'active',
-                    'trialing',
-                ]:
-
-                    attiva_piano_pro(
-                        studio=studio,
-                        customer_id=customer_id,
-                        subscription_id=subscription_id
-                    )
-
-                elif status in [
-                    'past_due',
-                    'unpaid',
-                    'incomplete',
-                    'incomplete_expired',
-                    'paused',
-                ]:
-
-                    aggiorna_stato_abbonamento(
-                        studio,
-                        'SCADUTO'
-                    )
-
-                elif status in [
-                    'canceled',
-                ]:
-
-                    disattiva_piano_pro(
-                        studio
-                    )
-
-            except Studio.DoesNotExist:
-
-                pass
-
-    # =========================
-    # SUBSCRIPTION CANCELLATA
-    # =========================
-
-    elif event_type == 'customer.subscription.deleted':
-
-        subscription = event['data']['object']
-
-        subscription_id = subscription.get(
-            'id'
-        )
-
-        if subscription_id:
-
-            try:
-
-                studio = Studio.objects.get(
-                    stripe_subscription_id=subscription_id
-                )
-
-                disattiva_piano_pro(
-                    studio
-                )
-
-            except Studio.DoesNotExist:
-
-                pass
+        try:
+            allinea_abbonamento_stripe(
+                subscription_id,
+                cancellato=event_type == 'customer.subscription.deleted',
+            )
+        except stripe.error.StripeError:
+            # Stripe ritenterà la consegna. Lo studio resta nello stato precedente.
+            return HttpResponse(status=503)
 
     return HttpResponse(
         status=200
@@ -360,11 +264,13 @@ def checkout_pro(request):
     if studio.is_pro() or studio.stripe_subscription_id:
         return redirect('abbonamento')
 
+    coupon_primo_anno = os.environ.get('STRIPE_COUPON_PRO_FIRST_YEAR', '').strip()
+    modalita_live = settings.STRIPE_SECRET_KEY.startswith(('sk_live_', 'rk_live_'))
     if not all((
         settings.STRIPE_SECRET_KEY,
         settings.STRIPE_PRICE_PRO_MONTHLY,
         settings.STRIPE_WEBHOOK_SECRET,
-    )):
+    )) or (modalita_live and not coupon_primo_anno):
 
         return render(
             request,
@@ -421,11 +327,6 @@ def checkout_pro(request):
     else:
 
         checkout_data['customer_email'] = email_checkout
-
-    coupon_primo_anno = os.environ.get(
-        'STRIPE_COUPON_PRO_FIRST_YEAR',
-        ''
-    )
 
     if coupon_primo_anno:
 
