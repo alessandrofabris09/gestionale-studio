@@ -53,7 +53,9 @@ class CheckoutProtezioneTests(TestCase):
     @override_settings(STRIPE_SECRET_KEY='sk_live_fittizia')
     def test_checkout_live_richiede_lo_sconto_pubblicizzato(self):
         with (
-            patch.dict('os.environ', {'STRIPE_COUPON_PRO_FIRST_YEAR': '  '}),
+            patch.dict('os.environ', {
+                'STRIPE_COUPON_PRO_FIRST_YEAR': '  ', 'STRIPE_AUTOMATIC_TAX': 'true',
+            }),
             patch('billing.views.stripe.checkout.Session.create') as create,
         ):
             risposta = self.client.post('/billing/checkout/pro/')
@@ -65,6 +67,7 @@ class CheckoutProtezioneTests(TestCase):
         sessione = SimpleNamespace(id='cs_qa', status='open', url='https://checkout.stripe.com/qa')
         prezzo = SimpleNamespace(
             livemode=True, active=True, currency='eur', unit_amount=2900, product='prod_pro',
+            tax_behavior='exclusive',
             recurring=SimpleNamespace(interval='month', interval_count=1),
         )
         coupon = SimpleNamespace(
@@ -77,14 +80,27 @@ class CheckoutProtezioneTests(TestCase):
             patch('billing.views.stripe.Coupon.retrieve', return_value=coupon),
             patch('billing.views.stripe.checkout.Session.create', return_value=sessione) as create,
         ):
-            coupon.duration_in_months = 1
             risposta = self.client.post('/billing/checkout/pro/')
             self.assertContains(risposta, 'Contatta il supporto.')
             create.assert_not_called()
-            coupon.duration_in_months = 12
-            risposta = self.client.post('/billing/checkout/pro/')
+            self.studio.stripe_customer_id = 'cus_fittizio'
+            self.studio.save(update_fields=['stripe_customer_id'])
+            with (
+                patch.dict('os.environ', {'STRIPE_AUTOMATIC_TAX': 'true'}),
+                patch('billing.views.stripe.Customer.modify'),
+            ):
+                coupon.duration_in_months = 1
+                risposta = self.client.post('/billing/checkout/pro/')
+                self.assertContains(risposta, 'Contatta il supporto.')
+                create.assert_not_called()
+                coupon.duration_in_months = 12
+                risposta = self.client.post('/billing/checkout/pro/')
         self.assertEqual(risposta.status_code, 302)
         self.assertEqual(create.call_args.kwargs['discounts'], [{'coupon': 'coupon_fittizio'}])
+        self.assertEqual(create.call_args.kwargs['automatic_tax'], {'enabled': True})
+        self.assertEqual(create.call_args.kwargs['tax_id_collection'], {'enabled': True})
+        self.assertEqual(create.call_args.kwargs['billing_address_collection'], 'required')
+        self.assertEqual(create.call_args.kwargs['customer_update'], {'address': 'auto', 'name': 'auto'})
 
     def test_altri_ruoli_non_avviano_checkout(self):
         for role in ['TECNICO', 'SEGRETERIA', 'COLLABORATORE']:

@@ -78,6 +78,7 @@ def offerta_pro_live_valida(price_id, coupon_id):
     return (
         prezzo.livemode and prezzo.active
         and prezzo.currency == 'eur' and prezzo.unit_amount == 2900
+        and prezzo.tax_behavior == 'exclusive'
         and ricorrenza and ricorrenza.interval == 'month' and ricorrenza.interval_count == 1
         and coupon.livemode and coupon.valid
         and coupon.currency == 'eur' and coupon.amount_off == 1000
@@ -281,12 +282,13 @@ def checkout_pro(request):
         return redirect('abbonamento')
 
     coupon_primo_anno = os.environ.get('STRIPE_COUPON_PRO_FIRST_YEAR', '').strip()
+    iva_automatica = os.environ.get('STRIPE_AUTOMATIC_TAX', '').strip().lower() == 'true'
     modalita_live = settings.STRIPE_SECRET_KEY.startswith(('sk_live_', 'rk_live_'))
     if not all((
         settings.STRIPE_SECRET_KEY,
         settings.STRIPE_PRICE_PRO_MONTHLY,
         settings.STRIPE_WEBHOOK_SECRET,
-    )) or (modalita_live and not coupon_primo_anno):
+    )) or (modalita_live and not (coupon_primo_anno and iva_automatica)):
 
         return render(
             request,
@@ -344,6 +346,13 @@ def checkout_pro(request):
 
         checkout_data['customer_email'] = email_checkout
 
+    if iva_automatica:
+        checkout_data['automatic_tax'] = {'enabled': True}
+        checkout_data['tax_id_collection'] = {'enabled': True}
+        checkout_data['billing_address_collection'] = 'required'
+        if studio.stripe_customer_id:
+            checkout_data['customer_update'] = {'address': 'auto', 'name': 'auto'}
+
     if coupon_primo_anno:
 
         checkout_data['discounts'] = [
@@ -366,9 +375,9 @@ def checkout_pro(request):
                 if studio.is_pro() or studio.stripe_subscription_id:
                     return redirect('abbonamento')
                 pending = studio.stripe_checkout_pending
-                if modalita_live and pending and any(
-                    pending['payload'].get(campo) != checkout_data[campo]
-                    for campo in ('line_items', 'discounts')
+                if (modalita_live or iva_automatica) and pending and any(
+                    pending['payload'].get(campo) != checkout_data.get(campo)
+                    for campo in ('line_items', 'discounts', 'automatic_tax', 'tax_id_collection')
                 ):
                     return render(request, 'billing/success.html', {
                         'studio': studio,

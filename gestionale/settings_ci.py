@@ -7,6 +7,7 @@ os.environ['PYTHON_DOTENV_DISABLED'] = '1'
 os.environ['DATABASE_URL'] = ''
 os.environ['USE_BACKBLAZE_B2'] = 'False'
 os.environ['RESEND_API_KEY'] = ''
+os.environ['STRIPE_AUTOMATIC_TAX'] = ''
 os.environ.pop('RENDER', None)
 
 from .settings import *  # noqa: F403,E402
