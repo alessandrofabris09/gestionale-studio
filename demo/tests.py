@@ -48,7 +48,12 @@ class DemoTests(TestCase):
         self.assertFalse(mail.outbox)
 
     def test_condizioni_visibili_prima_della_candidatura(self):
-        self.assertContains(self.client.get(reverse('demo_home')), 'Candidati alla beta PRO')
+        home = self.client.get(reverse('demo_home'))
+        self.assertContains(home, 'Candidati alla beta PRO')
+        self.assertContains(home, 'prova gratuita di 14 giorni')
+        registrazione = 'href="https://app.studiotecnicocloud.it/accounts/registrazione/">Registrati al piano Free</a>'
+        self.assertContains(home, registrazione, count=2)
+        self.assertContains(self.client.get(self.lista), registrazione, count=1)
         for url in (self.lista, reverse('demo_termini')):
             response = self.client.get(url)
             for testo in ('15 studi', '6 mesi', '500 MB', '30 giorni prima', 'sola lettura', 'rinnovo automatico'):
