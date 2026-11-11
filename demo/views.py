@@ -26,6 +26,22 @@ from .models import DURATA_CONSENSO, DURATA_RICHIESTA, OBIETTIVO_PRO, VERSIONE_C
 
 logger = logging.getLogger(__name__)
 ATTESA_REINVIO = timedelta(minutes=15)
+ESEMPI_PRATICHE = {
+    'cila': {
+        'modello': 'CILA',
+        'checklist': [
+            'Delega e dati dei soggetti', 'Titoli edilizi di riferimento',
+            'Elaborati ante e post operam', 'Ricevuta del deposito',
+        ],
+    },
+    'docfa': {
+        'modello': 'DOCFA - nuova costruzione',
+        'checklist': [
+            'Estremi del tipo mappale', 'Planimetrie delle unità',
+            'Elaborato planimetrico ed elenco subalterni se pertinenti', 'Ricevuta catastale',
+        ],
+    },
+}
 
 
 def _contesto_pro():
@@ -70,12 +86,16 @@ def _invia_conferma(richiesta):
 
 @require_GET
 def home(request):
-    return render(request, 'demo/home.html', _contesto_pro())
+    return render(request, 'demo/home.html', {
+        **_contesto_pro(), 'esempio': ESEMPI_PRATICHE['cila'],
+    })
 
 
 @require_GET
 def prova(request):
-    return render(request, 'demo/prova.html')
+    return render(request, 'demo/prova.html', {
+        'esempi': ESEMPI_PRATICHE, 'esempio': ESEMPI_PRATICHE['cila'],
+    })
 
 
 @never_cache

@@ -3,14 +3,10 @@
 const pratica = document.querySelector('#pratica');
 const voci = Array.from(document.querySelectorAll('.voce'));
 const data = document.querySelector('#scadenza');
-const checklist = {
-    cila: ['Rilievo e foto', 'Elaborati grafici', 'Invio pratica'],
-    docfa: ['Verifica planimetria', 'Compilazione DOCFA', 'Presentazione al Catasto'],
-};
-const stati = {
-    cila: { voci: [false, false, false], data: '' },
-    docfa: { voci: [false, false, false], data: '' },
-};
+const esempi = JSON.parse(document.querySelector('#esempi-pratiche').textContent);
+const stati = Object.fromEntries(Object.entries(esempi).map(([chiave, esempio]) => [
+    chiave, { voci: esempio.checklist.map(() => false), data: '' },
+]));
 const formatoData = new Intl.DateTimeFormat('it-IT', { dateStyle: 'long' });
 
 function mostraRiepilogo() {
@@ -26,7 +22,7 @@ pratica.addEventListener('change', () => {
     const stato = stati[pratica.value];
     voci.forEach((voce, indice) => {
         voce.checked = stato.voci[indice];
-        voce.nextElementSibling.textContent = checklist[pratica.value][indice];
+        voce.nextElementSibling.textContent = esempi[pratica.value].checklist[indice];
     });
     data.value = stato.data;
     mostraRiepilogo();

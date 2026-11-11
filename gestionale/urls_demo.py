@@ -1,8 +1,14 @@
 from django.urls import path
 
 from demo import views
+from gestionale.cron import esegui_cron
 
 urlpatterns = [
+    path(
+        'cron/pulisci-candidature/', esegui_cron,
+        {'comando': 'pulisci_lista_pro', 'configurazione_token': 'DEMO_CLEANUP_CRON_TOKEN'},
+        name='cron_pulisci_candidature',
+    ),
     path('', views.home, name='demo_home'),
     path('prova/', views.prova, name='demo_prova'),
     path('pro/', views.lista, name='demo_lista'),

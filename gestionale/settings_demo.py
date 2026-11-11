@@ -74,12 +74,14 @@ EMAIL_BACKEND = (
 )
 ANYMAIL = {'RESEND_API_KEY': resend_key}
 EMAIL_TIMEOUT = 8
+DEMO_CLEANUP_CRON_TOKEN = os.environ.get('DEMO_CLEANUP_CRON_TOKEN', '')
 LANGUAGE_CODE = 'it'
 TIME_ZONE = 'Europe/Rome'
 USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles-demo'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 STORAGES = {
     'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
     'staticfiles': {'BACKEND': (

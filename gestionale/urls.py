@@ -5,9 +5,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 
+from gestionale.cron import esegui_cron
 
 urlpatterns = [
-
+    path(
+        'cron/avvisa-scadenza-beta/', esegui_cron,
+        {'comando': 'avvisa_scadenza_beta', 'configurazione_token': 'BETA_REMINDER_CRON_TOKEN'},
+        name='cron_avvisa_scadenza_beta',
+    ),
     path(
         'studi/',
         include('studi.urls')

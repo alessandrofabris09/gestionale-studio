@@ -7,16 +7,22 @@
     <meta name="description" content="Prova Studio Tecnico Cloud, il gestionale web per pratiche, checklist e scadenze degli studi tecnici.">
     {% block robots %}{% endblock %}
     <title>{% block titolo %}Studio Tecnico Cloud{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/studio-ui.css' %}">
     <link rel="stylesheet" href="{% static 'demo/demo.css' %}">
     {% block script %}{% endblock %}
 </head>
-<body>
-    <header class="barra contenitore">
-        <a class="marchio" href="{% url 'demo_home' %}">Studio Tecnico Cloud</a>
-        <nav aria-label="Navigazione principale">
-            <a href="{% url 'demo_prova' %}">Demo</a>
-            <a href="{% url 'demo_lista' %}">Piano PRO</a>
-        </nav>
+<body class="studio-ui">
+    <header class="barra">
+        <div class="contenitore barra-interna">
+            <a class="marchio" href="{% url 'demo_home' %}">
+                <img src="{% static 'img/logo.png' %}" width="38" height="38" alt="">
+                Studio Tecnico Cloud
+            </a>
+            <nav aria-label="Navigazione principale">
+                <a class="pulsante secondario" href="{% url 'demo_prova' %}">Prova la demo</a>
+                <a class="pulsante" href="{% url 'demo_lista' %}">Candidati alla beta PRO</a>
+            </nav>
+        </div>
     </header>
     <main id="contenuto" class="contenitore">{% block contenuto %}{% endblock %}</main>
     <footer class="contenitore piede">

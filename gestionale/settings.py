@@ -13,6 +13,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 BETA_PRO_CONDIZIONI_USCITA = os.environ.get('BETA_PRO_CONDIZIONI_USCITA', '')
+BETA_REMINDER_CRON_TOKEN = os.environ.get('BETA_REMINDER_CRON_TOKEN', '')
 
 
 # =========================

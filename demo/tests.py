@@ -120,6 +120,19 @@ class DemoTests(TestCase):
         self.assertEqual(self.client.post(self.lista, self.form).status_code, 429)
         self.assertFalse(mail.outbox)
 
+    @override_settings(DEMO_CLEANUP_CRON_TOKEN='token-test')
+    def test_pulizia_programmata_richiede_post_autenticato(self):
+        richiesta = RichiestaPro.objects.create(
+            email='scaduta@example.com', richiesta_il=timezone.now() - timedelta(days=2),
+        )
+        client = Client(enforce_csrf_checks=True)
+        url = reverse('cron_pulisci_candidature')
+        self.assertEqual(client.get(url, headers={'Authorization': 'Bearer token-test'}).status_code, 405)
+        self.assertEqual(client.post(url, headers={'Authorization': 'Bearer errato'}).status_code, 404)
+        self.assertTrue(RichiestaPro.objects.filter(pk=richiesta.pk).exists())
+        self.assertEqual(client.post(url, headers={'Authorization': 'Bearer token-test'}).status_code, 204)
+        self.assertFalse(RichiestaPro.objects.filter(pk=richiesta.pk).exists())
+
     def test_errore_email_non_conferma_la_richiesta(self):
         with patch('demo.views.send_mail', return_value=0):
             response = self.client.post(self.lista, self.form)

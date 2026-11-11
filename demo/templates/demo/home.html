@@ -9,11 +9,11 @@
     </div>
     <div class="pannello anteprima">
         <p class="occhiello">Pratica di esempio</p>
-        <h2>CILA · Ristrutturazione interna</h2>
+        <h2>{{ esempio.modello }}</h2>
         <ul class="riepilogo">
-            <li><span>Rilievo e foto</span><strong>Completato</strong></li>
-            <li><span>Elaborati grafici</span><strong>Da fare</strong></li>
-            <li><span>Invio pratica</span><strong>Prossima scadenza</strong></li>
+            {% for voce in esempio.checklist|slice:":3" %}
+                <li><span>{{ voce }}</span><strong>{% if forloop.first %}Completato{% else %}Da fare{% endif %}</strong></li>
+            {% endfor %}
         </ul>
     </div>
 </section>

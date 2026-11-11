@@ -12,7 +12,7 @@ from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -26,6 +26,21 @@ from .models import BetaStudio, ProfiloUtente, Studio
 
 
 class BetaStudioTests(TestCase):
+    @override_settings(BETA_REMINDER_CRON_TOKEN='token-test')
+    def test_promemoria_programmato_riporta_errori_senza_esporre_dettagli(self):
+        client = Client(enforce_csrf_checks=True)
+        url = reverse('cron_avvisa_scadenza_beta')
+        with patch('gestionale.cron.call_command', side_effect=[CommandError('dettagli interni'), None]) as comando:
+            self.assertEqual(client.post(url).status_code, 404)
+            comando.assert_not_called()
+            with self.assertLogs('gestionale.cron', level='ERROR'):
+                errore = client.post(url, headers={'Authorization': 'Bearer token-test'})
+            self.assertEqual(errore.status_code, 503)
+            self.assertEqual(errore.content, b'')
+            self.assertEqual(client.post(url, headers={'Authorization': 'Bearer token-test'}).status_code, 204)
+            self.assertEqual(comando.call_count, 2)
+            self.assertEqual(comando.call_args.args, ('avvisa_scadenza_beta',))
+
     def crea_studio(self, nome):
         utente = User.objects.create_user(nome, email=f'{nome}@example.test')
         studio = Studio.objects.create(nome=nome, titolare=utente)
