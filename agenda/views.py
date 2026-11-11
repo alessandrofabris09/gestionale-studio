@@ -370,6 +370,8 @@ def invia_email_agenda_giornaliera(studio):
     Invia allo studio una email riepilogativa degli eventi agenda di oggi.
     """
 
+    if studio.fase_beta() in ('LETTURA', 'CHIUSA'):
+        return 'Invio sospeso al termine della beta PRO.'
     oggi = now().date()
 
     eventi = EventoAgenda.objects.filter(
@@ -697,7 +699,7 @@ def calendario_ics(request, codice):
         calendario_ics_token=codice
     ).first()
 
-    if not studio:
+    if not studio or studio.fase_beta() == 'CHIUSA':
 
         return HttpResponse(
             'Calendario non disponibile o codice non valido.',

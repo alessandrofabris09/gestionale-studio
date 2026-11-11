@@ -4,6 +4,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+from gestionale.beta_pro import POSTI_BETA
+
 
 PIANI_STUDIO = [
     ('FREE', 'Free'),
@@ -136,13 +138,29 @@ class Studio(models.Model):
         return self.nome
 
     def is_pro(self):
+        return self.ha_piano_pro() or self.fase_beta() in ('ATTIVA', 'LETTURA')
+
+    def ha_piano_pro(self):
         return self.piano == 'PRO' and self.stato_abbonamento in [
             'ATTIVO',
             'TRIAL',
         ]
 
+    def fase_beta(self, oggi=None):
+        beta = getattr(self, 'beta_pro', None)
+        if beta is None or (self.ha_piano_pro() and self.stato_abbonamento == 'ATTIVO'):
+            return None
+        oggi = oggi or timezone.localdate()
+        if oggi < beta.attivata_il:
+            return None
+        if oggi < beta.fine_pro_il:
+            return 'ATTIVA'
+        if oggi < beta.fine_esportazione_il:
+            return 'LETTURA'
+        return 'CHIUSA'
+
     def is_free(self):
-        return self.piano == 'FREE'
+        return self.piano == 'FREE' and not self.is_pro()
 
     def trial_attivo(self):
 
@@ -153,6 +171,9 @@ class Studio(models.Model):
 
     def abbonamento_attivo(self):
 
+        if self.fase_beta() == 'ATTIVA':
+            return True
+
         if self.stato_abbonamento == 'TRIAL':
             return self.trial_attivo()
 
@@ -160,6 +181,30 @@ class Studio(models.Model):
             return True
 
         return False
+
+
+class BetaStudio(models.Model):
+    studio = models.OneToOneField(Studio, on_delete=models.SET_NULL, null=True, related_name='beta_pro')
+    posto = models.PositiveSmallIntegerField(unique=True)
+    attivata_il = models.DateField()
+    fine_pro_il = models.DateField()
+    fine_esportazione_il = models.DateField()
+    avvisata_il = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(posto__gte=1, posto__lte=POSTI_BETA),
+                name='studi_beta_posto_valido',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    fine_pro_il__gt=models.F('attivata_il'),
+                    fine_esportazione_il__gt=models.F('fine_pro_il'),
+                ),
+                name='studi_beta_date_in_ordine',
+            ),
+        ]
 
 
 class ProfiloUtente(models.Model):

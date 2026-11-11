@@ -1,0 +1,10 @@
+{% extends 'demo/base.html' %}
+{% block robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block titolo %}{{ titolo }} · Studio Tecnico Cloud{% endblock %}
+{% block contenuto %}
+<section class="pagina stretta">
+    <h1>{{ titolo }}</h1>
+    <p>{{ testo }}</p>
+    <a href="{% url 'demo_lista' %}">Torna alla pagina del piano PRO</a>
+</section>
+{% endblock %}

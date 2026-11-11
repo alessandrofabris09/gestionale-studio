@@ -1,0 +1,12 @@
+{% extends 'demo/base.html' %}
+{% block robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block titolo %}{{ titolo }} · Studio Tecnico Cloud{% endblock %}
+{% block contenuto %}
+<section class="pagina stretta">
+    <h1>{{ titolo }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        <button class="pulsante" type="submit">{{ azione }}</button>
+    </form>
+</section>
+{% endblock %}

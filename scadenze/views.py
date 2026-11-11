@@ -535,6 +535,8 @@ def invia_email_scadenze_leggera(studio):
     dei prossimi 7 giorni.
     """
 
+    if studio.fase_beta() in ('LETTURA', 'CHIUSA'):
+        return 'Invio sospeso al termine della beta PRO.'
     oggi = now().date()
 
     limite = oggi + timedelta(days=7)

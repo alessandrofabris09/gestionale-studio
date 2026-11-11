@@ -1,8 +1,10 @@
 import requests
 
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
+from gestionale.beta_pro import QUOTA_BETA_MB
 
 from studi.utils import (
     get_studio_utente,
@@ -106,7 +108,21 @@ def lista_documenti(request):
     )
 
 
+def limite_allegati(request, studio):
+    if studio.fase_beta():
+        return render(request, 'studi/beta_bloccata.html', {
+            'fase_beta': studio.fase_beta(), 'quota_beta_mb': QUOTA_BETA_MB,
+        }, status=403)
+    return render(request, 'studi/upgrade_required.html', {
+        'studio': studio,
+        'titolo': 'Limite storage raggiunto',
+        'messaggio': f'Il piano FREE consente massimo {studio.limite_storage_mb} MB di spazio.',
+        'azione': 'Passa al piano PRO',
+    })
+
+
 @login_required
+@transaction.atomic
 def carica_documento(request, pratica_id):
 
     if not puo_gestire_documenti(request):
@@ -140,19 +156,7 @@ def carica_documento(request, pratica_id):
                     file.size
                 ):
 
-                    return render(
-                        request,
-                        'studi/upgrade_required.html',
-                        {
-                            'studio': studio,
-                            'titolo': 'Limite storage raggiunto',
-                            'messaggio': (
-                                f'Il piano FREE consente massimo '
-                                f'{studio.limite_storage_mb} MB di spazio.'
-                            ),
-                            'azione': 'Passa al piano PRO',
-                        }
-                    )
+                    return limite_allegati(request, studio)
 
             documento = form.save(commit=False)
 
@@ -189,6 +193,7 @@ def carica_documento(request, pratica_id):
 
 
 @login_required
+@transaction.atomic
 def carica_documenti_multipli(request, pratica_id):
 
     if not puo_gestire_documenti(request):
@@ -227,19 +232,7 @@ def carica_documenti_multipli(request, pratica_id):
                     dimensione_totale
                 ):
 
-                    return render(
-                        request,
-                        'studi/upgrade_required.html',
-                        {
-                            'studio': studio,
-                            'titolo': 'Limite storage raggiunto',
-                            'messaggio': (
-                                f'Il piano FREE consente massimo '
-                                f'{studio.limite_storage_mb} MB di spazio.'
-                            ),
-                            'azione': 'Passa al piano PRO',
-                        }
-                    )
+                    return limite_allegati(request, studio)
 
             for file in files:
 

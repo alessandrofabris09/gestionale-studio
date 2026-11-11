@@ -1,0 +1,4 @@
+<div class="progresso">
+    <label for="adesioni">{{ totale }} candidatur{{ totale|pluralize:"a,e" }} confermat{{ totale|pluralize:"a,e" }} · obiettivo {{ obiettivo }}</label>
+    <progress id="adesioni" max="{{ obiettivo }}" value="{{ totale }}"></progress>
+</div>

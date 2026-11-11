@@ -1,9 +1,20 @@
+import logging
+from tempfile import TemporaryFile
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
+from django.core.cache import cache
+from django.core.management.base import CommandError
+from django.http import FileResponse, HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_POST
 
 from django.utils import timezone
+
+from backups.management.commands.esporta_allegati import scrivi_archivio_allegati
+from gestionale.beta_pro import QUOTA_BETA_MB
 
 from .utils import get_studio_utente, is_admin_piattaforma
 
@@ -11,10 +22,12 @@ from .models import ProfiloUtente
 from .forms import StudioForm, ProfiloUtenteRuoloForm, NuovoUtenteStudioForm
 
 from studi.permessi import (
+    is_titolare,
     puo_gestire_abbonamento,
     puo_gestire_utenti,
 )
 
+logger = logging.getLogger(__name__)
 
 def accesso_negato(request):
     """
@@ -36,6 +49,15 @@ def abbonamento(request):
     if not studio:
         logout(request)
         return redirect('login')
+
+    fase_beta = studio.fase_beta()
+    if fase_beta:
+        return render(request, 'studi/abbonamento_beta.html', {
+            'studio': studio,
+            'fase_beta': fase_beta,
+            'quota_beta_mb': QUOTA_BETA_MB,
+            'puo_esportare': is_titolare(request) and request.user.pk == studio.titolare_id,
+        })
 
     if not puo_gestire_abbonamento(request):
         return redirect('home')
@@ -61,6 +83,33 @@ def abbonamento(request):
         'studi/abbonamento.html',
         context
     )
+
+
+@login_required
+@require_POST
+@never_cache
+def esporta_beta(request):
+    studio = get_studio_utente(request)
+    if not studio or request.user.pk != studio.titolare_id or not is_titolare(request):
+        return HttpResponseForbidden('L’esportazione è disponibile per il titolare dello studio.')
+    if studio.fase_beta() != 'LETTURA':
+        return HttpResponseForbidden('L’esportazione è disponibile durante il periodo in sola lettura.')
+
+    chiave = f'beta-export-{studio.pk}'
+    if not cache.add(chiave, True, timeout=60):
+        return HttpResponse('Attendi un minuto prima di riprovare.', status=429)
+    archivio = TemporaryFile(mode='w+b')
+    try:
+        scrivi_archivio_allegati(archivio, studio.pk)
+        archivio.seek(0)
+    except (CommandError, OSError):
+        archivio.close()
+        logger.warning('Esportazione beta non riuscita per studio %s', studio.pk)
+        return HttpResponse('Archivio temporaneamente non disponibile. Riprova o contatta l’assistenza.', status=503)
+    except Exception:
+        archivio.close()
+        raise
+    return FileResponse(archivio, as_attachment=True, filename='studio-tecnico-cloud.zip')
 
 
 @login_required

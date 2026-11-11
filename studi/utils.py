@@ -1,3 +1,5 @@
+from gestionale.beta_pro import QUOTA_BETA_MB
+
 from .models import ProfiloUtente, Studio
 
 
@@ -21,15 +23,18 @@ def get_studio_utente(request):
     if not request.user.is_authenticated:
         return None
 
+    if hasattr(request, '_studio_corrente'):
+        return request._studio_corrente
     try:
-        profilo = ProfiloUtente.objects.select_related('studio').get(
+        profilo = ProfiloUtente.objects.select_related('studio__beta_pro').get(
             user=request.user
         )
-        return profilo.studio
+        request._studio_corrente = profilo.studio
     except ProfiloUtente.DoesNotExist:
         # Un amministratore della piattaforma non viene assegnato
         # automaticamente allo studio di un altro professionista.
-        return None
+        request._studio_corrente = None
+    return request._studio_corrente
 
 
 def is_admin_piattaforma(request):
@@ -133,7 +138,7 @@ def studio_deve_upgrade(studio):
     return False
 
 
-def studio_storage_usato_mb(studio):
+def studio_storage_usato_mb(studio, *, rigoroso=False):
     """
     Calcola lo storage documenti usato dallo studio in MB.
 
@@ -160,7 +165,8 @@ def studio_storage_usato_mb(studio):
                 try:
                     totale += documento.file.size
                 except Exception:
-                    pass
+                    if rigoroso:
+                        raise
 
     return totale / (1024 * 1024)
 
@@ -178,6 +184,19 @@ def studio_puo_caricare_file(studio, nuovo_file_size=0):
 
     if not studio:
         return False
+
+    if studio.fase_beta():
+        # Le viste di upload mantengono il blocco fino al salvataggio.
+        studio = Studio.objects.select_for_update().get(pk=studio.pk)
+        fase = studio.fase_beta()
+        if fase == 'ATTIVA':
+            try:
+                usati = studio_storage_usato_mb(studio, rigoroso=True)
+            except Exception:
+                return False
+            return usati + nuovo_file_size / (1024 * 1024) <= QUOTA_BETA_MB
+        if fase in ('LETTURA', 'CHIUSA'):
+            return False
 
     if studio.is_pro():
         return True

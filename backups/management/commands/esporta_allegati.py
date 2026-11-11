@@ -1,4 +1,5 @@
 import json
+from io import TextIOWrapper
 from os import link
 from pathlib import Path
 from shutil import copyfileobj
@@ -42,6 +43,29 @@ def dati_operativi(studio_id):
         yield from modello.objects.filter(**{percorso: studio_id}).order_by('pk').iterator()
 
 
+def scrivi_archivio_allegati(destinazione, studio_id=None):
+    documenti = Documento.objects.only('file').order_by('pk')
+    if studio_id is not None:
+        documenti = documenti.filter(pratica__studio_id=studio_id)
+
+    indice = []
+    with ZipFile(destinazione, 'w', compression=ZIP_DEFLATED) as archivio:
+        for documento in documenti.iterator():
+            voce = f'allegati/{documento.pk}'
+            try:
+                with documento.file.open('rb') as origine, archivio.open(voce, 'w', force_zip64=True) as copia:
+                    copyfileobj(origine, copia)
+            except Exception as exc:
+                raise CommandError(f'Impossibile copiare il documento {documento.pk}. Archivio non pubblicato.') from exc
+            indice.append({'id': documento.pk, 'file': documento.file.name, 'voce_zip': voce})
+        archivio.writestr('indice.json', json.dumps(indice, ensure_ascii=False))
+        if studio_id is not None:
+            with archivio.open('dati-operativi.json', 'w', force_zip64=True) as voce:
+                with TextIOWrapper(voce, encoding='utf-8') as stream:
+                    serializers.serialize('json', dati_operativi(studio_id), stream=stream)
+    return len(indice)
+
+
 class Command(BaseCommand):
     help = 'Copia gli allegati di tutti gli studi in uno ZIP privato fuori dal progetto.'
 
@@ -50,12 +74,9 @@ class Command(BaseCommand):
         parser.add_argument('--studio-id', type=int, help='Esporta gli allegati e i dati operativi dello studio indicato.')
 
     def handle(self, *args, **options):
-        documenti = Documento.objects.only('file').order_by('pk')
         studio_id = options['studio_id']
-        if studio_id is not None:
-            if not Studio.objects.filter(pk=studio_id).exists():
-                raise CommandError('Studio non trovato.')
-            documenti = documenti.filter(pratica__studio_id=studio_id)
+        if studio_id is not None and not Studio.objects.filter(pk=studio_id).exists():
+            raise CommandError('Studio non trovato.')
 
         destinazione = options['destinazione'].resolve()
         if (
@@ -68,26 +89,10 @@ class Command(BaseCommand):
         if destinazione.exists():
             raise CommandError('Il file di destinazione esiste già.')
 
-        indice = []
         try:
             with TemporaryDirectory(dir=destinazione.parent) as cartella:
                 temporaneo = Path(cartella) / 'allegati.zip'
-                with ZipFile(temporaneo, 'w', compression=ZIP_DEFLATED) as archivio:
-                    for documento in documenti.iterator():
-                        voce = f'allegati/{documento.pk}'
-                        try:
-                            with documento.file.open('rb') as origine:
-                                with archivio.open(voce, 'w', force_zip64=True) as copia:
-                                    copyfileobj(origine, copia)
-                        except Exception as exc:
-                            raise CommandError(f'Impossibile copiare il documento {documento.pk}. Archivio non pubblicato.') from exc
-                        indice.append({'id': documento.pk, 'file': documento.file.name, 'voce_zip': voce})
-                    archivio.writestr('indice.json', json.dumps(indice, ensure_ascii=False))
-                    if studio_id is not None:
-                        with archivio.open('dati-operativi.json', 'w', force_zip64=True) as voce:
-                            from io import TextIOWrapper
-                            with TextIOWrapper(voce, encoding='utf-8') as stream:
-                                serializers.serialize('json', dati_operativi(studio_id), stream=stream)
+                numero_allegati = scrivi_archivio_allegati(temporaneo, studio_id)
 
                 with ZipFile(temporaneo) as archivio:
                     if archivio.testzip() is not None:
@@ -97,4 +102,4 @@ class Command(BaseCommand):
         except OSError as exc:
             raise CommandError(f'Impossibile scrivere l’archivio: {exc}') from exc
 
-        self.stdout.write(self.style.SUCCESS(f'Allegati copiati e verificati: {len(indice)}'))
+        self.stdout.write(self.style.SUCCESS(f'Allegati copiati e verificati: {numero_allegati}'))

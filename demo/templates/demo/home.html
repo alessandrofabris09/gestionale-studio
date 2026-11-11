@@ -1,0 +1,28 @@
+{% extends 'demo/base.html' %}
+{% block contenuto %}
+<section class="eroe">
+    <div>
+        <p class="occhiello">Gestionale web per studi tecnici</p>
+        <h1>Pratiche, checklist e scadenze in un unico posto.</h1>
+        <p class="introduzione">Prova a seguire una pratica edilizia dall’apertura alla prossima scadenza. La demo è gratuita e si apre nel browser.</p>
+        <a class="pulsante" href="{% url 'demo_prova' %}">Prova la demo gratuita</a>
+    </div>
+    <div class="pannello anteprima">
+        <p class="occhiello">Pratica di esempio</p>
+        <h2>CILA · Ristrutturazione interna</h2>
+        <ul class="riepilogo">
+            <li><span>Rilievo e foto</span><strong>Completato</strong></li>
+            <li><span>Elaborati grafici</span><strong>Da fare</strong></li>
+            <li><span>Invio pratica</span><strong>Prossima scadenza</strong></li>
+        </ul>
+    </div>
+</section>
+<section class="pannello pro">
+    <div>
+        <h2>Beta di Studio Tecnico Cloud PRO</h2>
+        <p>I primi {{ posti_beta }} studi ammessi potranno provare il PRO gratis per {{ mesi_beta }} mesi dall’attivazione.</p>
+        <a class="pulsante secondario" href="{% url 'demo_lista' %}">Candidati alla beta PRO</a>
+    </div>
+    {% include 'demo/progresso.html' %}
+</section>
+{% endblock %}

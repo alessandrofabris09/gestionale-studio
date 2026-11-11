@@ -1,0 +1,21 @@
+{% extends 'demo/base.html' %}
+{% block titolo %}Informativa privacy · Studio Tecnico Cloud{% endblock %}
+{% block contenuto %}
+<article class="pagina stretta legale">
+    <h1>Informativa privacy</h1>
+    <p>Questa informativa riguarda il sito dimostrativo di Studio Tecnico Cloud e le candidature alla beta PRO. Versione {{ versione_consenso }}.</p>
+    <h2>Titolare del trattamento</h2>
+    <p>Alessandro Fabris, Via Dei Furlani 115, 31029 Vittorio Veneto (TV), P. IVA 05330970269. Contatto <a href="mailto:info@studiotecnicocloud.it">info@studiotecnicocloud.it</a>.</p>
+    <h2>Dati trattati e finalità</h2>
+    <p>La demo è accessibile senza account. Le scelte nella simulazione avvengono nel browser e non vengono trasmesse al server.</p>
+    <p>Per erogare e proteggere il sito possono essere trattati dati tecnici di connessione, come indirizzo IP, data, ora e richieste al server. La base giuridica è il legittimo interesse a mantenere il servizio funzionante e a prevenire abusi (art. 6, par. 1, lett. f GDPR). I contatori temporanei contro gli abusi usano un identificativo derivato dall’IP per 10 minuti. Gli eventuali registri tecnici dell’hosting seguono il periodo di conservazione del servizio e sono consultati per diagnosi e sicurezza.</p>
+    <p>Se ti candidi alla beta, trattiamo l’email, le date della richiesta e della conferma e la versione del consenso per verificare l’indirizzo, gestire la candidatura e comunicarti l’esito e le condizioni della beta. La base giuridica è il tuo consenso (art. 6, par. 1, lett. a GDPR). Il conferimento è facoltativo e serve per partecipare alla selezione. Il contatore pubblico mostra un totale aggregato.</p>
+    <h2>Conservazione e revoca</h2>
+    <p>Il link di conferma scade dopo 24 ore. Le richieste non confermate vengono rimosse con la pulizia giornaliera dopo la scadenza. Le richieste confermate restano attive per un massimo di 365 giorni dalla conferma, salvo revoca anticipata, e vengono poi rimosse con la pulizia giornaliera. Puoi revocare il consenso con il link di ritiro o scrivendo al titolare. La revoca non pregiudica la liceità del trattamento precedente.</p>
+    <h2>Destinatari e trasferimenti</h2>
+    <p>Per questa demo sono previsti Render per l’hosting, Neon per il database e Resend per l’invio delle email. L’accesso è limitato al titolare, agli eventuali autorizzati e ai fornitori necessari per il servizio. I fornitori possono trattare dati anche fuori dallo Spazio economico europeo. In questi casi si applicano le garanzie del GDPR previste per il trasferimento, come una decisione di adeguatezza applicabile o le clausole contrattuali standard. Puoi chiedere al titolare informazioni sulle garanzie applicate e una copia delle garanzie pertinenti.</p>
+    <h2>I tuoi diritti</h2>
+    <p>Puoi chiedere accesso, rettifica, cancellazione, limitazione e, quando applicabile, portabilità. Puoi opporti al trattamento basato sul legittimo interesse e revocare il consenso in ogni momento. Scrivi a <a href="mailto:info@studiotecnicocloud.it">info@studiotecnicocloud.it</a>. Puoi presentare un reclamo al <a href="https://www.garanteprivacy.it/">Garante per la protezione dei dati personali</a>. Il sito non adotta decisioni automatizzate con effetti giuridici o analogamente significativi.</p>
+    <p>Per i dettagli sui cookie, consulta l’<a href="{% url 'demo_cookie' %}">informativa cookie</a>.</p>
+</article>
+{% endblock %}

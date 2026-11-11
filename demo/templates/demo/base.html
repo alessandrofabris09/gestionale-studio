@@ -1,0 +1,32 @@
+{% load static %}
+<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Prova Studio Tecnico Cloud, il gestionale web per pratiche, checklist e scadenze degli studi tecnici.">
+    {% block robots %}{% endblock %}
+    <title>{% block titolo %}Studio Tecnico Cloud{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'demo/demo.css' %}">
+    {% block script %}{% endblock %}
+</head>
+<body>
+    <header class="barra contenitore">
+        <a class="marchio" href="{% url 'demo_home' %}">Studio Tecnico Cloud</a>
+        <nav aria-label="Navigazione principale">
+            <a href="{% url 'demo_prova' %}">Demo</a>
+            <a href="{% url 'demo_lista' %}">Piano PRO</a>
+        </nav>
+    </header>
+    <main id="contenuto" class="contenitore">{% block contenuto %}{% endblock %}</main>
+    <footer class="contenitore piede">
+        <p>Alessandro Fabris · P. IVA 05330970269</p>
+        <nav aria-label="Informazioni legali">
+            <a href="{% url 'demo_privacy' %}">Privacy</a>
+            <a href="{% url 'demo_cookie' %}">Cookie</a>
+            <a href="{% url 'demo_termini' %}">Condizioni della demo</a>
+            <a href="mailto:info@studiotecnicocloud.it">Contatti</a>
+        </nav>
+    </footer>
+</body>
+</html>

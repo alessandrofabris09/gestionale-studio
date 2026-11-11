@@ -1,0 +1,28 @@
+{% extends 'demo/base.html' %}
+{% block titolo %}Candidati alla beta PRO · Studio Tecnico Cloud{% endblock %}
+{% block contenuto %}
+<section class="pagina stretta">
+    <h1>Candidati alla beta PRO</h1>
+    <p>I primi {{ posti_beta }} studi ammessi potranno usare il PRO gratis per {{ mesi_beta }} mesi. La candidatura è gratuita e senza impegno. Ti contatteremo via email per comunicarti l’esito.</p>
+    {% include 'demo/progresso.html' %}
+    <h2>Come funziona la prova</h2>
+    {% include 'demo/condizioni_beta.html' %}
+    <div class="pannello">
+        {% if inviata %}
+            <p role="status">Se devi ancora confermare la candidatura, controlla la posta. Il link è valido 24 ore dall’invio.</p>
+        {% else %}
+            <form method="post">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                {{ form.email.label_tag }}
+                {{ form.email }}
+                {{ form.email.errors }}
+                <label class="consenso" for="{{ form.consenso.id_for_label }}">{{ form.consenso }} <span>{{ form.consenso.label }}</span></label>
+                {{ form.consenso.errors }}
+                <p>Puoi ritirare il consenso in qualsiasi momento. Leggi l’<a href="{% url 'demo_privacy' %}">informativa privacy</a>.</p>
+                <button class="pulsante" type="submit">Invia la candidatura</button>
+            </form>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

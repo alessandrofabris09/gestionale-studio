@@ -1,0 +1,16 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<section class="card">
+    {% if fase_beta == 'ATTIVA' %}
+        <h1>Caricamento non disponibile</h1>
+        <p>La beta include {{ quota_beta_mb }} MB di allegati per studio. Controlla lo spazio disponibile e riprova.</p>
+    {% elif fase_beta == 'LETTURA' %}
+        <h1>Beta PRO in sola lettura</h1>
+        <p>Puoi consultare i dati dello studio. Il titolare può scaricare l’archivio dalla pagina Abbonamento.</p>
+    {% else %}
+        <h1>Periodo beta terminato</h1>
+        <p>Per assistenza sui dati dello studio, scrivi a <a href="mailto:info@studiotecnicocloud.it">info@studiotecnicocloud.it</a>.</p>
+    {% endif %}
+    <p><a class="btn" href="{% url 'abbonamento' %}">Vai ad Abbonamento</a></p>
+</section>
+{% endblock %}

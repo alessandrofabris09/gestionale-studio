@@ -12,6 +12,7 @@ from pathlib import Path
 # =========================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+BETA_PRO_CONDIZIONI_USCITA = os.environ.get('BETA_PRO_CONDIZIONI_USCITA', '')
 
 
 # =========================
@@ -108,6 +109,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
 
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'studi.middleware.AccessoBetaMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -268,6 +270,7 @@ if USE_BACKBLAZE_B2:
     AWS_QUERYSTRING_AUTH = True
 
     AWS_S3_FILE_OVERWRITE = False
+    AWS_S3_MAX_MEMORY_SIZE = 8 * 1024 * 1024
 
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',

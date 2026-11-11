@@ -1,0 +1,11 @@
+{% extends 'demo/base.html' %}
+{% block titolo %}Informativa cookie · Studio Tecnico Cloud{% endblock %}
+{% block contenuto %}
+<article class="pagina stretta legale">
+    <h1>Informativa cookie</h1>
+    <p>Il sito dimostrativo usa un cookie tecnico di prima parte, <code>csrftoken</code>, per proteggere i moduli della lista d’attesa e le azioni di conferma e ritiro da invii non autorizzati. Il cookie dura 24 ore.</p>
+    <p>La simulazione mantiene le modifiche in memoria nella scheda. Il sito non usa cookie di profilazione, pubblicità, strumenti di analisi del traffico o risorse incorporate di terze parti. Per il solo cookie tecnico non è richiesto il consenso.</p>
+    <p>Puoi cancellare o bloccare il cookie dalle impostazioni del browser. Se lo blocchi, i moduli potrebbero non funzionare.</p>
+    <p>Per contatti, finalità e diritti consulta l’<a href="{% url 'demo_privacy' %}">informativa privacy</a>.</p>
+</article>
+{% endblock %}

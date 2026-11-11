@@ -1,0 +1,39 @@
+{% extends 'demo/base.html' %}
+{% load static %}
+{% block titolo %}Demo interattiva · Studio Tecnico Cloud{% endblock %}
+{% block script %}<script defer src="{% static 'demo/prova.js' %}"></script>{% endblock %}
+{% block contenuto %}
+<section class="pagina">
+    <p class="occhiello">Studio dimostrativo</p>
+    <h1>Prova a seguire una pratica</h1>
+    <p class="introduzione">Scegli una pratica fittizia, spunta una voce e imposta una scadenza. Le modifiche durano fino a quando lasci o ricarichi la pagina.</p>
+    <noscript><p>Attiva JavaScript per usare la simulazione interattiva.</p></noscript>
+    <div class="griglia">
+        <section class="pannello" aria-labelledby="titolo-pratica">
+            <label for="pratica">Pratica di esempio</label>
+            <select id="pratica">
+                <option value="cila">CILA · Ristrutturazione interna</option>
+                <option value="docfa">DOCFA · Variazione catastale</option>
+            </select>
+            <h2 id="titolo-pratica">Checklist della pratica</h2>
+            <div class="checklist">
+                <label><input type="checkbox" class="voce"> <span>Rilievo e foto</span></label>
+                <label><input type="checkbox" class="voce"> <span>Elaborati grafici</span></label>
+                <label><input type="checkbox" class="voce"> <span>Invio pratica</span></label>
+            </div>
+            <label for="scadenza">Data di scadenza</label>
+            <input type="date" id="scadenza">
+        </section>
+        <section class="pannello" aria-labelledby="titolo-dashboard">
+            <p class="occhiello">Dashboard</p>
+            <h2 id="titolo-dashboard">Centro operativo</h2>
+            <div class="quadro" aria-live="polite">
+                <p><strong id="pratica-corrente">CILA · Ristrutturazione interna</strong></p>
+                <p id="avanzamento">0 di 3 voci completate</p>
+                <p id="prossima-scadenza">Nessuna scadenza impostata</p>
+            </div>
+        </section>
+    </div>
+    <p><a class="pulsante secondario" href="{% url 'demo_lista' %}">Candidati alla beta PRO</a></p>
+</section>
+{% endblock %}

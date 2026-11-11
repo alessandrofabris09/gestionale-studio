@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     abbonamento,
+    esporta_beta,
     profilo_studio,
     modifica_studio,
     utenti_studio,
@@ -10,6 +11,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path('beta/esporta/', esporta_beta, name='esporta_beta'),
     path(
         'abbonamento/',
         abbonamento,

@@ -1,0 +1,23 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<section class="card">
+    <h1>Beta PRO · {{ studio.nome }}</h1>
+    {% if fase_beta == 'ATTIVA' %}
+        <p>Prova attiva dal {{ studio.beta_pro.attivata_il|date:"j F Y" }}. La consultazione in sola lettura inizia il {{ studio.beta_pro.fine_pro_il|date:"j F Y" }}.</p>
+        <p>Spazio allegati incluso: {{ quota_beta_mb }} MB. La prova è gratuita e non prevede rinnovo automatico.</p>
+    {% elif fase_beta == 'LETTURA' %}
+        <p>La prova è terminata. Puoi consultare i dati fino al {{ studio.beta_pro.fine_esportazione_il|date:"j F Y" }} escluso.</p>
+        {% if puo_esportare %}
+            <form method="post" action="{% url 'esporta_beta' %}">
+                {% csrf_token %}
+                <button class="btn" type="submit">Scarica i dati e gli allegati dello studio</button>
+            </form>
+        {% else %}
+            <p>Il titolare dello studio può scaricare l’archivio.</p>
+        {% endif %}
+    {% else %}
+        <p>Il periodo di consultazione della beta è terminato.</p>
+    {% endif %}
+    <p>Per informazioni sul piano PRO o assistenza scrivi a <a href="mailto:info@studiotecnicocloud.it">info@studiotecnicocloud.it</a>.</p>
+</section>
+{% endblock %}

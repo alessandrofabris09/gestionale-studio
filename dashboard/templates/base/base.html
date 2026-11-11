@@ -564,6 +564,9 @@
                 </div>
             {% endif %}
 
+            {% if request.fase_beta == 'LETTURA' %}
+                <p>Beta PRO in sola lettura. <a href="{% url 'abbonamento' %}">Scadenza ed esportazione</a></p>
+            {% endif %}
             {% block content %}
             {% endblock %}
 
