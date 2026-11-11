@@ -33,6 +33,10 @@ Dashboard gestionale
         margin-bottom:8px;
     }
 
+    .hero-beta{
+        margin-top:16px;
+    }
+
     .cards{
         display:grid;
         grid-template-columns:repeat(3,minmax(0,1fr));
@@ -249,6 +253,9 @@ Dashboard gestionale
         <div class="muted" style="font-size:16px;">
             Panoramica operativa dello studio tecnico in base ai permessi del tuo ruolo.
         </div>
+        {% if candidatura_beta_pro_url and studio_corrente.piano == 'FREE' and not studio_corrente.is_pro and not studio_corrente.stripe_subscription_id and request.user|can_manage_subscription %}
+            <a href="{{ candidatura_beta_pro_url }}" class="btn hero-beta">Candidati alla beta PRO</a>
+        {% endif %}
     </div>
 
 

@@ -6,7 +6,7 @@ Upgrade richiesto
 {% endblock %}
 
 {% block page_title %}
-Passa al piano PRO
+{% if candidatura_beta_pro_url %}Beta PRO{% else %}Passa al piano PRO{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -265,6 +265,8 @@ Passa al piano PRO
             {% if request.user|can_manage_subscription %}
                 {% if studio.is_pro or studio.stripe_subscription_id %}
                     <a href="{% url 'abbonamento' %}" class="btn">Gestisci abbonamento</a>
+                {% elif candidatura_beta_pro_url %}
+                    <a href="{{ candidatura_beta_pro_url }}" class="btn">Candidati alla beta PRO</a>
                 {% else %}
                     <form method="post" action="{% url 'checkout_pro' %}">
                         {% csrf_token %}
@@ -287,7 +289,11 @@ Passa al piano PRO
 
         {% if not studio.is_pro and not studio.stripe_subscription_id %}
             <div class="note">
-                Puoi passare al piano PRO in qualsiasi momento. Dopo il pagamento il gestionale viene aggiornato automaticamente.
+                {% if candidatura_beta_pro_url %}
+                    La candidatura è gratuita. Il PRO viene attivato solo per gli studi ammessi.
+                {% else %}
+                    Puoi passare al piano PRO in qualsiasi momento. Dopo il pagamento il gestionale viene aggiornato automaticamente.
+                {% endif %}
             </div>
         {% endif %}
 

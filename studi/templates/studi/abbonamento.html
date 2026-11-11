@@ -233,6 +233,10 @@
                 Pro
             </h3>
 
+            {% if candidatura_beta_pro_url and not studio.is_pro and not studio.stripe_subscription_id %}
+            <div class="price">Beta gratuita</div>
+            <p>Puoi candidare il tuo studio per partecipare alla prova PRO.</p>
+            {% else %}
             <div class="price">
                 € 19
                 <span>/ mese + IVA primo anno</span>
@@ -243,6 +247,7 @@
                 Dal secondo anno il piano Pro passa a
                 <strong>€ 29/mese + IVA</strong>.
             </p>
+            {% endif %}
 
             <ul>
                 <li>✓ Pratiche estese</li>
@@ -262,6 +267,10 @@
 
                 <p>Hai già un abbonamento Stripe. Se il pagamento non è riuscito, contatta il supporto per riattivarlo.</p>
 
+            {% elif candidatura_beta_pro_url %}
+
+                <a href="{{ candidatura_beta_pro_url }}" class="btn">Candidati alla beta PRO</a>
+
             {% else %}
 
                 <form method="post" action="/billing/checkout/pro/">{% csrf_token %}<button type="submit" class="btn" style="border:0; cursor:pointer; font:inherit;">
@@ -274,11 +283,15 @@
 
     </div>
 
-    <div class="notice">
-        L'attivazione del piano PRO avviene solo dopo conferma sicura del pagamento
-        da parte di Stripe. La pagina di ritorno dal pagamento non abilita automaticamente
-        il piano.
-    </div>
+    {% if candidatura_beta_pro_url and not studio.is_pro and not studio.stripe_subscription_id %}
+        <div class="notice">La candidatura è gratuita. Il PRO viene attivato solo per gli studi ammessi.</div>
+    {% else %}
+        <div class="notice">
+            L'attivazione del piano PRO avviene solo dopo conferma sicura del pagamento
+            da parte di Stripe. La pagina di ritorno dal pagamento non abilita automaticamente
+            il piano.
+        </div>
+    {% endif %}
 
 </div>
 
