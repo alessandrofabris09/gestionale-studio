@@ -11,6 +11,7 @@ from .views import (
 
 urlpatterns = [
     path('', home, name='home'),
+    path('lancio/', views.lancio, name='lancio_beta'),
 
     path("privacy-policy/", views.privacy_policy, name="privacy_policy"),
 

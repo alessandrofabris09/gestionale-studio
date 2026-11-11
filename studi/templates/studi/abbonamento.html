@@ -233,7 +233,10 @@
                 Pro
             </h3>
 
-            {% if candidatura_beta_pro_url and not studio.is_pro and not studio.stripe_subscription_id %}
+            {% if lancio_beta_free and not studio.is_pro and not studio.stripe_subscription_id %}
+            <div class="price">Beta gratuita</div>
+            <p>La beta PRO aprirà al raggiungimento dell’obiettivo di registrazioni al piano Free.</p>
+            {% elif candidatura_beta_pro_url and not studio.is_pro and not studio.stripe_subscription_id %}
             <div class="price">Beta gratuita</div>
             <p>Puoi candidare il tuo studio per partecipare alla prova PRO.</p>
             {% else %}
@@ -267,6 +270,10 @@
 
                 <p>Hai già un abbonamento Stripe. Se il pagamento non è riuscito, contatta il supporto per riattivarlo.</p>
 
+            {% elif lancio_beta_free %}
+
+                <a href="{% url 'lancio_beta' %}#lancio-beta" class="btn">Segui il lancio della beta PRO</a>
+
             {% elif candidatura_beta_pro_url %}
 
                 <a href="{{ candidatura_beta_pro_url }}" class="btn">Candidati alla beta PRO</a>
@@ -283,7 +290,9 @@
 
     </div>
 
-    {% if candidatura_beta_pro_url and not studio.is_pro and not studio.stripe_subscription_id %}
+    {% if lancio_beta_free and not studio.is_pro and not studio.stripe_subscription_id %}
+        <div class="notice">Puoi usare il piano Free entro i suoi limiti mentre raccogliamo le iscrizioni per il lancio.</div>
+    {% elif candidatura_beta_pro_url and not studio.is_pro and not studio.stripe_subscription_id %}
         <div class="notice">La candidatura è gratuita. Il PRO viene attivato solo per gli studi ammessi.</div>
     {% else %}
         <div class="notice">
