@@ -33,12 +33,17 @@ class CheckoutProtezioneTests(TestCase):
         for path in ('/', '/login/'):
             self.assertContains(visitatore.get(path), 'href="https://demo.example.test/pro/"')
 
+        self.assertContains(self.client.get('/dashboard/'), 'Candidati alla beta PRO')
         abbonamento = self.client.get('/studi/abbonamento/')
         self.assertContains(abbonamento, 'Candidati alla beta PRO')
         self.assertNotContains(abbonamento, '/billing/checkout/pro/')
         with patch('billing.views.stripe.checkout.Session.create') as create:
             self.assertRedirects(self.client.post('/billing/checkout/pro/'), '/studi/abbonamento/')
             create.assert_not_called()
+
+        self.studio.piano = 'PRO'
+        self.studio.save(update_fields=['piano'])
+        self.assertNotContains(self.client.get('/dashboard/'), 'Candidati alla beta PRO')
 
     def test_post_senza_csrf_bloccato(self):
         client = Client(enforce_csrf_checks=True)
