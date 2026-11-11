@@ -278,7 +278,7 @@ def checkout_pro(request):
             'login'
         )
 
-    if settings.BETA_PRO_CANDIDATURA_URL or studio.is_pro() or studio.stripe_subscription_id:
+    if settings.LANCIO_BETA_FREE or settings.BETA_PRO_CANDIDATURA_URL or studio.is_pro() or studio.stripe_subscription_id:
         return redirect('abbonamento')
 
     coupon_primo_anno = os.environ.get('STRIPE_COUPON_PRO_FIRST_YEAR', '').strip()

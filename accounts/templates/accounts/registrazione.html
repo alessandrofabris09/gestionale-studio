@@ -221,7 +221,12 @@
             </h1>
 
             <p>
-                Attiva Studio Tecnico Cloud e prova il gestionale gratuitamente per 14 giorni.
+                {% if lancio_beta_free %}
+                    Registra il tuo studio e usa il piano Free senza scadenza, nei limiti del piano.
+                    La registrazione conta per il lancio della beta PRO. Gli studi ammessi ricevono l’invito via email.
+                {% else %}
+                    Attiva Studio Tecnico Cloud e prova il gestionale gratuitamente per 14 giorni.
+                {% endif %}
             </p>
         </div>
 

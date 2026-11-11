@@ -74,9 +74,9 @@
             Non hai ancora uno studio registrato?
         </p>
 
-        <a class="btn btn-secondary" href="/utenti/registrazione/">
+        <a class="btn btn-secondary" href="{% if lancio_beta_free %}/accounts/registrazione/{% else %}/utenti/registrazione/{% endif %}">
             <i class="fa-solid fa-user-plus"></i>
-            Crea nuovo studio
+            {% if lancio_beta_free %}Registrati al piano Free{% else %}Crea nuovo studio{% endif %}
         </a>
 
         {% if candidatura_beta_pro_url %}

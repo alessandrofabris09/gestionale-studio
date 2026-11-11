@@ -12,6 +12,7 @@ from pathlib import Path
 # =========================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+LANCIO_BETA_FREE = os.environ.get('LANCIO_BETA_FREE', os.environ.get('RENDER', '')).strip().lower() == 'true'
 BETA_PRO_CANDIDATURA_URL = os.environ.get(
     'BETA_PRO_CANDIDATURA_URL',
     'https://studio-tecnico-demo.onrender.com/pro/' if os.environ.get('RENDER') == 'true' else '',

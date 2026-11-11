@@ -254,6 +254,12 @@
                 I dati personali sono trattati per le seguenti finalità:
             </p>
 
+            {% if lancio_beta_free %}
+                <p>Per il lancio della beta PRO associamo allo studio data e ora della registrazione Free.
+                    Queste informazioni servono a calcolare il totale pubblicato in forma aggregata e a stabilire l’ordine degli inviti.
+                    Gli studi ammessi ricevono l’invito all’indirizzo email usato per la registrazione e possono rifiutarlo.</p>
+            {% endif %}
+
             <ul>
                 <li>consentire la navigazione sul sito e l’utilizzo dell’applicazione;</li>
                 <li>registrare l’utente e creare l’account;</li>

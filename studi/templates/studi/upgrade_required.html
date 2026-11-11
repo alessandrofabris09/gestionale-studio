@@ -6,7 +6,7 @@ Upgrade richiesto
 {% endblock %}
 
 {% block page_title %}
-{% if candidatura_beta_pro_url %}Beta PRO{% else %}Passa al piano PRO{% endif %}
+{% if lancio_beta_free or candidatura_beta_pro_url %}Beta PRO{% else %}Passa al piano PRO{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -265,6 +265,8 @@ Upgrade richiesto
             {% if request.user|can_manage_subscription %}
                 {% if studio.is_pro or studio.stripe_subscription_id %}
                     <a href="{% url 'abbonamento' %}" class="btn">Gestisci abbonamento</a>
+                {% elif lancio_beta_free %}
+                    <a href="{% url 'lancio_beta' %}#lancio-beta" class="btn">Segui il lancio della beta PRO</a>
                 {% elif candidatura_beta_pro_url %}
                     <a href="{{ candidatura_beta_pro_url }}" class="btn">Candidati alla beta PRO</a>
                 {% else %}
@@ -289,7 +291,9 @@ Upgrade richiesto
 
         {% if not studio.is_pro and not studio.stripe_subscription_id %}
             <div class="note">
-                {% if candidatura_beta_pro_url %}
+                {% if lancio_beta_free %}
+                    La beta PRO aprirà al raggiungimento dell’obiettivo di registrazioni al piano Free.
+                {% elif candidatura_beta_pro_url %}
                     La candidatura è gratuita. Il PRO viene attivato solo per gli studi ammessi.
                 {% else %}
                     Puoi passare al piano PRO in qualsiasi momento. Dopo il pagamento il gestionale viene aggiornato automaticamente.

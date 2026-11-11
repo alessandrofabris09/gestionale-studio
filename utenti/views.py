@@ -1,13 +1,12 @@
 from django.db import transaction
-from datetime import timedelta
+from django.conf import settings
 
 from django.contrib.auth import login
 from django.contrib.auth.models import Group, User
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-from django.utils import timezone
-
-from studi.models import Studio, ProfiloUtente
+from landing.lancio import crea_studio_free
+from studi.models import ProfiloUtente
 from studi.utils import (
     get_studio_utente,
     is_admin_piattaforma,
@@ -145,6 +144,9 @@ def nuovo_utente(request):
 @transaction.atomic
 def registrazione_studio(request):
 
+    if settings.LANCIO_BETA_FREE:
+        return redirect('/accounts/registrazione/')
+
     if request.user.is_authenticated:
 
         return redirect('home')
@@ -170,18 +172,13 @@ def registrazione_studio(request):
 
             user.groups.add(admin_group)
 
-            studio = Studio.objects.create(
+            studio = crea_studio_free(
                 nome=form.cleaned_data['nome_studio'],
                 titolare=user,
                 email=form.cleaned_data['email'],
                 telefono=form.cleaned_data.get('telefono', ''),
                 partita_iva=form.cleaned_data.get('partita_iva', ''),
                 attivo=True,
-                piano='FREE',
-                stato_abbonamento='TRIAL',
-                trial_fino_al=timezone.now().date() + timedelta(days=14),
-                limite_utenti=1,
-                limite_storage_mb=500
             )
 
             ProfiloUtente.objects.create(

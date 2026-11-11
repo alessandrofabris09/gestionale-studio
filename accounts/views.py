@@ -1,13 +1,10 @@
 from django.db import transaction
-from datetime import timedelta
-
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import render, redirect
-from django.utils import timezone
-
-from studi.models import Studio, ProfiloUtente
+from landing.lancio import crea_studio_free
+from studi.models import ProfiloUtente
 
 from .forms import RegistrazioneStudioForm
 
@@ -55,7 +52,7 @@ def registrazione_studio(request):
 
             user.save()
 
-            studio = Studio.objects.create(
+            studio = crea_studio_free(
                 nome=form.cleaned_data.get(
                     'nome_studio'
                 ),
@@ -66,11 +63,6 @@ def registrazione_studio(request):
                     'telefono'
                 ),
                 titolare=user,
-                piano='FREE',
-                stato_abbonamento='TRIAL',
-                trial_fino_al=timezone.now().date() + timedelta(days=14),
-                limite_utenti=1,
-                limite_storage_mb=500,
                 attivo=True,
             )
 
