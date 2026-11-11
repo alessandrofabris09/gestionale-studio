@@ -79,5 +79,9 @@
             Crea nuovo studio
         </a>
 
+        {% if candidatura_beta_pro_url %}
+            <a class="btn btn-secondary" href="{{ candidatura_beta_pro_url }}">Candidati alla beta PRO</a>
+        {% endif %}
+
     </div>
 {% endblock %}

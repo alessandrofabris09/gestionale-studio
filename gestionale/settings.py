@@ -12,6 +12,10 @@ from pathlib import Path
 # =========================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+BETA_PRO_CANDIDATURA_URL = os.environ.get(
+    'BETA_PRO_CANDIDATURA_URL',
+    'https://studio-tecnico-demo.onrender.com/pro/' if os.environ.get('RENDER') == 'true' else '',
+).strip()
 BETA_PRO_CONDIZIONI_USCITA = os.environ.get('BETA_PRO_CONDIZIONI_USCITA', '')
 BETA_REMINDER_CRON_TOKEN = os.environ.get('BETA_REMINDER_CRON_TOKEN', '')
 
@@ -145,6 +149,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'gestionale.context_processors.candidatura_beta_pro',
             ],
         },
     },

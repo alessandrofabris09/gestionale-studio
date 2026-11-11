@@ -505,6 +505,9 @@
                 <a href="{{ app_url }}/login/" class="btn btn-secondary">
                     Accedi al gestionale
                 </a>
+                {% if candidatura_beta_pro_url %}
+                    <a href="{{ candidatura_beta_pro_url }}" class="btn btn-secondary">Candidati alla beta PRO</a>
+                {% endif %}
             </div>
 
             <div class="hero-note">
@@ -670,7 +673,11 @@
             </h2>
 
             <p>
-                Puoi iniziare con il piano gratuito e passare al piano Pro quando lo studio cresce.
+                {% if candidatura_beta_pro_url %}
+                    Puoi iniziare con il piano gratuito o candidare il tuo studio alla beta PRO.
+                {% else %}
+                    Puoi iniziare con il piano gratuito e passare al piano Pro quando lo studio cresce.
+                {% endif %}
             </p>
         </div>
 
@@ -703,6 +710,10 @@
             <div class="price-card highlight">
                 <h3>Pro</h3>
 
+                {% if candidatura_beta_pro_url %}
+                <div class="price">Beta gratuita</div>
+                <p>Riservata agli studi ammessi. Consulta le condizioni e invia la candidatura.</p>
+                {% else %}
                 <div class="price">
                     € 19
                     <span>/ mese + IVA</span>
@@ -711,22 +722,29 @@
                 <p>
                     Prezzo di lancio per il primo anno. Dal secondo anno il piano Pro passa a € 29/mese + IVA.
                 </p>
+                {% endif %}
 
                 <p>
                     Pensato per studi tecnici che vogliono lavorare in modo continuativo e professionale.
                 </p>
 
                 <ul>
-                    <li><i class="fa-solid fa-check"></i>Prezzo bloccato a € 19/mese per il primo anno</li>
+                    {% if not candidatura_beta_pro_url %}
+                        <li><i class="fa-solid fa-check"></i>Prezzo bloccato a € 19/mese per il primo anno</li>
+                    {% endif %}
                     <li><i class="fa-solid fa-check"></i>Pratiche estese</li>
                     <li><i class="fa-solid fa-check"></i>Più utenti dello studio</li>
                     <li><i class="fa-solid fa-check"></i>Maggiore spazio documenti</li>
                     <li><i class="fa-solid fa-check"></i>Alert email e gestione completa</li>
                 </ul>
 
+                {% if candidatura_beta_pro_url %}
+                    <a href="{{ candidatura_beta_pro_url }}" class="btn btn-primary">Candidati alla beta PRO</a>
+                {% else %}
                 <a href="{{ app_url }}/accounts/registrazione/" class="btn btn-primary">
                     Prova gratis 14 giorni
                 </a>
+                {% endif %}
             </div>
 
         </div>

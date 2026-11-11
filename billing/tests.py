@@ -27,6 +27,19 @@ class CheckoutProtezioneTests(TestCase):
             create.assert_not_called()
             modify.assert_not_called()
 
+    @override_settings(BETA_PRO_CANDIDATURA_URL='https://demo.example.test/pro/')
+    def test_beta_mostra_la_candidatura_e_sospende_i_nuovi_checkout(self):
+        visitatore = Client()
+        for path in ('/', '/login/'):
+            self.assertContains(visitatore.get(path), 'href="https://demo.example.test/pro/"')
+
+        abbonamento = self.client.get('/studi/abbonamento/')
+        self.assertContains(abbonamento, 'Candidati alla beta PRO')
+        self.assertNotContains(abbonamento, '/billing/checkout/pro/')
+        with patch('billing.views.stripe.checkout.Session.create') as create:
+            self.assertRedirects(self.client.post('/billing/checkout/pro/'), '/studi/abbonamento/')
+            create.assert_not_called()
+
     def test_post_senza_csrf_bloccato(self):
         client = Client(enforce_csrf_checks=True)
         client.force_login(self.owner)
