@@ -1,0 +1,138 @@
+{% load static %}
+<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Gestisci pratiche, agenda, scadenze e parcelle con Studio Tecnico Cloud. Registrati al piano Free e partecipa al lancio della beta PRO.">
+    <title>Studio Tecnico Cloud | Gestionale per studi tecnici</title>
+    <link rel="stylesheet" href="{% static 'css/studio-ui.css' %}">
+    <link rel="stylesheet" href="{% static 'landing/campagna.css' %}">
+</head>
+<body class="studio-ui campagna">
+    <a class="salta-al-contenuto" href="#contenuto">Vai al contenuto</a>
+    <header class="barra-lancio">
+        <div class="larghezza barra-interna">
+            <a class="marchio-lancio" href="/">
+                <img src="{% static 'img/logo.png' %}" width="36" height="36" alt="">
+                <span>Studio Tecnico Cloud</span>
+            </a>
+            <nav aria-label="Navigazione principale">
+                <a class="nav-sezione" href="#funzionalita">Cosa puoi fare</a>
+                <a class="nav-sezione" href="#lancio-beta">Beta PRO</a>
+                <a class="azione azione-secondaria" href="{{ app_url }}/login/">Accedi</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="contenuto">
+        <section class="apertura" aria-labelledby="titolo-apertura">
+            <div class="larghezza apertura-griglia">
+                <div class="apertura-testo">
+                    <p class="destinatari">Per geometri, architetti e studi tecnici</p>
+                    <h1 id="titolo-apertura">Dalla pratica <span>alla parcella.</span></h1>
+                    <p class="introduzione">Apri una pratica, tieni d’occhio le scadenze e trasforma le ore lavorate in parcelle. Tutto nel gestionale del tuo studio.</p>
+                </div>
+
+                <figure class="filmato">
+                    <video controls playsinline preload="none" aria-label="Presentazione di Studio Tecnico Cloud" poster="{% static 'landing/media/studio-tecnico-cloud.webp' %}">
+                        <source src="{% static 'landing/media/studio-tecnico-cloud.mp4' %}" type="video/mp4">
+                        <a href="{% static 'landing/media/studio-tecnico-cloud.mp4' %}">Apri il video del gestionale</a>
+                    </video>
+                    <figcaption><strong>Guarda il gestionale in azione</strong><span>43 secondi</span></figcaption>
+                </figure>
+
+                <div class="apertura-azioni">
+                    <div class="azioni-affiancate">
+                        <a class="azione azione-principale" href="{{ app_url }}/accounts/registrazione/">Registrati al piano Free</a>
+                        <a class="link-lancio" href="#lancio-beta">Come funziona la beta PRO <span aria-hidden="true">↓</span></a>
+                    </div>
+                    <p>Con una sola registrazione inizi a usare il Free e partecipi al lancio della beta PRO.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="sezione-beta" id="lancio-beta" aria-labelledby="titolo-lancio-beta">
+            <div class="larghezza beta-griglia">
+                <div class="beta-stato">
+                    <h2 id="titolo-lancio-beta">La beta PRO apre a {{ obiettivo_iscrizioni_free }} studi</h2>
+                    <p>Contiamo le nuove registrazioni al piano Free dall’inizio della campagna.</p>
+                    <label for="avanzamento-beta">{{ iscrizioni_free }} / {{ obiettivo_iscrizioni_free }} studi Free registrati</label>
+                    <progress id="avanzamento-beta" value="{{ iscrizioni_free }}" max="{{ obiettivo_iscrizioni_free }}"></progress>
+                    {% if obiettivo_beta_raggiunto %}
+                        <p class="stato-raggiunto">Obiettivo raggiunto. Il prossimo passo è verificare le iscrizioni per aprire la beta.</p>
+                    {% endif %}
+                </div>
+                <div class="beta-percorso">
+                    <ol>
+                        <li><strong>Registrati al Free.</strong> Puoi usare subito il gestionale senza scadenza, entro i limiti del piano. La registrazione vale anche per il lancio.</li>
+                        <li><strong>Arriviamo a quota {{ obiettivo_iscrizioni_free }}.</strong> Raggiunto l’obiettivo, verifichiamo le iscrizioni in ordine di arrivo.</li>
+                        <li><strong>{{ mesi_beta_lancio }} mesi di PRO gratuito per i primi {{ posti_beta_lancio }} studi idonei.</strong> L’invito arriva via email. Se uno studio rinuncia, il posto passa al successivo.</li>
+                    </ol>
+                    <a class="azione azione-principale" href="{{ app_url }}/accounts/registrazione/">Registrati al piano Free</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="larghezza sezione-esempi" id="funzionalita" aria-labelledby="titolo-funzionalita">
+            <div class="intestazione-sezione">
+                <h2 id="titolo-funzionalita">Una pratica, dal sopralluogo alla parcella</h2>
+                <p>Un esempio di lavoro quotidiano, ripreso nel gestionale con dati fittizi.</p>
+            </div>
+            <div class="esempi-griglia">
+                <article class="esempio">
+                    <img src="{% static 'landing/media/esempio-cila.jpg' %}" width="1265" height="711" loading="lazy" alt="Fasi operative di una pratica CILA nel gestionale">
+                    <div class="esempio-testo">
+                        <h3>Segui le fasi di una CILA</h3>
+                        <p>Controlla quali elaborati mancano e aggiorna l’avanzamento dalla scheda pratica.</p>
+                    </div>
+                </article>
+                <article class="esempio">
+                    <img src="{% static 'landing/media/esempio-agenda.jpg' %}" width="1265" height="711" loading="lazy" alt="Agenda con un sopralluogo e le scadenze della pratica">
+                    <div class="esempio-testo">
+                        <h3>Ritrova sopralluogo e scadenza</h3>
+                        <p>Apri l’agenda e vedi subito l’orario del sopralluogo e la pratica a cui è collegato.</p>
+                    </div>
+                </article>
+                <article class="esempio">
+                    <img src="{% static 'landing/media/esempio-parcella.jpg' %}" width="1265" height="711" loading="lazy" alt="Parcella di esempio da 100 euro calcolata dalle ore lavorate">
+                    <div class="esempio-testo">
+                        <h3>Genera la parcella dalle ore</h3>
+                        <p>Nell’esempio, due ore registrate a 50 € l’ora diventano una parcella da 100 €.</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="larghezza domande" aria-labelledby="titolo-domande">
+            <h2 id="titolo-domande">Prima di registrarti</h2>
+            <div class="domande-elenco">
+                <details>
+                    <summary>Che cosa include il piano Free?</summary>
+                    <p>Il piano Free include fino a 20 pratiche, un utente per studio e 500 MB per gli allegati. Puoi usarlo anche se non ricevi un invito alla beta.</p>
+                </details>
+                <details>
+                    <summary>Devo inserire una carta?</summary>
+                    <p>La registrazione al Free non richiede una carta. Se ricevi l’invito alla beta, puoi decidere se accettarlo.</p>
+                </details>
+                <details>
+                    <summary>Ho già uno studio registrato. La mia iscrizione conta?</summary>
+                    <p>Il contatore include gli studi registrati a partire dall’apertura della campagna. Se hai già un account, puoi <a href="{{ app_url }}/login/">entrare con le tue credenziali</a>.</p>
+                </details>
+            </div>
+        </section>
+    </main>
+
+    <footer class="piede-lancio">
+        <div class="larghezza piede-interno">
+            <div><strong>Studio Tecnico Cloud</strong><span>P. IVA 05330970269</span></div>
+            <nav aria-label="Informazioni legali">
+                <a href="/privacy-policy/">Privacy</a>
+                <a href="/cookie-policy/">Cookie</a>
+                <a href="/termini/">Termini di utilizzo</a>
+                <a href="mailto:info@studiotecnicocloud.it">Contatti</a>
+            </nav>
+        </div>
+    </footer>
+</body>
+</html>

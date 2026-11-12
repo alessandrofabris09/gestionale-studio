@@ -140,76 +140,6 @@
             color:#6b7280;
         }
 
-        .video-presentazione{
-            min-width:0;
-            margin:0;
-        }
-
-        .video-presentazione video{
-            display:block;
-            width:100%;
-            aspect-ratio:16 / 9;
-            border-radius:20px;
-            background:#111827;
-            box-shadow:0 20px 48px rgba(15,23,42,.22);
-        }
-
-        .video-presentazione figcaption{
-            margin-top:12px;
-            color:#4b5563;
-            font-size:14px;
-        }
-
-        .lancio-beta{
-            padding:64px 8%;
-            background:#f5f8ff;
-            scroll-margin-top:32px;
-        }
-
-        .lancio-layout{
-            display:grid;
-            grid-template-columns:repeat(2,minmax(0,1fr));
-            gap:40px;
-            align-items:start;
-        }
-
-        .lancio-beta h2{
-            font-size:clamp(28px,4vw,40px);
-            margin-bottom:16px;
-        }
-
-        .lancio-beta p,
-        .lancio-passaggi li{
-            color:#374151;
-            line-height:1.65;
-        }
-
-        .lancio-contatore{
-            display:grid;
-            gap:10px;
-            margin:20px 0;
-        }
-
-        .lancio-contatore progress{
-            width:100%;
-            height:12px;
-            accent-color:#1d4ed8;
-        }
-
-        .lancio-passaggi{
-            display:grid;
-            gap:14px;
-            padding:20px 20px 20px 42px;
-            margin:0;
-            background:white;
-            border:1px solid #dbe5f4;
-            border-radius:20px;
-        }
-
-        @media(max-width:800px){
-            .lancio-layout{grid-template-columns:1fr;gap:24px;}
-        }
-
         .dashboard-preview{
             background:#111827;
             border-radius:24px;
@@ -542,7 +472,7 @@
             </a>
 
             <a href="{{ app_url }}/accounts/registrazione/" class="btn btn-primary">
-                {% if lancio_beta_free %}Registrati al piano Free{% else %}Prova gratis{% endif %}
+                Prova gratis
             </a>
         </div>
 
@@ -569,15 +499,13 @@
 
             <div class="hero-actions">
                 <a href="{{ app_url }}/accounts/registrazione/" class="btn btn-primary">
-                    {% if lancio_beta_free %}Registrati al piano Free{% else %}Prova gratis 14 giorni{% endif %}
+                    Prova gratis 14 giorni
                 </a>
 
                 <a href="{{ app_url }}/login/" class="btn btn-secondary">
                     Accedi al gestionale
                 </a>
-                {% if lancio_beta_free %}
-                    <a href="#lancio-beta" class="btn btn-secondary">Come funziona la beta PRO</a>
-                {% elif candidatura_beta_pro_url %}
+                {% if candidatura_beta_pro_url %}
                     <a href="{{ candidatura_beta_pro_url }}" class="btn btn-secondary">Candidati alla beta PRO</a>
                 {% endif %}
             </div>
@@ -587,15 +515,6 @@
             </div>
         </div>
 
-        {% if lancio_beta_free %}
-            <figure class="video-presentazione">
-                <video controls playsinline preload="none" aria-label="Presentazione di Studio Tecnico Cloud" poster="{% static 'landing/media/studio-tecnico-cloud.webp' %}">
-                    <source src="{% static 'landing/media/studio-tecnico-cloud.mp4' %}" type="video/mp4">
-                    <a href="{% static 'landing/media/studio-tecnico-cloud.mp4' %}">Apri il video del gestionale</a>
-                </video>
-                <figcaption>Il gestionale in funzione, con schermate reali e dati di esempio.</figcaption>
-            </figure>
-        {% else %}
         <div class="dashboard-preview">
 
             <div class="preview-top">
@@ -630,33 +549,8 @@
             </div>
 
         </div>
-        {% endif %}
 
     </section>
-
-    {% if lancio_beta_free %}
-    <section class="lancio-beta" id="lancio-beta" aria-labelledby="titolo-lancio-beta">
-        <div class="lancio-layout">
-            <div>
-                <h2 id="titolo-lancio-beta">La beta PRO apre a {{ obiettivo_iscrizioni_free }} studi</h2>
-                <p>Il piano Free è già aperto. Ogni nuovo studio registrato al piano Free conta per il lancio della beta.</p>
-                <div class="lancio-contatore">
-                    <label for="avanzamento-beta"><strong>{{ iscrizioni_free }} / {{ obiettivo_iscrizioni_free }} studi Free registrati</strong></label>
-                    <progress id="avanzamento-beta" value="{{ iscrizioni_free }}" max="{{ obiettivo_iscrizioni_free }}"></progress>
-                </div>
-                {% if obiettivo_beta_raggiunto %}
-                    <p>Obiettivo raggiunto. Il prossimo passo è verificare le iscrizioni per aprire la beta.</p>
-                {% endif %}
-                <a href="{{ app_url }}/accounts/registrazione/" class="btn btn-primary">Registrati al piano Free</a>
-            </div>
-            <ol class="lancio-passaggi">
-                <li><strong>Inizia con il Free.</strong> Registra il tuo studio e usa il gestionale senza scadenza, nei limiti del piano.</li>
-                <li><strong>Raggiungiamo quota {{ obiettivo_iscrizioni_free }}.</strong> La beta PRO partirà quando avremo raggiunto l’obiettivo e verificato le prime iscrizioni.</li>
-                <li><strong>I primi {{ posti_beta_lancio }} studi in ordine di iscrizione.</strong> Dopo la verifica, ricevono un invito a usare il PRO gratis per {{ mesi_beta_lancio }} mesi. Se uno studio rinuncia, il posto passa al successivo.</li>
-            </ol>
-        </div>
-    </section>
-    {% endif %}
 
 
     <section class="section">
@@ -771,7 +665,6 @@
     </section>
 
 
-    {% if not lancio_beta_free %}
     <section class="section">
 
         <div class="section-title">
@@ -859,8 +752,6 @@
     </section>
 
 
-    {% endif %}
-
     <section class="section cta">
 
         <h2>
@@ -872,7 +763,7 @@
         </p>
 
         <a href="{{ app_url }}/accounts/registrazione/" class="btn btn-primary">
-            {% if lancio_beta_free %}Registrati al piano Free{% else %}Crea il tuo studio{% endif %}
+            Crea il tuo studio
         </a>
 
         <a href="{{ app_url }}/login/" class="btn btn-secondary">
