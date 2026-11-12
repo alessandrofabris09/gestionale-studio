@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import seo, views
 
 from .views import (
     home,
@@ -10,6 +10,8 @@ from .views import (
 
 
 urlpatterns = [
+    path('robots.txt', seo.robots, name='landing_robots'),
+    path('sitemap.xml', seo.sitemap, name='landing_sitemap'),
     path('', home, name='home'),
     path('lancio/', views.lancio, name='lancio_beta'),
 

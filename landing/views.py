@@ -4,6 +4,7 @@ from django.views.decorators.http import require_safe
 
 from .lancio import MESI_BETA_LANCIO, OBIETTIVO_ISCRIZIONI_FREE, POSTI_BETA_LANCIO
 from .models import IscrizioneFreeLancio
+from .seo import URL_CANONICO
 
 
 def home(request):
@@ -15,7 +16,7 @@ def home(request):
 
 @require_safe
 def lancio(request):
-    context = {'app_url': settings.SITE_URL.rstrip('/')}
+    context = {'app_url': settings.SITE_URL.rstrip('/'), 'url_canonico': URL_CANONICO}
     if not settings.LANCIO_BETA_FREE:
         return render(request, 'landing/home.html', context)
 
