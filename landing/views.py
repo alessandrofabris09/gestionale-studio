@@ -16,16 +16,18 @@ def home(request):
 @require_safe
 def lancio(request):
     context = {'app_url': settings.SITE_URL.rstrip('/')}
-    if settings.LANCIO_BETA_FREE:
-        iscrizioni = IscrizioneFreeLancio.attive().count()
-        context.update({
-            'iscrizioni_free': iscrizioni,
-            'obiettivo_iscrizioni_free': OBIETTIVO_ISCRIZIONI_FREE,
-            'obiettivo_beta_raggiunto': iscrizioni >= OBIETTIVO_ISCRIZIONI_FREE,
-            'posti_beta_lancio': POSTI_BETA_LANCIO,
-            'mesi_beta_lancio': MESI_BETA_LANCIO,
-        })
-    return render(request, 'landing/home.html', context)
+    if not settings.LANCIO_BETA_FREE:
+        return render(request, 'landing/home.html', context)
+
+    iscrizioni = IscrizioneFreeLancio.attive().count()
+    context.update({
+        'iscrizioni_free': iscrizioni,
+        'obiettivo_iscrizioni_free': OBIETTIVO_ISCRIZIONI_FREE,
+        'obiettivo_beta_raggiunto': iscrizioni >= OBIETTIVO_ISCRIZIONI_FREE,
+        'posti_beta_lancio': POSTI_BETA_LANCIO,
+        'mesi_beta_lancio': MESI_BETA_LANCIO,
+    })
+    return render(request, 'landing/campagna.html', context)
 
 
 def privacy_policy(request):
