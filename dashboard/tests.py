@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal
 from unittest.mock import patch
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
@@ -7,6 +8,7 @@ from django.utils.timezone import localdate
 
 from clienti.models import Cliente
 from immobili.models import Immobile
+from parcelle.models import Parcella
 from pratiche.models import Pratica
 from scadenze.models import Scadenza
 from studi.models import Studio, ProfiloUtente
@@ -119,3 +121,72 @@ class PraticheOperativeTests(TestCase):
         self.assertNotContains(pagina, altrui.oggetto)
         seconda = self.client.get(reverse('home'), {'operative': 2})
         self.assertEqual(list(seconda.context['pratiche_operative']), [altre[-1]])
+
+
+class RiepilogoIncassiTests(TestCase):
+    def test_cila_dalle_ore_all_acconto(self):
+        titolare = User.objects.create_user('qa_incassi_cila')
+        studio = Studio.objects.create(nome='Studio CILA', titolare=titolare, stato_abbonamento='ATTIVO')
+        ProfiloUtente.objects.create(user=titolare, studio=studio, ruolo='TITOLARE')
+        cliente = Cliente.objects.create(nome='Cliente CILA', studio=studio)
+        immobile = Immobile.objects.create(cliente=cliente, comune='Treviso', studio=studio)
+        pratica = Pratica.objects.create(
+            oggetto='CILA di collaudo', studio=studio, cliente=cliente, immobile=immobile,
+            comune='Treviso', tipo_pratica='CILA',
+        )
+        self.client.force_login(titolare)
+        oggi = localdate()
+        consuntivo = reverse('lista_ore_pratica', args=[pratica.pk])
+        for attivita, ore in [('SOPRALLUOGO', '2'), ('RILIEVO', '3')]:
+            risposta = self.client.post(reverse('nuova_voce_ora', args=[pratica.pk]), {
+                'data': oggi.isoformat(), 'tipo_attivita': attivita, 'descrizione': attivita,
+                'ore': ore, 'tariffa_oraria': '40', 'fatturabile': 'on',
+            })
+            self.assertRedirects(risposta, consuntivo)
+
+        risposta = self.client.post(reverse('genera_parcella_da_ore', args=[pratica.pk]))
+        parcella = pratica.parcelle.get()
+        self.assertRedirects(risposta, reverse('modifica_parcella', args=[parcella.pk]))
+        self.assertEqual(parcella.importo, Decimal('200.00'))
+        self.assertEqual(pratica.voci_ore.filter(parcella=parcella).count(), 2)
+        parcella.data_scadenza = oggi - timedelta(days=1)
+        parcella.save(update_fields=['data_scadenza'])
+        Parcella.objects.create(
+            pratica=pratica, tipo_documento='PREVENTIVO', descrizione='Preventivo QA', importo=Decimal('500.00'),
+            data_scadenza=oggi - timedelta(days=1),
+        )
+
+        storico = reverse('storico_incassi', args=[parcella.pk])
+        chiave = self.client.get(storico).context['form'].initial['chiave']
+        acconto = {
+            'chiave': chiave, 'importo': '100.00', 'data': oggi.isoformat(), 'riferimento': 'Acconto',
+        }
+        for _ in range(2):
+            self.assertRedirects(self.client.post(storico, acconto), storico)
+        parcella.refresh_from_db()
+        self.assertEqual(parcella.stato, 'PARZIALE')
+        self.assertEqual(parcella.incassi.count(), 1)
+        self.assertEqual(parcella.saldo_residuo, Decimal('156.20'))
+        self.assertEqual(self.client.get(storico).context['parcella'].saldo_residuo, Decimal('156.20'))
+        scheda = self.client.get(reverse('dettaglio_pratica', args=[pratica.pk]))
+        self.assertContains(scheda, 'Da incassare: € 156,20')
+        self.assertContains(scheda, f'href="{storico}"')
+        dashboard = self.client.get(reverse('home')).context
+        self.assertEqual(dashboard['totale_parcelle'], Decimal('256.20'))
+        self.assertEqual(dashboard['totale_incassato'], Decimal('100.00'))
+        self.assertEqual(dashboard['totale_da_incassare'], Decimal('156.20'))
+        self.assertEqual(dashboard['parcelle_scadute'], 1)
+
+        chiave_saldo = self.client.get(storico).context['form'].initial['chiave']
+        self.assertRedirects(self.client.post(storico, {
+            'chiave': chiave_saldo, 'importo': '156.20', 'data': oggi.isoformat(), 'riferimento': 'Saldo',
+        }), storico)
+        parcella.refresh_from_db()
+        self.assertEqual(parcella.stato, 'PAGATO')
+        self.assertEqual(parcella.saldo_residuo, Decimal('0.00'))
+        self.assertEqual(parcella.incassi.count(), 2)
+        self.assertIsNone(self.client.get(storico).context['form'])
+        dashboard = self.client.get(reverse('home')).context
+        self.assertEqual(dashboard['totale_incassato'], Decimal('256.20'))
+        self.assertEqual(dashboard['totale_da_incassare'], Decimal('0.00'))
+        self.assertEqual(dashboard['parcelle_scadute'], 0)

@@ -415,12 +415,17 @@ Scheda pratica
             </span>
 
             <span class="badge money">
-                Importo: € {{ parcella.importo }}
+                Totale documento: € {{ parcella.totale_documento|floatformat:2 }}
             </span>
 
+            {% if parcella.tipo_documento != 'PREVENTIVO' %}
             <span class="badge ok">
                 Pagato: € {{ parcella.importo_pagato }}
             </span>
+            <span class="badge money">
+                Da incassare: € {{ parcella.saldo_residuo|floatformat:2 }}
+            </span>
+            {% endif %}
 
             <br>
 
@@ -428,6 +433,9 @@ Scheda pratica
                 <i class="fa-solid fa-file-pdf"></i>
                 PDF documento
             </a>
+            {% if parcella.tipo_documento != 'PREVENTIVO' %}
+                <a class="action-btn" href="{% url 'storico_incassi' parcella.pk %}">Storico incassi</a>
+            {% endif %}
 
         </div>
 

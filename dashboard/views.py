@@ -1,9 +1,10 @@
 from datetime import timedelta
+from decimal import Decimal
 
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Case, F, OuterRef, Q, Subquery, Sum, Value, When
+from django.db.models import Case, F, OuterRef, Q, Subquery, Value, When
 from django.shortcuts import render, redirect
 from django.utils.timezone import now, localdate
 
@@ -143,20 +144,20 @@ def home(request):
         completata=False
     ).count()
 
-    totale_parcelle = parcelle.aggregate(
-        totale=Sum('importo')
-    )['totale'] or 0
-
-    totale_incassato = parcelle.aggregate(
-        totale=Sum('importo_pagato')
-    )['totale'] or 0
-
-    totale_da_incassare = totale_parcelle - totale_incassato
-
-    parcelle_scadute = parcelle.filter(
-        stato='DA_PAGARE',
-        data_scadenza__lt=now().date()
-    ).count()
+    totale_parcelle = totale_incassato = totale_da_incassare = Decimal('0.00')
+    parcelle_scadute = 0
+    oggi = localdate()
+    puo_vedere_economia = puo_vedere_parcelle(request)
+    if puo_vedere_economia:
+        for parcella in parcelle.exclude(tipo_documento='PREVENTIVO').iterator():
+            pagato = parcella.importo_pagato
+            residuo = parcella.saldo_residuo
+            totale_parcelle += pagato + residuo
+            totale_incassato += pagato
+            if residuo > 0:
+                totale_da_incassare += residuo
+                if parcella.data_scadenza and parcella.data_scadenza < oggi:
+                    parcelle_scadute += 1
 
     ultime_parcelle = parcelle.order_by('-id')[:5]
 
@@ -173,23 +174,15 @@ def home(request):
         'ora_inizio'
     )[:5]
 
-    oggi = now().date()
-
     notifiche = []
 
-    if puo_vedere_parcelle(request):
-
-        parcelle_scadute_qs = parcelle.filter(
-            stato='DA_PAGARE',
-            data_scadenza__lt=oggi
-        )
-
-        if parcelle_scadute_qs.exists():
+    if puo_vedere_economia:
+        if parcelle_scadute:
             notifiche.append({
                 'tipo': 'danger',
                 'icona': 'fa-file-invoice-dollar',
                 'titolo': 'Parcelle scadute',
-                'testo': f'Hai {parcelle_scadute_qs.count()} parcelle scadute da incassare.',
+                'testo': f'Hai {parcelle_scadute} parcelle scadute da incassare.',
                 'link': '/parcelle/',
             })
 
