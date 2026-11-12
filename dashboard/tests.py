@@ -31,6 +31,46 @@ class BackupUnificatoTests(TestCase):
 
 
 class PraticheOperativeTests(TestCase):
+    def test_invito_prima_pratica_rispetta_studio_ruolo_e_limite(self):
+        titolare = User.objects.create_user('qa_prima_pratica')
+        studio = Studio.objects.create(nome='QA primo studio', titolare=titolare, stato_abbonamento='ATTIVO')
+        profilo = ProfiloUtente.objects.create(user=titolare, studio=studio, ruolo='TITOLARE')
+        altro_titolare = User.objects.create_user('qa_prima_pratica_altro')
+        altro_studio = Studio.objects.create(nome='QA altro studio', titolare=altro_titolare)
+
+        def crea_pratica_conclusa(studio):
+            cliente = Cliente.objects.create(nome='Cliente QA', studio=studio)
+            immobile = Immobile.objects.create(cliente=cliente, comune='QA', studio=studio)
+            Pratica.objects.create(
+                oggetto='Pratica QA', studio=studio, cliente=cliente, immobile=immobile,
+                comune='QA', tipo_pratica='CILA', stato='CONCLUSA',
+            )
+
+        crea_pratica_conclusa(altro_studio)
+        self.client.force_login(titolare)
+        dashboard = reverse('home')
+        invito = 'Crea la prima pratica'
+        pagina = self.client.get(dashboard)
+        self.assertContains(pagina, invito)
+        self.assertContains(pagina, f'href="{reverse("nuova_pratica")}"')
+        self.assertEqual(self.client.get(reverse('nuova_pratica')).status_code, 200)
+
+        profilo.ruolo = 'SEGRETERIA'
+        profilo.save(update_fields=['ruolo'])
+        self.assertNotContains(self.client.get(dashboard), invito)
+        profilo.ruolo = 'TITOLARE'
+        profilo.save(update_fields=['ruolo'])
+
+        limite_iniziale = studio.limite_pratiche
+        studio.limite_pratiche = 0
+        studio.save(update_fields=['limite_pratiche'])
+        self.assertNotContains(self.client.get(dashboard), invito)
+        studio.limite_pratiche = limite_iniziale
+        studio.save(update_fields=['limite_pratiche'])
+
+        crea_pratica_conclusa(studio)
+        self.assertNotContains(self.client.get(dashboard), invito)
+
     def test_ordine_scadenze_priorita_paginazione_e_isolamento(self):
         titolare = User.objects.create_user('qa_dashboard_operativa')
         studio = Studio.objects.create(nome='QA operativo', titolare=titolare, stato_abbonamento='ATTIVO')

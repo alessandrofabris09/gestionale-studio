@@ -1,12 +1,68 @@
 from datetime import timedelta
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
+from django.urls import reverse
 from django.utils.timezone import localdate
+from agenda.models import EventoAgenda
 from studi.models import Studio, ProfiloUtente
 from clienti.models import Cliente
 from immobili.models import Immobile
 from pratiche.models import Pratica
 from .models import Scadenza
+
+
+@override_settings(LANCIO_BETA_FREE=True)
+class PercorsoPrimaCILATests(TestCase):
+    def test_registrazione_pratica_e_prima_scadenza(self):
+        password = 'CILA-Collaudo-642!'
+        registrazione = self.client.post('/accounts/registrazione/', {
+            'nome_studio': 'Studio CILA', 'username': 'studio_cila_qa', 'email': 'cila@example.test',
+            'password1': password, 'password2': password, 'accetta_privacy': 'on', 'accetta_termini': 'on',
+        })
+        self.assertRedirects(registrazione, reverse('home'))
+        self.assertContains(self.client.get(reverse('home')), 'Crea la prima pratica')
+
+        cliente = self.client.post(reverse('nuovo_cliente'), {'nome': 'Cliente CILA'}, HTTP_ACCEPT='application/json')
+        self.assertEqual(cliente.status_code, 201)
+        cliente_id = cliente.json()['id']
+        immobile = self.client.post(reverse('nuovo_immobile'), {
+            'cliente': cliente_id, 'comune': 'Treviso', 'indirizzo': 'Via di prova 1',
+        }, HTTP_ACCEPT='application/json')
+        self.assertEqual(immobile.status_code, 201)
+        creazione = self.client.post(reverse('nuova_pratica'), {
+            'cliente': cliente_id, 'immobile': immobile.json()['id'], 'comune': 'Treviso',
+            'tipo_pratica': 'CILA', 'oggetto': 'CILA di collaudo', 'stato': 'IN_CORSO',
+        })
+        pratica = Pratica.objects.get(oggetto='CILA di collaudo')
+        scheda = reverse('dettaglio_pratica', args=[pratica.pk])
+        self.assertRedirects(creazione, scheda)
+        self.assertTrue(pratica.workflow_pratica.fasi_pratica.exists())
+        self.assertTrue(pratica.workflow_pratica.checklist_pratica.exists())
+        self.assertNotContains(self.client.get(reverse('home')), 'Crea la prima pratica')
+
+        nuova_scadenza = f'{reverse("nuova_scadenza")}?pratica={pratica.pk}'
+        ritorno = f'{scheda}#scadenze-pratica'
+        modulo = self.client.get(nuova_scadenza)
+        self.assertEqual(modulo.context['form'].initial['pratica'], pratica.pk)
+        self.assertContains(modulo, f'href="{ritorno}"')
+        dati = {
+            'pratica': pratica.pk, 'titolo': 'Sopralluogo CILA',
+            'data_scadenza': (localdate() + timedelta(days=3)).isoformat(), 'priorita': 'ALTA',
+        }
+        errore = self.client.post(nuova_scadenza, {**dati, 'data_scadenza': ''})
+        self.assertContains(errore, 'role="alert"')
+        self.assertContains(errore, f'href="{ritorno}"')
+        self.assertFalse(Scadenza.objects.filter(pratica=pratica, titolo=dati['titolo']).exists())
+
+        self.assertRedirects(self.client.post(nuova_scadenza, dati), ritorno)
+        dettaglio = self.client.get(scheda)
+        self.assertContains(dettaglio, 'id="scadenze-pratica"')
+        self.assertContains(dettaglio, dati['titolo'])
+        self.assertContains(self.client.get(reverse('lista_scadenze')), dati['titolo'])
+        self.assertTrue(EventoAgenda.objects.filter(pratica=pratica, titolo=f'Scadenza: {dati["titolo"]}').exists())
+
+        self.assertRedirects(self.client.post(reverse('nuova_scadenza'), {**dati, 'titolo': 'Altra scadenza'}),
+                             reverse('lista_scadenze'))
 
 
 class ElencoScadenzeTests(TestCase):

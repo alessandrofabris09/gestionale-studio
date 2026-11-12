@@ -251,8 +251,18 @@ Dashboard gestionale
         </h2>
 
         <div class="muted" style="font-size:16px;">
-            Panoramica operativa dello studio tecnico in base ai permessi del tuo ruolo.
+            {% if mostra_prima_pratica %}
+                Collega il cliente e l’immobile, poi scegli il tipo di pratica.
+            {% else %}
+                Panoramica operativa dello studio tecnico in base ai permessi del tuo ruolo.
+            {% endif %}
         </div>
+        {% if mostra_prima_pratica %}
+            <a href="{% url 'nuova_pratica' %}" class="btn">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                Crea la prima pratica
+            </a>
+        {% endif %}
         {% if studio_corrente.piano == 'FREE' and not studio_corrente.is_pro and not studio_corrente.stripe_subscription_id and request.user|can_manage_subscription %}
             {% if lancio_beta_free %}
                 <a href="{% url 'lancio_beta' %}#lancio-beta" class="btn hero-beta">Segui il lancio della beta PRO</a>
