@@ -212,11 +212,10 @@ Archivio documenti
 
                             <a
                                 class="action-btn open-btn"
-                                href="{{ documento.file.url }}"
-                                target="_blank"
+                                href="{% url 'scarica_documento' documento.pk %}"
                             >
                                 <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                Apri
+                                Scarica
                             </a>
 
                             <a

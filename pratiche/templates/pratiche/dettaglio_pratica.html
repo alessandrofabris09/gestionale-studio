@@ -642,9 +642,9 @@ Scheda pratica
 
             <br>
 
-            <a class="action-btn" href="{{ documento.file.url }}" target="_blank">
+            <a class="action-btn" href="{% url 'scarica_documento' documento.pk %}">
                 <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                Apri file
+                Scarica
             </a>
 
             <a class="action-btn delete-small" href="/documenti/{{ documento.id }}/elimina/">

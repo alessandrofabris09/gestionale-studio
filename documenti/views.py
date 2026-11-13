@@ -1,6 +1,11 @@
+from pathlib import PurePosixPath
+
 import requests
 
 from django.contrib.auth.decorators import login_required
+from django.http import FileResponse, Http404
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_safe
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 
@@ -103,6 +108,29 @@ def lista_documenti(request):
         request,
         'documenti/lista_documenti.html',
         context
+    )
+
+
+@never_cache
+@login_required
+@require_safe
+def scarica_documento(request, documento_id):
+    if not puo_gestire_documenti(request):
+        return accesso_negato(request)
+
+    if not (get_studio_utente(request) or is_admin_piattaforma(request)):
+        return redirect('login')
+
+    documento = get_object_or_404(get_documenti_queryset(request), pk=documento_id)
+    if not documento.file:
+        raise Http404('Allegato non disponibile.')
+    try:
+        file = documento.file.open('rb')
+    except FileNotFoundError as exc:
+        raise Http404('Allegato non disponibile.') from exc
+
+    return FileResponse(
+        file, as_attachment=True, filename=PurePosixPath(documento.file.name).name,
     )
 
 

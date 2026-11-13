@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     lista_documenti,
+    scarica_documento,
     carica_documento,
     carica_documenti_multipli,
     elimina_documento,
@@ -27,6 +28,8 @@ urlpatterns = [
         carica_documenti_multipli,
         name='carica_documenti_multipli'
     ),
+
+    path('<int:documento_id>/scarica/', scarica_documento, name='scarica_documento'),
 
     path(
         '<int:documento_id>/elimina/',
