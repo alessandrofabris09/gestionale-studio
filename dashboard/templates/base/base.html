@@ -4,6 +4,7 @@
 <html lang="it">
 
 <head>
+    <link rel="icon" type="image/png" sizes="96x96" href="{% static 'img/favicon-studio-tecnico-cloud.png' %}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -41,6 +42,20 @@
         .sidebar h2{
             margin-bottom:10px;
             font-size:24px;
+        }
+
+        .studio-sidebar-brand{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            font-size:20px;
+            line-height:1.15;
+        }
+
+        .studio-sidebar-brand img{
+            flex:none;
+            border-radius:12px;
+            background:#f4f3ff;
         }
 
         .user-info{
@@ -350,8 +365,9 @@
 
     <aside class="sidebar">
 
-        <h2>
-            Studio Tecnico
+        <h2 class="studio-sidebar-brand">
+            <img src="{% static 'img/logo.png' %}" width="48" height="48" alt="">
+            <span>Studio Tecnico Cloud</span>
         </h2>
 
         <div class="user-info">
