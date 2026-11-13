@@ -5,8 +5,8 @@
     <link rel="icon" type="image/png" sizes="96x96" href="{% static 'img/favicon-studio-tecnico-cloud.png' %}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Prova Studio Tecnico Cloud, il gestionale web per pratiche, checklist e scadenze degli studi tecnici.">
-    {% block robots %}{% endblock %}
+    <meta name="description" content="Informazioni sulla precedente demo di Studio Tecnico Cloud.">
+    <meta name="robots" content="noindex">
     <title>{% block titolo %}Studio Tecnico Cloud{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/studio-ui.css' %}">
     <link rel="stylesheet" href="{% static 'demo/demo.css' %}">
@@ -21,7 +21,7 @@
             </a>
             <nav aria-label="Navigazione principale">
                 <a class="pulsante secondario" href="https://app.studiotecnicocloud.it/accounts/registrazione/">Registrati al piano Free</a>
-                <a class="pulsante" href="{% url 'demo_lista' %}">Candidati alla beta PRO</a>
+                <a class="pulsante" href="{% url 'demo_lista' %}">Segui il lancio della beta PRO</a>
             </nav>
         </div>
     </header>
