@@ -11,6 +11,7 @@ from studi.utils import (
     get_studio_utente,
     is_admin_piattaforma,
     studio_deve_upgrade,
+    studio_puo_creare_pratiche,
 )
 
 from studi.permessi import (
@@ -257,6 +258,12 @@ def home(request):
         'studio_corrente': studio,
 
         'puo_vedere_pratiche': puo_vedere_pratiche,
+        'mostra_prima_pratica': (
+            studio is not None
+            and puo_creare_pratiche(request)
+            and not pratiche.exists()
+            and studio_puo_creare_pratiche(studio)
+        ),
         'pratiche_operative': pratiche_operative,
         'oggi': localdate(),
         'scadenze_imminenti': scadenze_imminenti,

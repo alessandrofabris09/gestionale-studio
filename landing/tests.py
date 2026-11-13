@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import Client, TestCase, override_settings
+from django.urls import reverse
 from django.utils import timezone
 
 from studi.models import Studio
@@ -19,6 +20,7 @@ class LancioFreeTests(TestCase):
         home = visitatore.get('/')
         self.assertContains(home, '0 / 100 studi Free registrati')
         self.assertContains(home, '<video controls', html=False)
+        self.assertContains(home, 'La prova gratuita termina senza rinnovo automatico.')
         self.assertNotContains(home, 'https://demo.example.test/pro/')
         self.assertRedirects(visitatore.get('/utenti/registrazione/'), '/accounts/registrazione/')
 
@@ -35,7 +37,15 @@ class LancioFreeTests(TestCase):
         self.assertContains(visitatore.get('/lancio/'), '1 / 100 studi Free registrati')
         with patch('django.utils.timezone.now', return_value=timezone.now() + timedelta(days=40)):
             visitatore.force_login(studio.titolare)
-            self.assertContains(visitatore.get('/dashboard/'), 'Segui il lancio della beta PRO')
+            dashboard = visitatore.get('/dashboard/')
+            self.assertContains(dashboard, 'Segui il lancio della beta PRO')
+            self.assertContains(dashboard, 'Crea la prima pratica')
+            self.assertContains(dashboard, f'href="{reverse("nuova_pratica")}"')
+            self.assertEqual(visitatore.get(reverse('nuova_pratica')).status_code, 200)
+
+        studio.limite_pratiche = 0
+        studio.save(update_fields=['limite_pratiche'])
+        self.assertNotContains(visitatore.get('/dashboard/'), 'Crea la prima pratica')
         self.assertNotContains(visitatore.get('/studi/abbonamento/'), '/billing/checkout/pro/')
 
     def test_soglia_e_ordine_delle_iscrizioni_attive(self):
