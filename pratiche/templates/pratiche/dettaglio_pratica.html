@@ -583,7 +583,7 @@ Scheda pratica
 </div>
 
 {% if puo_vedere_scadenze %}
-<div class="card">
+<div class="card" id="scadenze-pratica">
     <h2>Scadenze aperte</h2>
     <div class="page-actions">
         <a class="btn" href="{% url 'nuova_scadenza' %}?pratica={{ pratica.pk }}">Aggiungi scadenza</a>

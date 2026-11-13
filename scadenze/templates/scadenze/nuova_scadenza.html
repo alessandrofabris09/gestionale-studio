@@ -102,6 +102,12 @@ Nuova scadenza
         border-bottom:1px solid #e5e7eb;
     }
 
+    .errorlist{
+        color:#991b1b;
+        margin:6px 0 0 20px;
+        font-size:14px;
+    }
+
     .form-grid{
         display:grid;
         grid-template-columns:repeat(2, 1fr);
@@ -169,9 +175,10 @@ Nuova scadenza
 
 <div class="page-actions">
 
-    <a class="btn" href="/scadenze/">
+    {% url 'lista_scadenze' as url_scadenze %}
+    <a class="btn" href="{{ ritorno_pratica|default:url_scadenze }}">
         <i class="fa-solid fa-arrow-left"></i>
-        Torna alle scadenze
+        {% if ritorno_pratica %}Torna alla pratica{% else %}Torna alle scadenze{% endif %}
     </a>
 
 </div>
@@ -200,6 +207,11 @@ Nuova scadenza
 
         {% csrf_token %}
 
+        {% if form.errors %}
+            <p class="errorlist" role="alert">Controlla i campi segnalati prima di salvare.</p>
+            {{ form.non_field_errors }}
+        {% endif %}
+
         <div class="section">
 
             <div class="section-title">
@@ -209,33 +221,39 @@ Nuova scadenza
             <div class="form-grid">
 
                 <div class="field full">
-                    <label>Titolo</label>
+                    <label for="{{ form.titolo.id_for_label }}">Titolo</label>
                     {{ form.titolo }}
+                    {{ form.titolo.errors }}
                 </div>
 
                 <div class="field">
-                    <label>Pratica collegata</label>
+                    <label for="{{ form.pratica.id_for_label }}">Pratica collegata</label>
                     {{ form.pratica }}
+                    {{ form.pratica.errors }}
                 </div>
 
                 <div class="field">
-                    <label>Priorità</label>
+                    <label for="{{ form.priorita.id_for_label }}">Priorità</label>
                     {{ form.priorita }}
+                    {{ form.priorita.errors }}
                 </div>
 
                 <div class="field">
-                    <label>Data scadenza</label>
+                    <label for="{{ form.data_scadenza.id_for_label }}">Data scadenza</label>
                     {{ form.data_scadenza }}
+                    {{ form.data_scadenza.errors }}
                 </div>
 
                 <div class="field">
-                    <label>Completata</label>
+                    <label for="{{ form.completata.id_for_label }}">Completata</label>
                     {{ form.completata }}
+                    {{ form.completata.errors }}
                 </div>
 
                 <div class="field full">
-                    <label>Descrizione</label>
+                    <label for="{{ form.descrizione.id_for_label }}">Descrizione</label>
                     {{ form.descrizione }}
+                    {{ form.descrizione.errors }}
                 </div>
 
             </div>
@@ -249,7 +267,7 @@ Nuova scadenza
                 Salva scadenza
             </button>
 
-            <a class="btn cancel-btn" href="/scadenze/">
+            <a class="btn cancel-btn" href="{{ ritorno_pratica|default:url_scadenze }}">
                 <i class="fa-solid fa-xmark"></i>
                 Annulla
             </a>

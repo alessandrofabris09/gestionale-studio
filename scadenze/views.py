@@ -11,6 +11,7 @@ import resend
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -21,6 +22,7 @@ from attivita.models import Attivita
 from agenda.models import EventoAgenda
 from agenda.views import invia_email_agenda_giornaliera
 from parcelle.views import scadenze_incasso_aperte
+from pratiche.views import puo_vedere_area_pratiche
 
 from studi.models import Studio
 from studi.utils import get_studio_utente, is_admin_piattaforma
@@ -151,6 +153,7 @@ def lista_scadenze(request):
 
 
 @login_required
+@transaction.atomic
 def nuova_scadenza(request):
 
     if not puo_usare_agenda(request):
@@ -161,13 +164,22 @@ def nuova_scadenza(request):
     if not studio and not request.user.is_superuser:
         return redirect('login')
 
+    form = ScadenzaForm(request.POST if request.method == 'POST' else None, studio=studio)
+    pratica_origine = None
+    pratica_id = request.GET.get('pratica')
+    if pratica_id:
+        try:
+            pratica_origine = form.fields['pratica'].clean(pratica_id)
+        except ValidationError:
+            pass
+        else:
+            form.initial['pratica'] = pratica_origine.pk
+
+    ritorno_pratica = None
+    if pratica_origine and puo_vedere_area_pratiche(request):
+        ritorno_pratica = reverse('dettaglio_pratica', args=[pratica_origine.pk]) + '#scadenze-pratica'
+
     if request.method == 'POST':
-
-        form = ScadenzaForm(
-            request.POST,
-            studio=studio
-        )
-
         if form.is_valid():
 
             scadenza = form.save()
@@ -188,7 +200,7 @@ def nuova_scadenza(request):
                     studio=scadenza.pratica.studio,
                     titolo=f'Scadenza: {scadenza.titolo}',
                     tipo='SCADENZA',
-                    priorita='MEDIA',
+                    priorita=scadenza.priorita,
                     cliente=(
                         scadenza.pratica.cliente
                         if scadenza.pratica.cliente
@@ -202,29 +214,16 @@ def nuova_scadenza(request):
                     )
                 )
 
-            return redirect(
-                'lista_scadenze'
-            )
-
-    else:
-
-        form = ScadenzaForm(
-            studio=studio
-        )
-        pratica_id = request.GET.get('pratica')
-        if pratica_id:
-            try:
-                pratica = form.fields['pratica'].clean(pratica_id)
-            except ValidationError:
-                pass
-            else:
-                form.initial['pratica'] = pratica.pk
+            if ritorno_pratica and scadenza.pratica_id == pratica_origine.pk:
+                return redirect(ritorno_pratica)
+            return redirect('lista_scadenze')
 
     return render(
         request,
         'scadenze/nuova_scadenza.html',
         {
-            'form': form
+            'form': form,
+            'ritorno_pratica': ritorno_pratica,
         }
     )
 
