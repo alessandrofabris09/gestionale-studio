@@ -59,6 +59,14 @@ class EventoAgenda(models.Model):
         blank=True
     )
 
+    scadenza = models.OneToOneField(
+        'scadenze.Scadenza',
+        on_delete=models.CASCADE,
+        null=True,
+        editable=False,
+        related_name='evento_agenda',
+    )
+
     assegnato_a = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,

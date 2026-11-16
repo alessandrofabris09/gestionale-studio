@@ -61,6 +61,43 @@ class PercorsoPrimaCILATests(TestCase):
         self.assertContains(self.client.get(reverse('lista_scadenze')), dati['titolo'])
         evento = EventoAgenda.objects.get(pratica=pratica, titolo=f'Scadenza: {dati["titolo"]}')
         self.assertEqual(evento.priorita, 'ALTA')
+        scadenza = Scadenza.objects.get(pratica=pratica, titolo=dati['titolo'])
+        self.assertEqual(evento.scadenza_id, scadenza.pk)
+        modifica = reverse('modifica_scadenza', args=[scadenza.pk])
+        agenda = reverse('lista_agenda')
+        self.assertRedirects(self.client.get(reverse('modifica_evento', args=[evento.pk])), modifica)
+
+        nuovi_dati = {
+            **dati, 'titolo': 'Sopralluogo rinviato', 'priorita': 'BASSA',
+            'data_scadenza': (localdate() + timedelta(days=4)).isoformat(),
+        }
+        self.assertRedirects(self.client.post(modifica, nuovi_dati), reverse('lista_scadenze'))
+        evento.refresh_from_db()
+        self.assertEqual(evento.data.isoformat(), nuovi_dati['data_scadenza'])
+        self.assertEqual(evento.priorita, 'BASSA')
+        self.assertContains(self.client.get(agenda), nuovi_dati['titolo'])
+        voci = self.client.get(reverse('eventi_calendario')).json()
+        self.assertEqual(sum(nuovi_dati['titolo'] in voce['title'] for voce in voci), 1)
+
+        completa = reverse('completa_scadenza', args=[scadenza.pk])
+        self.assertRedirects(self.client.post(completa, {'origine': 'agenda'}), agenda)
+        scadenza.refresh_from_db()
+        evento.refresh_from_db()
+        self.assertTrue(scadenza.completata)
+        self.assertTrue(evento.completato)
+        self.assertNotContains(self.client.get(agenda), nuovi_dati['titolo'])
+        dashboard = self.client.get('/dashboard/')
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertNotIn(scadenza, list(dashboard.context['ultime_scadenze']))
+        self.assertNotIn(evento, list(dashboard.context['eventi_oggi']))
+
+        self.assertRedirects(self.client.post(modifica, nuovi_dati), reverse('lista_scadenze'))
+        evento.refresh_from_db()
+        self.assertFalse(evento.completato)
+        self.assertContains(self.client.get(agenda), nuovi_dati['titolo'])
+        self.client.post(reverse('elimina_scadenza', args=[scadenza.pk]))
+        self.assertFalse(EventoAgenda.objects.filter(pk=evento.pk).exists())
+        self.assertNotContains(self.client.get(agenda), nuovi_dati['titolo'])
 
         self.assertRedirects(self.client.post(reverse('nuova_scadenza'), {**dati, 'titolo': 'Altra scadenza'}),
                              reverse('lista_scadenze'))

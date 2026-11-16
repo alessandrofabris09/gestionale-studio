@@ -89,6 +89,25 @@ def get_eventi_agenda_queryset(request):
     )
 
 
+def sincronizza_evento_scadenza(scadenza, *, nuovo=False):
+    pratica = scadenza.pratica
+    dati = {
+        'studio_id': pratica.studio_id,
+        'pratica': pratica,
+        'cliente_id': pratica.cliente_id,
+        'titolo': f'Scadenza: {scadenza.titolo}'[:255],
+        'tipo': 'SCADENZA',
+        'priorita': scadenza.priorita,
+        'data': scadenza.data_scadenza,
+        'completato': scadenza.completata,
+        'descrizione': f'Scadenza collegata alla pratica: {pratica}',
+    }
+    if nuovo:
+        EventoAgenda.objects.create(scadenza=scadenza, **dati)
+    else:
+        EventoAgenda.objects.filter(scadenza=scadenza).update(**dati)
+
+
 @login_required
 def lista_scadenze(request):
     if not puo_usare_agenda(request):
@@ -196,23 +215,7 @@ def nuova_scadenza(request):
                     )
                 )
 
-                EventoAgenda.objects.create(
-                    studio=scadenza.pratica.studio,
-                    titolo=f'Scadenza: {scadenza.titolo}',
-                    tipo='SCADENZA',
-                    priorita=scadenza.priorita,
-                    cliente=(
-                        scadenza.pratica.cliente
-                        if scadenza.pratica.cliente
-                        else None
-                    ),
-                    pratica=scadenza.pratica,
-                    data=scadenza.data_scadenza,
-                    descrizione=(
-                        f'Scadenza collegata alla pratica: '
-                        f'{scadenza.pratica}'
-                    )
-                )
+                sincronizza_evento_scadenza(scadenza, nuovo=True)
 
             if ritorno_pratica and scadenza.pratica_id == pratica_origine.pk:
                 return redirect(ritorno_pratica)
@@ -229,6 +232,7 @@ def nuova_scadenza(request):
 
 
 @login_required
+@transaction.atomic
 def modifica_scadenza(request, scadenza_id):
 
     if not puo_usare_agenda(request):
@@ -239,10 +243,10 @@ def modifica_scadenza(request, scadenza_id):
     if not studio and not request.user.is_superuser:
         return redirect('login')
 
-    scadenza = get_object_or_404(
-        get_scadenze_queryset(request),
-        id=scadenza_id
-    )
+    scadenze = get_scadenze_queryset(request)
+    if request.method == 'POST':
+        scadenze = scadenze.select_for_update(of=('self',))
+    scadenza = get_object_or_404(scadenze, id=scadenza_id)
     if scadenza.da_pratica:
         return redirect('dettaglio_pratica', pratica_id=scadenza.pratica_id)
 
@@ -259,6 +263,7 @@ def modifica_scadenza(request, scadenza_id):
             scadenza = form.save()
 
             if scadenza.pratica:
+                sincronizza_evento_scadenza(scadenza)
 
                 Attivita.objects.create(
                     pratica=scadenza.pratica,
@@ -292,6 +297,7 @@ def modifica_scadenza(request, scadenza_id):
 
 
 @login_required
+@transaction.atomic
 def elimina_scadenza(request, scadenza_id):
 
     if not puo_usare_agenda(request):
@@ -302,10 +308,10 @@ def elimina_scadenza(request, scadenza_id):
     if not studio and not request.user.is_superuser:
         return redirect('login')
 
-    scadenza = get_object_or_404(
-        get_scadenze_queryset(request),
-        id=scadenza_id
-    )
+    scadenze = get_scadenze_queryset(request)
+    if request.method == 'POST':
+        scadenze = scadenze.select_for_update(of=('self',))
+    scadenza = get_object_or_404(scadenze, id=scadenza_id)
     if scadenza.da_pratica:
         return redirect('dettaglio_pratica', pratica_id=scadenza.pratica_id)
 
@@ -340,6 +346,7 @@ def elimina_scadenza(request, scadenza_id):
 
 @login_required
 @require_POST
+@transaction.atomic
 def completa_scadenza(request, scadenza_id):
 
     if not puo_usare_agenda(request):
@@ -351,13 +358,13 @@ def completa_scadenza(request, scadenza_id):
         return redirect('login')
 
     scadenza = get_object_or_404(
-        get_scadenze_queryset(request),
+        get_scadenze_queryset(request).select_for_update(of=('self',)),
         id=scadenza_id
     )
     if scadenza.da_pratica:
         return redirect('dettaglio_pratica', pratica_id=scadenza.pratica_id)
 
-    if scadenza.pratica:
+    if scadenza.pratica and not scadenza.completata:
 
         Attivita.objects.create(
             pratica=scadenza.pratica,
@@ -370,10 +377,11 @@ def completa_scadenza(request, scadenza_id):
         )
 
     scadenza.completata = True
-    scadenza.save()
+    scadenza.save(update_fields=['completata'])
+    sincronizza_evento_scadenza(scadenza)
 
     return redirect(
-        'lista_scadenze'
+        'lista_agenda' if request.POST.get('origine') == 'agenda' else 'lista_scadenze'
     )
 
 
@@ -501,7 +509,7 @@ def eventi_calendario(request):
             'url': reverse('storico_incassi', args=[parcella.pk]),
         })
 
-    eventi_agenda = get_eventi_agenda_queryset(request)
+    eventi_agenda = get_eventi_agenda_queryset(request).filter(scadenza__isnull=True)
 
     for evento in eventi_agenda:
 

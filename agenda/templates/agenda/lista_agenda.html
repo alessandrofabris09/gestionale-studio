@@ -333,8 +333,9 @@ Agenda operativa
                     <td>
                         <div class="actions">
 
-                            <form method="post" action="{% url 'completa_evento' evento.id %}" style="display:inline">
+                            <form method="post" action="{% if evento.scadenza_id %}{% url 'completa_scadenza' evento.scadenza_id %}{% else %}{% url 'completa_evento' evento.id %}{% endif %}" style="display:inline">
                                 {% csrf_token %}
+                                <input type="hidden" name="origine" value="agenda">
                                 <button type="submit" class="action-btn complete-btn">
                                     <i class="fa-solid fa-check"></i>
                                     Completa
