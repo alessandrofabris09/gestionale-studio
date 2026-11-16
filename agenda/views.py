@@ -229,6 +229,8 @@ def modifica_evento(request, evento_id):
         get_eventi_queryset(request),
         id=evento_id
     )
+    if evento.scadenza_id:
+        return redirect('modifica_scadenza', scadenza_id=evento.scadenza_id)
 
     if request.method == 'POST':
 
@@ -296,6 +298,8 @@ def elimina_evento(request, evento_id):
         id=evento_id
     )
 
+    if evento.scadenza_id:
+        return redirect('elimina_scadenza', scadenza_id=evento.scadenza_id)
     pratica = evento.pratica
     titolo_evento = evento.titolo
 
@@ -344,6 +348,8 @@ def completa_evento(request, evento_id):
         get_eventi_queryset(request),
         id=evento_id
     )
+    if evento.scadenza_id:
+        return redirect('completa_scadenza', scadenza_id=evento.scadenza_id, preserve_request=True)
 
     if evento.pratica:
 
@@ -759,6 +765,7 @@ def calendario_ics(request, codice):
 
     eventi_agenda = EventoAgenda.objects.filter(
         studio=studio,
+        scadenza__isnull=True,
         completato=False,
         data__gte=data_inizio,
         data__lte=data_fine
